@@ -1280,7 +1280,7 @@ function admSys(){const Y=S.sysInfo;if(!Y)return'<p class="hint">Wird geladen �
      <button type="button" class="btn ghost sm" style="align-self:flex-start" id="wartAus">Hinweis zurücknehmen</button></div>`
     :`<div class="f2"><label class="f">Uhrzeit<select id="wartZeit">${["22:00","01:00","02:00","03:00"].map(x=>`<option ${x==="02:00"?"selected":""}>${x}</option>`).join("")}</select></label><span></span></div>
      <button type="button" class="btn sec sm" style="align-self:flex-start" id="wartAn">Hinweis für heute Nacht an die App senden</button>
-     <p class="hint">Push-Nachrichten aufs Handy folgen. Bis dahin sehen die Monteure den Hinweis beim Öffnen der App.</p>`}</div></div>`}
+     <p class="hint">Wer in der App Mitteilungen erlaubt hat, bekommt sofort eine Push-Nachricht. Alle anderen sehen den Hinweis beim Öffnen der App.</p>`}</div></div>`}
 function pushText(z){return`Ab ${z} Uhr wird N-Flow aktualisiert, die App ist dann etwa eine Minute nicht erreichbar. Bitte offene Berichte vorher senden. Entwürfe bleiben auf dem Handy erhalten.`}
 function admLog(){if(!S.log)return'<p class="hint">Wird geladen …</p>';return`<div class="panel"><h3>Protokoll <span class="hint">wer hat wann was geändert · letzte ${S.log.length} Einträge</span></h3><div class="tbwrap"><table class="tb"><thead><tr><th>Zeit</th><th>Wer</th><th>Aktion</th><th>Details</th></tr></thead><tbody>
  ${S.log.map(l=>`<tr><td class="hint" style="white-space:nowrap">${fmt(l[0].slice(0,10))} ${l[0].slice(11)}</td><td>${esc(l[1])}</td><td><b>${esc(l[2])}</b></td><td>${esc(l[3])}</td></tr>`).join("")}</tbody></table></div>

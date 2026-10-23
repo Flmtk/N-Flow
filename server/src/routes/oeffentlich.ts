@@ -5,6 +5,7 @@ import { sql } from "../db.js";
 import { protokolliere } from "../protokoll.js";
 import { brauche } from "../sitzung.js";
 import { nummernZiehen } from "./daten.js";
+import { planerIds, senden } from "../push.js";
 
 /**
  * QR-Aufkleber an der Anlage. Im Code steht nur  <BASE_URL>/a/<zufällige Kennung>.
@@ -131,6 +132,7 @@ export async function oeffentlicheRouten(app: FastifyInstance): Promise<void> {
       };
       await sql`insert into daten (sammlung, id, daten, geaendert_von) values ('auftraege', ${id}, ${sql.json(auftrag)}, 'QR-Aufkleber')`;
       await protokolliere("QR-Aufkleber", "Störung gemeldet", `${a.nv} · ${id}`);
+      void planerIds().then((ids) => senden(ids, "stoerung", `Störmeldung ${a.nv}`, `${a.ort ?? ""}: „${text.slice(0, 120)}“ · Rückruf ${tel}`, "/buero/"));
       return { ok: true };
     },
   );

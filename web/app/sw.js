@@ -3,7 +3,7 @@
  * Erst Netz, dann Zwischenspeicher: Updates kommen beim nächsten Öffnen mit Netz automatisch an.
  * Daten (/api/…) laufen nicht hierüber, die speichert die App selbst (Postausgang).
  */
-const CACHE = "nflow-app-v3";
+const CACHE = "nflow-app-v4";
 const DATEIEN = ["/app/", "/js/nf.js", "/vendor/jsQR.js", "/app/manifest.webmanifest", "/icons/icon-192.png", "/icons/icon-512.png"];
 
 self.addEventListener("install", (e) => {
@@ -32,4 +32,24 @@ self.addEventListener("fetch", (e) => {
       })
       .catch(() => caches.match(istSeite ? "/app/" : e.request).then((r) => r || caches.match("/app/"))),
   );
+});
+
+/* Push-Mitteilungen vom N-Flow-Server */
+self.addEventListener("push", (e) => {
+  let d = {};
+  try { d = e.data ? e.data.json() : {}; } catch (x) { d = { text: e.data && e.data.text() }; }
+  e.waitUntil(self.registration.showNotification(d.titel || "N-Flow", {
+    body: d.text || "", icon: "/icons/icon-192.png", badge: "/icons/icon-192.png",
+    tag: d.art || undefined, renotify: !!d.art, data: { ziel: d.ziel || "/app/" },
+  }));
+});
+
+self.addEventListener("notificationclick", (e) => {
+  e.notification.close();
+  const ziel = (e.notification.data && e.notification.data.ziel) || "/app/";
+  e.waitUntil(self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((liste) => {
+    const offen = liste.find((c) => new URL(c.url).pathname.startsWith(ziel));
+    if (offen) return offen.focus();
+    return self.clients.openWindow(ziel);
+  }));
 });

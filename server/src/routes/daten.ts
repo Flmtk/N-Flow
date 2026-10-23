@@ -4,6 +4,7 @@ import { sql } from "../db.js";
 import { protokolliere } from "../protokoll.js";
 import { rechteLaden, type Recht } from "../rechte.js";
 import { brauche, type Benutzer } from "../sitzung.js";
+import { nachSpeichern } from "../push.js";
 
 /**
  * Gemeinsamer Datenspeicher für Büro und Monteur-App.
@@ -187,7 +188,7 @@ export async function datenRouten(app: FastifyInstance): Promise<void> {
     const r = await rechteVon(b);
     if (!r[regel.schreiben]) return { code: 403, fehler: "Dafür fehlt die Berechtigung." };
 
-    return sql.begin(async (tx) => {
+    const erg = await sql.begin(async (tx) => {
       const [alt] = await tx<Zeile[]>`
         select id, version, daten, geloescht from daten where sammlung = ${s} and id = ${id} for update`;
       const altDaten = alt && !alt.geloescht ? alt.daten : null;
@@ -214,12 +215,15 @@ export async function datenRouten(app: FastifyInstance): Promise<void> {
         } else if (s === "einstellungen") {
           await protokolliere(b.name, id === "preise" ? "Preise geändert" : "Einstellungen geändert", Object.keys(teil).join(", "));
         }
-        return { code: 200, zeile: z };
+        return { code: 200, zeile: z, alt: altDaten };
       } catch (err) {
         if ((err as { code?: string }).code === "23505") return { code: 409, fehler: "Dieser QR-Aufkleber ist schon einer anderen Anlage zugeordnet." };
         throw err;
       }
     });
+    // Mitteilungen erst nach dem Speichern, ohne auf sie zu warten
+    if ("zeile" in erg && erg.zeile) void nachSpeichern(s, id, erg.alt ?? null, erg.zeile.daten, b);
+    return erg;
   }
 
   app.put<{ Params: { s: string; id: string }; Body: { daten: Daten } }>(

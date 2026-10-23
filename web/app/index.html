@@ -917,6 +917,7 @@ function vIch(){
   ${RECHTE.planung?`<label class="alsbar">Arbeiten für<select id="alsTech"><option value="">mich (${esc(NF.ich.benutzer.name)})</option>${(NF.team||[]).filter(t=>t.rolle==="Monteur"&&t.aktiv&&!t.gesperrt).map(t=>`<option value="${t.id}" ${S.alsTech===t.id?"selected":""}>${esc(t.name)}</option>`).join("")}</select></label>`:""}
   <div class="seg" role="group" aria-label="Bereich">${tab("zeit","Zeit")}${tab("kal","Kalender")}${tab("belege","Belege")}${tab("abw","Abwesend")}${tab("auto","Auto")}</div>
   ${body}
+  ${mitteilungenPanel()}
   <div class="row" style="gap:8px">${RECHTE.planung?'<a class="btn sec" href="/buero/" style="text-decoration:none">Zum Büro</a>':""}<button type="button" class="btn ghost" id="abmelden">Abmelden</button></div>
   <p class="demo">N-Flow ${esc(NF.ich.version||"")} · ${esc(NF.ich.instanz||"")} · ${NF.outbox.length?NF.outbox.length+" Änderung(en) im Postausgang":"alles übertragen"}</p>
  </div>`;
@@ -1301,6 +1302,7 @@ document.addEventListener("change",e=>{
  if(t.id==="bf"&&t.files[0]){const f=t.files[0];NF.bildVerkleinern(f).then(bl=>{belegDatei=bl;const u=URL.createObjectURL(bl),im=new Image();im.onload=()=>{const c=document.createElement("canvas"),sc=96/Math.max(im.width,im.height);c.width=im.width*sc;c.height=im.height*sc;c.getContext("2d").drawImage(im,0,0,c.width,c.height);S.belegFoto=c.toDataURL("image/jpeg",.7);save();render();toast("Quittung fotografiert")};im.src=u}).catch(()=>toast("Foto konnte nicht gelesen werden"))}
  if(t.id==="papScan"&&r&&t.files[0]){hochladen(t.files,ids=>{r.papScan=ids[0];save();render();toast("Scan angehängt")})}
  if(t.id==="foto"&&r&&t.files[0]){const nn=t.files.length;hochladen(t.files,ids=>{r.fotos=(r.fotos||[]).concat(ids);save();render();toast(nn+" Foto(s) angehängt")})}
+ if(t.dataset.mtart&&MT_EIN){MT_EIN.einstellung[t.dataset.mtart]=t.checked;NF.api("/api/ich/mitteilungen",{method:"PUT",body:{[t.dataset.mtart]:t.checked}}).catch(e=>toast(e.message));return}
  if(t.id==="alsTech"){S.alsTech=t.value||null;save();render();toast(t.value?"Du arbeitest jetzt für "+TECH.name:"Wieder deine eigene Ansicht");return}
  if(t.dataset.mub&&r){const[sd,j]=t.dataset.mub.split("|");r.mess[sd].ub[j]=t.checked;save()}
  if(t.dataset.flag&&r){r[t.dataset.flag]=t.checked;save();if(t.dataset.flag==="nichtVorOrt"||t.dataset.flag==="papier")render();else refreshFoot()}
@@ -1310,6 +1312,9 @@ document.addEventListener("click",e=>{
  const tr=e.target.closest("tr[data-nach]");if(tr){if(tr.dataset.nach>=isoD()){toast("Heute bitte oben stempeln");return}S.nachDatum=tr.dataset.nach;save();render();const np=$("#nachPanel");if(np&&np.scrollIntoView)np.scrollIntoView({block:"start",behavior:"smooth"});return}
  const t=e.target.closest("button,[data-q]");if(!t)return;const d=t.dataset,r=S.view==="einsatz"&&R();
 
+ if(t.id==="pushAn"){pushAnmelden();return}
+ if(t.id==="pushAus"){pushAbmelden();return}
+ if(t.id==="pushTest"){NF.api("/api/push/test",{method:"POST"}).then(x=>toast(x.gesendet?"Test gesendet, gleich kommt die Mitteilung":"Kein Gerät angemeldet")).catch(e=>toast(e.message));return}
  if(t.id==="abmelden"){fetch("/auth/logout",{method:"POST"}).finally(()=>{location.href="/"});return}
 
 
@@ -1437,8 +1442,32 @@ let belegDatei=null;
  NF.bei("status",()=>{if(formular())renderTabs();else render()});
  NF.bei("fehler",m=>toast("Nicht gespeichert: "+m));
  wartPruefen();
- if("serviceWorker" in navigator)navigator.serviceWorker.register("/app/sw.js",{scope:"/app/"}).catch(()=>{});
+ if("serviceWorker" in navigator)navigator.serviceWorker.register("/app/sw.js",{scope:"/app/"}).then(pushPruefen).catch(()=>{});
 })();
+/* ---------- Mitteilungen (Push) ---------- */
+let MT_EIN=null;
+function pushMoeglich(){return"serviceWorker" in navigator&&"PushManager" in window&&"Notification" in window}
+function mitteilungenPanel(){
+ if(!pushMoeglich()){const ios=/iPhone|iPad/.test(navigator.userAgent);return`<div class="panel"><h4>Mitteilungen</h4><p class="hint">${ios?"Auf dem iPhone gehen Mitteilungen nur, wenn N-Flow auf dem Home-Bildschirm liegt und von dort geöffnet wird (iOS 16.4 oder neuer).":"Dieser Browser unterstützt keine Mitteilungen."}</p></div>`}
+ if(!MT_EIN){mtLaden();return`<div class="panel"><h4>Mitteilungen</h4><p class="hint">Wird geladen …</p></div>`}
+ const erlaubt=Notification.permission==="granted"&&S.pushAn;
+ return`<div class="panel"><h4>Mitteilungen</h4>
+  ${Notification.permission==="denied"?'<div class="alert wa">Mitteilungen sind in den Einstellungen des Handys für N-Flow blockiert. Dort unter Mitteilungen erlauben.</div>':
+   erlaubt?`<p class="hint">Auf diesem Handy aktiv.</p>`:`<p class="hint">N-Flow meldet sich, wenn sich etwas für dich ändert, auch wenn die App geschlossen ist.</p><button type="button" class="btn" id="pushAn">Mitteilungen erlauben</button>`}
+  ${Object.entries(MT_EIN.arten).filter(([k])=>k!=="stoerung"||RECHTE.planung).map(([k,l])=>`<label class="check"><input type="checkbox" data-mtart="${k}" ${MT_EIN.einstellung[k]!==false?"checked":""}>${esc(l)}</label>`).join("")}
+  ${erlaubt?'<div class="row" style="gap:8px"><button type="button" class="btn sec" id="pushTest">Test senden</button><button type="button" class="btn ghost" id="pushAus">Auf diesem Handy aus</button></div>':""}</div>`}
+async function mtLaden(){try{MT_EIN=await NF.api("/api/ich/mitteilungen");if(S.view==="ich")render()}catch(e){}}
+function b64zuBytes(b){const p="=".repeat((4-b.length%4)%4),s=atob((b+p).replace(/-/g,"+").replace(/_/g,"/"));return Uint8Array.from([...s].map(c=>c.charCodeAt(0)))}
+async function pushAnmelden(){
+ try{const ok=await Notification.requestPermission();if(ok!=="granted"){toast("Mitteilungen wurden nicht erlaubt");render();return}
+  const reg=await navigator.serviceWorker.ready,{schluessel}=await NF.api("/api/push/schluessel");
+  const abo=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64zuBytes(schluessel)});
+  await NF.api("/api/push/abo",{method:"POST",body:{abo:abo.toJSON(),geraet:navigator.userAgent.slice(0,120)}});
+  S.pushAn=true;save();render();toast("Mitteilungen sind an")}
+ catch(e){toast("Mitteilungen konnten nicht eingerichtet werden: "+e.message)}}
+async function pushAbmelden(){try{const reg=await navigator.serviceWorker.ready,abo=await reg.pushManager.getSubscription();if(abo){await NF.api("/api/push/abo",{method:"DELETE",body:{endpoint:abo.endpoint}});await abo.unsubscribe()}S.pushAn=false;save();render();toast("Mitteilungen auf diesem Handy aus")}catch(e){toast(e.message)}}
+async function pushPruefen(){if(!pushMoeglich()||Notification.permission!=="granted")return;try{const reg=await navigator.serviceWorker.ready,abo=await reg.pushManager.getSubscription();
+ if(abo){S.pushAn=true;NF.api("/api/push/abo",{method:"POST",body:{abo:abo.toJSON(),geraet:navigator.userAgent.slice(0,120)}}).catch(()=>{})}else if(S.pushAn){S.pushAn=false;save()}}catch(e){}}
 function wartPruefen(){if(S.wartAktiv&&S.pushSeen!==iso(new Date()))setTimeout(showPush,800)}
 
 })();

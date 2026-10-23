@@ -13,6 +13,7 @@ import { datenRouten } from "./routes/daten.js";
 import { dateienRouten } from "./routes/dateien.js";
 import { oeffentlicheRouten } from "./routes/oeffentlich.js";
 import { kalenderRouten } from "./routes/kalender.js";
+import { pushRouten, vorschauPlanen } from "./push.js";
 
 const app = Fastify({
   logger: { level: config.produktion ? "info" : "debug" },
@@ -37,6 +38,7 @@ await app.register(datenRouten);
 await app.register(dateienRouten);
 await app.register(oeffentlicheRouten);
 await app.register(kalenderRouten);
+await app.register(pushRouten);
 
 const webOrdner = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../web");
 await app.register(fastifyStatic, { root: webOrdner, index: ["index.html"] });
@@ -56,6 +58,7 @@ app.setErrorHandler((fehler, anfrage, antwort) => {
 });
 
 await migrieren((t) => app.log.info(t));
+vorschauPlanen();
 await app.listen({ host: "0.0.0.0", port: config.port });
 app.log.info(`N-Flow ${config.version} (${config.instanz}) läuft auf ${config.baseUrl}`);
 

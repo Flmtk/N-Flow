@@ -1,0 +1,1397 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#e9660f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="N-Flow">
+<link rel="manifest" href="/app/manifest.webmanifest">
+<link rel="icon" href="/icons/icon-192.png">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<title>N-Flow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout: ein Telefon-Bildschirm (max 420px), Kopfleiste oben, Untermenü unten, Assistent mit Schrittleiste */
+:root{
+  --bg:#e9edf1; --surface:#ffffff; --surface2:#f6f7f9; --line:#e4e7ec;
+  --fg:#1f2633; --muted:#6b7385; --accent:#e9660f; --accent-ink:#ffffff; --accent-soft:#fff0e4;
+  --ok:#23804a; --ok-soft:#e5f5eb; --warn:#a96500; --warn-soft:#fdf2df; --crit:#c0352b; --crit-soft:#fdeceb;
+  --frame:#ffffff; --shadow:0 1px 2px rgba(31,38,51,.05),0 6px 18px -8px rgba(31,38,51,.12);
+  --f-display:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-body:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"Figtree",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#11141a; --surface:#1b2029; --surface2:#151920; --line:#2a303b;
+  --fg:#eef1f5; --muted:#9aa3b2; --accent:#ff7d2e; --accent-ink:#1a0c03; --accent-soft:#3a2516;
+  --ok:#5cc583; --ok-soft:#173022; --warn:#e8a842; --warn-soft:#3a2c12; --crit:#ff7466; --crit-soft:#3d1c19; --frame:#1b2029; --shadow:0 1px 2px rgba(0,0,0,.3); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#11141a; --surface:#1b2029; --surface2:#151920; --line:#2a303b;
+  --fg:#eef1f5; --muted:#9aa3b2; --accent:#ff7d2e; --accent-ink:#1a0c03; --accent-soft:#3a2516;
+  --ok:#5cc583; --ok-soft:#173022; --warn:#e8a842; --warn-soft:#3a2c12; --crit:#ff7466; --crit-soft:#3d1c19; --frame:#1b2029; --shadow:0 1px 2px rgba(0,0,0,.3); color-scheme:dark}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:16px;line-height:1.4;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{display:flex;flex-direction:column;align-items:center;gap:12px}
+.note{max-width:420px;align-items:center;width:100%;font-size:13px;color:var(--muted);display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.phone{width:100%;max-width:420px;height:min(860px,calc(100vh - 64px));min-height:600px;background:var(--surface2);
+  border:1px solid var(--line);border-radius:28px;overflow:hidden;display:flex;flex-direction:column;position:relative;
+  box-shadow:0 20px 60px -30px rgba(0,0,0,.45)}
+@media (max-width:460px){body{padding:0}.note{padding:8px 16px 0}.phone{border-radius:0;border:0;height:calc(100vh - 40px);max-width:none}}
+/* Kopf */
+.top{background:var(--frame);color:#f3f1ec;padding:14px 16px 12px;display:flex;align-items:center;gap:12px}
+.top .back{background:none;border:0;color:#f3f1ec;font-size:22px;line-height:1;padding:4px 6px;margin-left:-6px}
+.brand{font-family:var(--f-display);font-weight:700;font-size:22px;letter-spacing:.06em}
+.brand b{color:#ff7a24}
+.top h1{font-family:var(--f-display);font-weight:600;font-size:20px;margin:0;letter-spacing:.02em;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.net{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:12px;background:#24262a;border:0;border-radius:99px;padding:5px 10px;color:#f3f1ec}
+.net i{width:8px;height:8px;border-radius:50%;background:#5cc07a;display:block}
+.net.off i{background:#e6a23c}
+.main{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
+.pad{padding:16px;display:flex;flex-direction:column;gap:14px}
+/* Untermenü */
+.tabs{display:grid;grid-template-columns:repeat(5,1fr);background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
+.tabs button{background:none;border:0;padding:10px 4px 12px;font-size:12px;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:4px;position:relative}
+.tabs button svg{width:22px;height:22px}
+.tabs button[aria-current="page"]{color:var(--fg);font-weight:600}
+.tabs button[aria-current="page"]::before{content:"";position:absolute;top:0;left:30%;right:30%;height:3px;background:var(--accent);border-radius:0 0 3px 3px}
+.badge{position:absolute;top:6px;right:calc(50% - 20px);background:var(--accent);color:var(--accent-ink);font-size:10px;font-weight:700;border-radius:99px;min-width:16px;height:16px;padding:0 4px;display:grid;place-items:center}
+/* Bausteine */
+.eyebrow{font-family:var(--f-display);font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.day{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.day h2{font-family:var(--f-display);font-size:30px;margin:0;font-weight:700;line-height:1}
+.greet h2{font-family:var(--f-display);font-size:32px;margin:0;font-weight:700;line-height:1.05;text-wrap:balance}
+.greet p{margin:4px 0 0;color:var(--muted);font-size:14px}
+h3.sub{font-family:var(--f-display);font-size:20px;margin:0;font-weight:600;letter-spacing:.02em}
+.ico{background:none;border:0;color:#f3f1ec;padding:6px;margin-left:auto;display:grid;place-items:center}
+.ico svg{width:22px;height:22px}
+.ico+.net{margin-left:0}
+.top .ico{margin-left:auto}
+.top .ico~.ico{margin-left:0}
+.top .net{margin-left:auto}
+.top .ico~.net{margin-left:0}
+.icotxt{width:auto;padding:0 12px;font-weight:700;font-size:14px;gap:4px;display:flex;align-items:center}
+.search{display:flex;align-items:center;gap:8px;background:var(--surface);border:1.5px solid var(--accent);border-radius:12px;padding:4px 4px 4px 12px}
+.search input{border:0;background:none;font-family:var(--f-mono);font-size:22px;padding:10px 0;min-width:0;flex:1}
+.search input:focus{outline:none}
+.search b{font-family:var(--f-mono);font-size:22px;color:var(--muted)}
+.contact{display:grid;grid-template-columns:1fr auto;gap:4px 10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.contact:last-child{border-bottom:0}
+.contact span{font-size:12px;color:var(--muted)}
+.contact b{font-weight:600;font-size:15px}
+.contact .tel{font-family:var(--f-mono);font-size:15px;user-select:all;grid-column:1}
+.contact .acts{grid-row:1/4;grid-column:2;display:flex;flex-direction:column;gap:6px;justify-content:center}
+.beleg{display:grid;grid-template-columns:44px 1fr auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.beleg:last-child{border-bottom:0}
+.beleg .th{width:44px;height:44px;border-radius:8px;background:var(--surface2) center/cover;border:1px solid var(--line)}
+.beleg p{margin:0;font-size:13px;color:var(--muted)}
+.beleg b{font-size:15px}
+.beleg .amt{font-family:var(--f-mono);font-weight:600;text-align:right}
+.stamp{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stamp button{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:12px 6px;display:flex;flex-direction:column;align-items:center;gap:2px;font-weight:600;font-size:14px}
+.stamp button span{font-family:var(--f-mono);font-size:13px;font-weight:400;color:var(--muted)}
+.stamp button.on{border-color:var(--accent);background:var(--accent-soft)}
+.stamp button.on span{color:var(--accent)}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.job{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;display:grid;grid-template-columns:52px 1fr;gap:12px;text-align:left;width:100%}
+.job .t{font-family:var(--f-mono);font-size:14px;font-weight:600}
+.job .t small{display:block;color:var(--muted);font-weight:400;font-size:11px}
+.job h3{margin:0 0 2px;font-size:16px;font-weight:600}
+.job p{margin:0;color:var(--muted);font-size:14px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.chip{font-size:12px;font-weight:600;border-radius:6px;padding:3px 8px;background:var(--surface2);color:var(--muted);border:1px solid var(--line)}
+.chip.or{background:var(--accent-soft);color:var(--accent);border-color:transparent}
+.chip.ok{background:var(--ok-soft);color:var(--ok);border-color:transparent}
+.chip.wa{background:var(--warn-soft);color:var(--warn);border-color:transparent}
+.chip.cr{background:var(--crit-soft);color:var(--crit);border-color:transparent}
+.jobrow{display:grid;grid-template-columns:1fr 64px;gap:8px}
+.jobrow .job{min-width:0}
+.maplink{border:1px solid var(--line);border-radius:14px;background:var(--surface);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-decoration:none;color:var(--fg);font-size:12px;font-weight:600;padding:8px 4px}
+.mapimg{width:44px;height:44px;border-radius:10px;position:relative;overflow:hidden;
+ background:linear-gradient(35deg,transparent 46%,var(--surface) 46%,var(--surface) 54%,transparent 54%),linear-gradient(-60deg,transparent 47%,var(--surface) 47%,var(--surface) 53%,transparent 53%),var(--ok-soft)}
+.mapimg::after{content:"";position:absolute;left:50%;top:42%;width:14px;height:14px;background:var(--accent);border-radius:50% 50% 50% 0;transform:translate(-50%,-50%) rotate(-45deg);box-shadow:0 0 0 2px var(--surface)}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center}
+.cal .h{font-size:11px;color:var(--muted);font-weight:600;padding:4px 0}
+.cal button{border:0;background:none;border-radius:8px;padding:6px 0 4px;font-family:var(--f-mono);font-size:14px;display:flex;flex-direction:column;align-items:center;gap:3px;min-height:42px}
+.cal button.out{color:var(--muted);opacity:.45}
+.cal button.we{color:var(--muted)}
+.cal button.today{outline:1.5px solid var(--accent);outline-offset:-1.5px}
+.cal button.sel{background:var(--fg);color:var(--bg)}
+.cal button.urlaub{background:var(--accent-soft)}
+.cal button.sel.urlaub{background:var(--fg)}
+.cal .dots{display:flex;gap:2px;height:5px}
+.cal .dots i{width:5px;height:5px;border-radius:50%;background:var(--fg)}
+.cal button.sel .dots i{background:var(--bg)}
+.cal .dots i.b{background:var(--warn)}
+.calhead{display:flex;align-items:center;justify-content:space-between}
+.calhead button{border:1px solid var(--line);background:var(--surface);border-radius:8px;width:34px;height:34px;font-size:18px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.legend span{display:flex;align-items:center;gap:5px}
+.legend i{width:10px;height:10px;border-radius:3px;display:block}
+.agenda{display:flex;flex-direction:column}
+.agenda div{display:grid;grid-template-columns:62px 1fr;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px}
+.agenda div:last-child{border-bottom:0}
+.agenda time{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.btn{border:0;border-radius:12px;padding:14px 16px;font-weight:600;font-size:16px;background:var(--accent);color:var(--accent-ink);width:100%;display:flex;justify-content:center;align-items:center;gap:8px}
+.btn.sec{background:var(--surface);color:var(--fg);border:1px solid var(--line)}
+.btn.ghost{background:none;color:var(--muted);border:1px dashed var(--line)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;gap:10px}
+.row>*{flex:1;min-width:0}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:12px}
+.panel h4{margin:0;font-family:var(--f-display);font-size:16px;letter-spacing:.08em;text-transform:uppercase;font-weight:600}
+dl.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0;font-size:14px}
+dl.kv dt{color:var(--muted)}
+dl.kv dd{margin:0;font-weight:500;min-width:0;overflow-wrap:anywhere}
+label.f{display:flex;flex-direction:column;gap:5px;font-size:13px;color:var(--muted);font-weight:500}
+label.f.req>span::after{content:" *";color:var(--accent)}
+input[type=text],input[type=number],input[type=date],input[type=time],select,textarea{width:100%;background:var(--surface2);border:1px solid var(--line);border-radius:10px;padding:11px 12px;font-size:16px;color:var(--fg)}
+textarea{min-height:96px;resize:vertical}
+input.num{font-family:var(--f-mono);text-align:right}
+.unit{display:flex;align-items:center;gap:6px}
+.unit em{font-style:normal;color:var(--muted);font-size:12px;min-width:44px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.check{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface2);border:1px solid var(--line);border-radius:10px;font-size:15px}
+.check input{width:20px;height:20px;accent-color:var(--accent)}
+.seg{display:flex;background:var(--surface2);border:1px solid var(--line);border-radius:10px;padding:3px;gap:3px}
+.seg.g2{display:grid;grid-template-columns:1fr 1fr}
+.seg.wrap button{white-space:normal}
+.seg button{flex:1;border:0;background:none;border-radius:8px;padding:9px 4px;font-size:14px;min-width:0;white-space:nowrap;font-weight:600;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--fg);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.tb{display:flex;flex-wrap:wrap;gap:6px}
+.tb button{border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:6px 11px;font-size:13px}
+/* Schrittleiste */
+.steps{display:flex;gap:4px;padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--line);overflow-x:auto}
+.steps button{flex:0 0 auto;border:0;background:none;padding:4px 2px;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;color:var(--muted);min-width:46px}
+.steps .dot{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-family:var(--f-mono);font-size:12px;border:1.5px solid var(--line);background:var(--surface2)}
+.steps button.done .dot{background:var(--ok-soft);color:var(--ok);border-color:transparent}
+.steps button.cur{color:var(--fg);font-weight:600}
+.steps button.cur .dot{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+.foot{display:flex;gap:10px;padding:12px 16px;background:var(--surface);border-top:1px solid var(--line)}
+.foot .btn{padding:13px}
+/* Zeiten */
+.clock{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.clock button{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:14px 10px;text-align:left;display:flex;flex-direction:column;gap:2px}
+.clock button b{font-size:15px}
+.clock button span{font-size:12px;color:var(--muted)}
+.clock button.on{border-color:var(--accent);background:var(--accent-soft)}
+.clock button.on span{color:var(--accent);font-family:var(--f-mono)}
+table.t{width:100%;border-collapse:collapse;font-size:14px}
+table.t td,table.t th{padding:8px 4px;border-bottom:1px solid var(--line);text-align:left}
+table.t th{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+table.t td.r,table.t th.r{text-align:right}
+.sum{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.sum div{background:var(--surface2);border-radius:10px;padding:8px 10px}
+.sum b{display:block;font-family:var(--f-mono);font-size:18px}
+.sum span{font-size:11px;color:var(--muted)}
+/* Messung */
+.result{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px;border-radius:10px;background:var(--surface2)}
+.result b{font-family:var(--f-mono);font-size:22px}
+.result.ok{background:var(--ok-soft);color:var(--ok)}
+.result.wa{background:var(--warn-soft);color:var(--warn)}
+.result.cr{background:var(--crit-soft);color:var(--crit)}
+.result small{display:block;font-size:12px;opacity:.9}
+.hint{font-size:13px;color:var(--muted);margin:0}
+.alert{border-radius:10px;padding:10px 12px;font-size:14px;background:var(--crit-soft);color:var(--crit)}
+.alert.wa{background:var(--warn-soft);color:var(--warn)}
+/* Unterschrift */
+.sig{position:relative;background:var(--surface2);border:1px dashed var(--line);border-radius:12px;height:130px;touch-action:none}
+.sig canvas{width:100%;height:100%;display:block;border-radius:12px}
+.sig .ph{position:absolute;inset:auto 12px 10px;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:4px;pointer-events:none}
+.sig .clr{position:absolute;top:6px;right:6px;border:0;background:var(--surface);border-radius:8px;font-size:12px;padding:4px 8px;color:var(--muted)}
+/* Scanner */
+.scan{background:#0b0b0c;border-radius:16px;aspect-ratio:1/1;max-width:100%;position:relative;display:grid;place-items:center;overflow:hidden}
+.scan .frame{width:62%;aspect-ratio:1/1;border-radius:14px;position:relative}
+.scan .frame::before,.scan .frame::after{content:"";position:absolute;inset:0;border:3px solid #ff7a24;border-radius:14px;clip-path:polygon(0 0,28% 0,28% 6%,6% 6%,6% 28%,0 28%,0 72%,6% 72%,6% 94%,28% 94%,28% 100%,72% 100%,72% 94%,94% 94%,94% 72%,100% 72%,100% 28%,94% 28%,94% 6%,72% 6%,72% 0,100% 0,100% 100%,0 100%)}
+.scan .laser{position:absolute;left:19%;right:19%;height:2px;background:#ff7a24;box-shadow:0 0 12px #ff7a24;top:30%;animation:sweep 2.2s ease-in-out infinite alternate}
+@keyframes sweep{to{top:70%}}
+@media (prefers-reduced-motion:reduce){.scan .laser{animation:none;top:50%}}
+/* Betrieb: ganzer Bildschirm statt Telefon-Rahmen */
+html,body{margin:0}
+body{padding:0}
+.wrap{display:block}
+.phone,.phone.desk{max-width:none!important;height:100vh!important;height:100dvh!important;min-height:0!important;border:0!important;border-radius:0!important;box-shadow:none!important}
+.scan video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.scan{overflow:hidden}
+.lade{display:grid;place-items:center;height:100%;color:var(--muted);padding:24px;text-align:center}
+.alsbar{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--muted)}
+.alsbar select{flex:1;padding:6px 8px;border-radius:8px;border:1px solid var(--line);background:var(--surface)}
+.fotos{display:flex;gap:6px;flex-wrap:wrap}.fotos img{width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--line)}
+.scan p{position:absolute;bottom:12px;left:0;right:0;text-align:center;color:#c9c6bf;font-size:13px;margin:0}
+.sticker{display:flex;gap:12px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;text-align:left;width:100%}
+.sticker .qr{width:44px;height:44px;flex:0 0 44px;border-radius:6px;background:var(--fg);-webkit-mask:var(--qr) center/cover;mask:var(--qr) center/cover}
+.sticker b{display:block;font-family:var(--f-mono);font-size:14px}
+.sticker span{font-size:13px;color:var(--muted)}
+/* Anlage */
+.hero{background:var(--frame);color:#f3f1ec;padding:4px 16px 18px;display:flex;flex-direction:column;gap:6px}
+.hero .nv{font-family:var(--f-mono);color:#ff7a24;font-size:13px}
+.hero h2{font-family:var(--f-display);font-size:26px;margin:0;line-height:1.05;font-weight:700;text-wrap:balance}
+.hero p{margin:0;color:#b9b6ae;font-size:14px}
+.hist{display:flex;flex-direction:column;gap:0}
+.hist div{display:grid;grid-template-columns:86px 1fr;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:14px}
+.hist div:last-child{border-bottom:0}
+.hist time{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.hist b{font-weight:600}
+/* Ergebnis */
+.sync{display:flex;flex-direction:column;gap:0;border-left:2px solid var(--line);margin-left:10px}
+.sync div{position:relative;padding:0 0 14px 20px;font-size:14px}
+.sync div::before{content:"";position:absolute;left:-7px;top:3px;width:12px;height:12px;border-radius:50%;background:var(--surface2);border:2px solid var(--line)}
+.sync div.ok::before{background:var(--ok);border-color:var(--ok)}
+.sync div.wait::before{background:var(--warn);border-color:var(--warn)}
+.sync small{display:block;color:var(--muted);font-size:12px;font-family:var(--f-mono);overflow-wrap:anywhere}
+.big{font-family:var(--f-display);font-size:34px;font-weight:700;margin:0;line-height:1}
+.toast{position:absolute;left:16px;right:16px;bottom:84px;background:var(--fg);color:var(--bg);border-radius:10px;padding:11px 14px;font-size:14px;z-index:5}
+.empty{text-align:center;color:var(--muted);font-size:14px;padding:24px 8px}
+.demo{font-size:11px;color:var(--muted);text-align:center}
+/* ---- PC-Ansicht ---- */
+.note.desk{max-width:1320px}
+.seg.vt{padding:2px;border-radius:99px}
+.seg.vt button{padding:3px 10px;font-size:12px;border-radius:99px}
+.phone.desk{max-width:1320px;height:calc(100vh - 64px);min-height:620px;border-radius:20px;display:grid;grid-template-columns:232px minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto;grid-template-areas:"nav top" "nav main" "nav foot"}
+.phone.desk #top{grid-area:top;padding:16px 28px}
+.phone.desk #main{grid-area:main}
+.phone.desk #foot{grid-area:foot}
+.phone.desk #tabs{grid-area:nav;display:flex;flex-direction:column;gap:4px;padding:76px 14px 14px;border-top:0;border-right:1px solid var(--line);position:relative}
+.phone.desk #tabs::after{content:"";position:absolute;top:26px;left:26px;width:14px;height:21px;background:var(--surface);mix-blend-mode:normal;display:none}
+.phone.desk .tabs button{flex-direction:row;justify-content:flex-start;gap:10px;font-size:15px;padding:10px 12px;border-radius:12px}
+.phone.desk .tabs button svg{width:22px;height:22px;padding:0;border-radius:0}
+.phone.desk .tabs button[aria-current="page"]{background:var(--accent-soft)}
+.phone.desk .tabs button[aria-current="page"] svg{background:none}
+.phone.desk .badge{position:static;margin-left:auto}
+.phone.desk .top .brand{display:none}
+.phone.desk .top h1{font-size:20px}
+.phone.desk .pad{padding:24px 28px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start;max-width:1100px}
+.phone.desk .pad>:not(.panel):not(.jobrow):not(.sticker){grid-column:1/-1}
+.phone.desk .pad>.panel:only-of-type{grid-column:1/-1}
+.phone.desk .hero{padding:8px 28px 22px}
+.phone.desk .hero h2{font-size:28px}
+.phone.desk .steps{padding:12px 28px;gap:10px}
+.phone.desk .steps button{flex-direction:row;font-size:14px;gap:8px;padding:6px 10px;border-radius:99px}
+.phone.desk .steps button.cur{background:var(--accent-soft)}
+.phone.desk .deskwrap{display:grid;grid-template-columns:minmax(0,1fr) 340px;align-items:start}
+.phone.desk .deskwrap .pad{grid-template-columns:minmax(0,1fr);max-width:none}
+.phone.desk .aside{padding:24px 28px 24px 0;display:flex;flex-direction:column;gap:12px;position:sticky;top:0}
+.phone.desk .aside .panel{box-shadow:none;background:var(--surface2)}
+.phone.desk .foot{justify-content:flex-end;padding:14px 28px}
+.phone.desk .foot .btn{width:auto;min-width:200px;flex:0 0 auto!important}
+.phone.desk .greet h2{font-size:30px}
+.phone.desk .sig{height:170px;max-width:520px}
+
+.phone.desk .toast{left:auto;right:28px;bottom:84px;max-width:420px}
+.phone.desk .net{margin-left:auto}
+@media (max-width:1100px){.phone.desk .deskwrap{grid-template-columns:minmax(0,1fr)}.phone.desk .aside{padding:0 28px 24px;position:static}}
+
+/* ---- Heller, freundlicher Stil ---- */
+.mono{font-variant-numeric:tabular-nums;letter-spacing:0}
+.phone{border:0;box-shadow:0 30px 70px -40px rgba(31,38,51,.45)}
+.top{background:var(--frame);color:var(--fg);border-bottom:1px solid var(--line);padding:14px 16px}
+.top .back{color:var(--fg);background:var(--surface2);border-radius:10px;width:36px;height:36px;margin-left:0;font-size:24px;padding:0}
+.brand{font-weight:800;font-size:21px;letter-spacing:-.01em}
+.brand b{color:var(--accent)}
+.top h1{font-weight:700;font-size:18px;letter-spacing:-.01em}
+.net{background:var(--surface2);color:var(--muted);font-weight:600}
+.net i{background:var(--ok)}.net.off i{background:var(--warn)}
+.ico{color:var(--fg);background:var(--surface2);border-radius:10px;width:36px;height:36px;padding:0}
+.ico svg{width:20px;height:20px}
+.eyebrow{font-family:var(--f-body);font-size:14px;letter-spacing:0;text-transform:none;font-weight:700;color:var(--fg);margin-top:4px}
+.greet h2{font-size:26px;font-weight:800;letter-spacing:-.02em;line-height:1.15}
+.greet.hi{display:flex;align-items:center;gap:12px}
+.greet .av{width:46px;height:46px;flex:0 0 46px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font-weight:800;font-size:16px}
+h3.sub{font-size:17px;font-weight:700;letter-spacing:-.01em}
+.day h2{font-weight:800}
+.job,.panel,.maplink,.sticker,.btn.sec,.clock button,.stamp button,.check{border-color:transparent;box-shadow:var(--shadow)}
+.job,.panel,.maplink{border-radius:18px}
+.job h3{font-size:16px;font-weight:700}
+.job .t{font-weight:700;font-size:15px;color:var(--accent)}
+.panel h4{font-family:var(--f-body);text-transform:none;letter-spacing:-.01em;font-size:16px;font-weight:700}
+.chip{border:0;border-radius:99px;padding:3px 10px;background:var(--surface2)}
+.btn{border-radius:14px;font-weight:700}
+.btn.ghost{box-shadow:none}
+input[type=text],input[type=number],input[type=date],input[type=time],select,textarea{background:var(--surface2);border-color:transparent;border-radius:12px}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);background:var(--surface)}
+.seg{border:0;border-radius:12px;background:var(--surface2)}
+.seg button[aria-pressed="true"]{box-shadow:var(--shadow);color:var(--accent)}
+.check{background:var(--surface)}
+.tabs{border-top:1px solid var(--line)}
+.tabs button[aria-current="page"]{color:var(--accent);font-weight:700}
+.tabs button[aria-current="page"]::before{display:none}
+.tabs button svg{padding:3px 14px;width:52px;height:30px;border-radius:99px;box-sizing:border-box}
+.tabs button[aria-current="page"] svg{background:var(--accent-soft)}
+.steps{border-bottom:1px solid var(--line)}
+.steps .dot{border:0;background:var(--surface2);font-weight:700}
+.hero{background:var(--surface);color:var(--fg);border-bottom:1px solid var(--line);padding:6px 16px 18px}
+.hero .nv{color:var(--accent);font-weight:700}
+.hero h2{font-weight:800;font-size:24px;letter-spacing:-.02em}
+.hero p{color:var(--muted)}
+.result b{font-weight:800}
+.sum div{background:var(--surface2)}
+.sum b{font-weight:800}
+.big{font-weight:800;letter-spacing:-.02em}
+.search{border-radius:16px;box-shadow:var(--shadow)}
+.search b{color:var(--accent);font-weight:800}
+.search input{font-weight:700;letter-spacing:.04em}
+.mapimg{background:linear-gradient(35deg,transparent 46%,var(--surface) 46%,var(--surface) 54%,transparent 54%),linear-gradient(-60deg,transparent 47%,var(--surface) 47%,var(--surface) 53%,transparent 53%),#dcefe2}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .mapimg{background-color:#1f3a2a}}
+.cal button.sel{background:var(--accent);color:var(--accent-ink)}
+.cal button.sel .dots i{background:var(--accent-ink)}
+.zrow{cursor:pointer}
+.zrow:hover td{background:var(--surface2)}
+.calhead button:disabled{opacity:.3}
+.toast{border-radius:14px;box-shadow:var(--shadow)}
+.push{position:absolute;left:10px;right:10px;top:calc(10px + env(safe-area-inset-top,0px));z-index:9;display:flex;background:color-mix(in srgb,var(--surface) 92%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-radius:18px;box-shadow:0 12px 34px -10px rgba(0,0,0,.35);animation:pin .35s ease-out}
+@keyframes pin{from{transform:translateY(-120%);opacity:0}}
+@media (prefers-reduced-motion:reduce){.push{animation:none}}
+.push-b{flex:1;border:0;background:none;text-align:left;padding:12px 6px 12px 14px;display:flex;flex-direction:column;gap:2px;color:var(--fg)}
+.push-b b{font-size:15px}.push-b .pt{font-size:13px;line-height:1.35;color:var(--fg)}
+.pp-h{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.pp-h span{margin-left:auto;text-transform:none}
+.pp-h i{width:18px;height:18px;border-radius:5px;background:#1f2633;color:#e9660f;font-style:normal;font-weight:800;font-size:11px;display:grid;place-items:center}
+.push-x{border:0;background:none;color:var(--muted);padding:10px 12px;font-size:14px;align-self:flex-start}
+.wart{display:grid;grid-template-columns:30px 1fr auto;gap:10px;align-items:start;background:var(--warn-soft);color:var(--fg);border-radius:16px;padding:12px}
+.wart .wi{width:30px;height:30px;border-radius:50%;background:var(--warn);color:#fff;display:grid;place-items:center;font-weight:800}
+.wart b{display:block;font-size:15px}.wart small{display:block;font-size:13px;color:var(--muted);margin-top:2px}
+.wart .wx{border:0;background:none;color:var(--muted);font-size:14px;padding:4px}
+.phone.desk .pad>.wart{grid-column:1/-1}
+.poolcard{border:0;background:var(--surface);border-radius:18px;box-shadow:var(--shadow);padding:14px;display:flex;flex-direction:column;gap:8px;text-align:left;width:100%}
+.pc-t{display:flex;flex-direction:column}.pc-t b{font-size:16px}.pc-t span{font-size:13px;color:var(--muted)}
+.pc-bar{height:6px;border-radius:6px;background:var(--surface2);overflow:hidden}.pc-bar i{display:block;height:100%;background:var(--ok)}
+.poolcard .chips{margin-top:0}
+.poolitem .pi-h{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.poolitem .pi-h>span:first-child{display:flex;flex-direction:column;min-width:0}
+.poolitem .chip{white-space:nowrap}
+.phone.desk .pad>.poolcard{grid-column:1/-1}
+.mwrap{overflow-x:auto;margin:0 -14px;padding:0 14px;-webkit-overflow-scrolling:touch}
+table.mt{border-collapse:separate;border-spacing:0;font-size:13px;font-variant-numeric:tabular-nums}
+table.mt th{position:relative;vertical-align:bottom;text-align:center;padding:0 3px 6px;font-weight:600;color:var(--muted);min-width:72px;line-height:1.15}
+table.mt th .mh{display:block;font-size:12px;color:var(--fg);max-width:74px;margin:0 auto;hyphens:manual;overflow-wrap:anywhere}
+table.mt th .mu{display:block;font-size:11px;font-weight:500}
+table.mt td{padding:2px}
+table.mt .mrow{position:sticky;left:0;background:var(--surface);z-index:1;min-width:38px;text-align:center;font-weight:700;color:var(--muted)}
+table.mt td.mrow{display:flex;align-items:center;gap:2px;height:44px;justify-content:center}
+input.mi[type=text]{width:72px;padding:9px 6px;text-align:right;font-size:15px;border-radius:9px}
+.mcalc{display:block;width:72px;padding:9px 6px;text-align:right;font-weight:700;color:var(--accent);background:var(--accent-soft);border-radius:9px;min-height:39px}
+.mx{border:0;background:none;color:var(--muted);font-size:15px;line-height:1;padding:2px 4px;border-radius:6px;cursor:pointer}
+table.mt th .mx{position:absolute;top:-4px;right:0;opacity:.55}
+.mx:hover{background:var(--crit-soft);color:var(--crit);opacity:1}
+table.mt td.mrow .mx{opacity:.5}
+.mtools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.mtools .chip{cursor:pointer;font-size:13px;padding:6px 12px;background:var(--accent-soft);color:var(--accent)}
+.mtools .chip:disabled{opacity:.4;cursor:not-allowed}
+.mtools .hint{margin-left:auto}
+.ubs{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px}
+.ubs .check{box-shadow:none;background:var(--surface2);font-size:14px}
+.phone.desk .mpanel{grid-column:1/-1}
+.mtyp{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.mtyp .chip{font-size:13px;padding:5px 12px}
+.doc{display:grid;grid-template-columns:40px minmax(0,1fr) 16px;gap:12px;align-items:center;width:100%;text-align:left;background:none;border:0;padding:8px 0;border-bottom:1px solid var(--line)}
+.doc:last-child{border-bottom:0}
+.pad>.doc{background:var(--surface);border-radius:16px;padding:12px;border:0;box-shadow:var(--shadow)}
+.di{width:40px;height:40px;border-radius:12px;display:grid;place-items:center}
+.di svg{width:22px;height:22px}
+.di.ordner{background:var(--accent-soft);color:var(--accent)}
+.di.pdf{background:var(--crit-soft);color:var(--crit)}
+.dt{display:flex;flex-direction:column;min-width:0}
+.dt b{font-weight:600;font-size:15px;overflow-wrap:anywhere}
+.dt span{font-size:13px;color:var(--muted);overflow-wrap:anywhere}
+.dg{color:var(--muted);font-size:20px}
+.tabs button span{white-space:nowrap}
+.search input[type=text]{background:none;border:0;padding-left:0;box-shadow:none}
+.ico.icotxt{width:auto;padding:0 12px;font-size:14px;white-space:nowrap}
+label.f.req>span.unit::after{content:none}
+.navbrand{display:none}
+.phone.desk .navbrand{display:flex;align-items:center;justify-content:space-between;position:absolute;top:18px;left:26px;right:14px;font-weight:800;font-size:21px;letter-spacing:-.01em}
+.phone.desk .navbrand b{color:var(--accent)}
+.phone.desk #top.empty{display:none}
+.phone.desk .top .hlupe{display:none}
+.phone.desk .tabs .navbrand .ico{margin:0;width:38px;min-width:38px;height:38px;padding:0;display:flex;align-items:center;justify-content:center;flex:0 0 38px;border-radius:10px;background:var(--surface2);color:var(--fg);gap:0}
+.phone.desk .tabs .navbrand .ico:hover{background:var(--accent-soft);color:var(--accent)}
+.phone.desk .tabs .navbrand .ico svg{width:20px;height:20px;padding:0}
+.top .brand+.hlupe,.top .brand+.ico{margin-left:auto}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="phone" id="phone">
+    <header class="top" id="top"></header>
+    <main class="main" id="main"></main>
+    <div id="foot"></div>
+    <nav class="tabs" id="tabs" aria-label="Hauptmenü"></nav>
+  </div>
+</div>
+
+<script src="/js/nf.js"></script>
+<script>
+(function(){
+"use strict";
+/* ---------- Daten aus N-Flow ---------- */
+let TECH={id:"",nr:"",name:""},ANLAGEN={},JOBS=[],KATALOG=[],POOL=[],PLAN=[],RECHTE={},AUFTRAEGE=[];
+const BAUSTEINE={
+ diagnose:["Anlage im Rahmen der Wartung geprüft","Ionisationsstrom zu gering","Kondensatablauf verstopft","Zündelektrode verschlissen","Wassermangel, Anlagendruck zu niedrig"],
+ arbeiten:["Brenner und Wärmetauscher gereinigt","Elektroden geprüft und eingestellt","Siphon gereinigt und befüllt","Dichtheitsprüfung Gasarmatur durchgeführt","Verbrennung gemessen und eingestellt","Fehlerspeicher ausgelesen und gelöscht","Wartungsanzeige zurückgesetzt"]
+};
+/* qA-Grenzwerte 1. BImSchV §10: 4–25 kW 11 %, >25–50 kW 10 %, >50 kW 9 % */
+function qaLimit(kw){return kw<=25?11:kw<=50?10:9}
+/* Brennstoffkennwerte 1. BImSchV Anlage 2: Erdgas A2 0,66 / B 0,009 · Heizöl EL A2 0,68 / B 0,007 · Flüssiggas A2 0,63 / B 0,008 */
+function qaK(a){return a.energie==="Öl"?[0.68,0.007]:/Flüssig/.test(a.gas||"")?[0.63,0.008]:[0.66,0.009]}
+function iso(d){const x=new Date(d);x.setMinutes(x.getMinutes()-x.getTimezoneOffset());return x.toISOString().slice(0,10)}
+function fmt(d){return new Date(typeof d==="string"&&d.length===10?d+"T12:00":d).toLocaleDateString("de-DE")}
+function addWd(d,k){const x=new Date(d);while(k>0){x.setDate(x.getDate()+1);if(x.getDay()%6)k--}return x}
+function addDays(n){const d=new Date();d.setDate(d.getDate()+n);return iso(d)}
+function naechsterWerktag(n){const d=new Date();d.setDate(d.getDate()+n);while(!(d.getDay()%6))d.setDate(d.getDate()+1);return iso(d)}
+function addMon(s,k){const d=new Date(s+"T12:00");d.setMonth(d.getMonth()+k);return iso(d)}
+const r2=x=>Math.round(x*100)/100;
+const INTERN={nv:"INTERN",hersteller:"Interne Tätigkeit",typ:"",sernr:"–",baujahr:"",kw:0,gas:"",energie:"–",druck:"",ans:"",kunde:{nr:"",name1:"NOVIS intern",name2:"",str:"Bornweg 34a",plz:"63599",ort:"Biebergemünd",tel:"",mail:""},ansprech:"–",zugang:"–",vertrag:"intern",hist:[],maengel:[]};
+const qOf=nv=>{const a=NF.get("anlagen",nv);return nv==="INTERN"?"INTERN":a?(a.qr||a.nv):null};
+function lastDone(a){let m=a.letzte||"";NF.liste("auftraege").forEach(o=>{if(o.nv===a.nv&&o.art==="Wartung"&&o.status==="erledigt"&&o.date>m)m=o.date});NF.liste("berichte").forEach(b=>{if(b.nv===a.nv&&b.art==="Wartung"&&b.datum>m)m=b.datum});return m||iso(new Date())}
+function aufbauen(){
+ const ich=NF.ich.benutzer,als=S.alsTech&&RECHTE.planung?(NF.team||[]).find(t=>t.id===S.alsTech):null;
+ TECH=als?{id:als.id,nr:als.kuerzel,name:als.name}:{id:ich.id,nr:ich.kuerzel,name:ich.name};
+ const T=iso(new Date()),ber=NF.liste("berichte");
+ ANLAGEN={INTERN};
+ for(const a of NF.liste("anlagen")){const k=NF.get("kunden",a.knr)||{},key=a.qr||a.nv;
+  const ger=String(a.ger||"").split(" ");
+  ANLAGEN[key]={nv:a.nv,qr:a.qr,hersteller:a.hersteller||ger[0]||"",typ:a.typ||ger.slice(1).join(" "),sernr:a.sernr||"–",baujahr:a.baujahr||"",kw:+a.kw||0,gas:a.gas||(a.en==="Öl"?"Heizöl EL":"Erdgas H"),energie:a.en||"Gas",medium:"Heizungswasser",druck:a.druck||"–",ans:a.ans||"–",
+   kunde:{nr:a.knr||"",name1:k.name1||"–",name2:k.name2||a.obj||"",str:a.str||k.str||"",plz:a.plz||k.plz||"",ort:a.ort||k.ort||"",tel:k.tel||"",mail:k.mail||""},
+   ansprech:a.ansprech||"–",zugang:a.zugang||"–",vertrag:a.vertrag?`Wartungsvertrag ${a.vertrag} · ${+a.zyk===24?"alle 2 Jahre":"jährlich"}`:"Einzelauftrag",
+   hist:ber.filter(b=>b.nv===a.nv).sort((x,y)=>String(y.datum).localeCompare(String(x.datum))).slice(0,10).map(b=>[fmt(b.datum),b.art,[b.zustand,b.qa!=null?"qA "+String(b.qa).replace(".",",")+" %":""].filter(Boolean).join(", ")||b.sb]),
+   maengel:a.maengel||[],details:a.details||null,schema:a.schema||"",_a:a}}
+ AUFTRAEGE=NF.liste("auftraege");
+ JOBS=AUFTRAEGE.filter(o=>o.tech===TECH.id&&o.date===T&&(o.status==="geplant"||o.status==="erledigt")&&ANLAGEN[qOf(o.nv)])
+  .sort((a,b)=>String(a.time).localeCompare(String(b.time)))
+  .map(o=>({id:o.id,q:qOf(o.nv),zeit:o.time||"–",dauer:(o.dauer!=null?String(o.dauer).replace(".",","):"–")+" h",art:o.art,grund:o.leistung&&o.art!=="Wartung"?o.leistung:o.grund,prio:o.prio==="hoch"||o.art==="Störung"?"cr":"",status:o.status}));
+ PLAN=AUFTRAEGE.filter(o=>o.tech===TECH.id&&o.date>T&&o.status==="geplant"&&ANLAGEN[qOf(o.nv)]).sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time)).map(o=>({iso:o.date,zeit:o.time||"",q:qOf(o.nv),art:o.art}));
+ POOL=NF.liste("anlagen").filter(a=>a.vertrag&&a.betreuer===TECH.id).map(a=>{const k=NF.get("kunden",a.knr)||{},ld=lastDone(a),kw=+a.kw||0;
+  const offen=AUFTRAEGE.find(o=>o.nv===a.nv&&o.art==="Wartung"&&o.status==="geplant");
+  const fix=offen&&!String(offen.quelle||"").startsWith("Wartungspool")?{date:offen.date,time:offen.time}:null;
+  return{nv:a.nv,kunde:k.name1||"–",ort:a.ort||k.ort||"",str:a.str||k.str||"",tel:k.tel||"",ger:[a.hersteller,a.typ].filter(Boolean).join(" ")||a.ger||"",en:a.en||"Gas",dauer:kw>100?3.5:kw>40?2.5:1.5,
+   due:addMon(ld,+a.zyk||12),fix,done:ld>=addDays(-60)&&(AUFTRAEGE.some(o=>o.nv===a.nv&&o.art==="Wartung"&&o.status==="erledigt"&&o.date===ld)||ber.some(b=>b.nv===a.nv&&b.art==="Wartung"&&b.datum===ld))?ld:null,
+   _plan:offen&&String(offen.quelle||"").startsWith("Wartungspool")?{date:offen.date,time:offen.time,id:offen.id}:null}});
+ KATALOG=NF.liste("artikel").filter(m=>m.nr).sort((a,b)=>String(a.nr).localeCompare(String(b.nr))).map(m=>[m.nr,m.bez,m.her||""]);
+}
+function poolPlan(p){return p.fix||p._plan||null}
+/* Abgeleitete Listen: sehen für die Oberfläche aus wie im Prototyp */
+function meineBerichte(){return NF.liste("berichte").filter(b=>b.tech===TECH.id).sort((a,b)=>String(b.sb).localeCompare(String(a.sb))).map(b=>{const q=qOf(b.nv),a=ANLAGEN[q]||INTERN;
+ return{sb:b.sb,job:b.id,q,kunde:a.kunde.name1,nv:b.nv,art:b.art,zeit:fmt(b.datum),datum:b.datum,status:NF.ausstehend("berichte",b.sb)?"queued":"sent",zustand:b.zustand,qa:b.qa,folge:b.folge}})}
+const KEY="nflow-app-ui";
+function blank(){return{tab:"heute",view:"heute",cur:null,reports:{},ichTab:"zeit",abwArt:"urlaub",calM:null,calSel:null}}
+let S=blank();
+function getter(){Object.defineProperties(S,{
+ online:{get:()=>NF.online,configurable:true},
+ queue:{get:()=>meineBerichte().filter(e=>e.status==="queued"),configurable:true},
+ done:{get:()=>{const T=iso(new Date());return meineBerichte().filter(e=>e.status==="sent"&&e.datum>=addDays(-14))},configurable:true},
+ urlaub:{get:()=>NF.liste("abwesenheiten").filter(x=>x.tech===TECH.id&&x.art==="Urlaub").sort((a,b)=>String(a.von).localeCompare(String(b.von))).map(x=>({von:fmt(x.von),bis:fmt(x.bis),vonIso:x.von,bisIso:x.bis,tage:+x.tage||1,status:x.status})),configurable:true},
+ blocks:{get:()=>NF.liste("abwesenheiten").filter(x=>x.tech===TECH.id&&x.art==="Block").sort((a,b)=>String(b.von).localeCompare(String(a.von))).map(x=>{const[v,b]=String(x.zeit||"–").split("–");return{iso:x.von,datum:fmt(x.von),von:v,bis:b,grund:x.grund||"",status:x.status}}),configurable:true},
+ belege:{get:()=>NF.eintraege("belege").map(e=>e.daten).filter(x=>x.tech===TECH.id).sort((a,b)=>String(b.datum).localeCompare(String(a.datum))).map(x=>({kat:x.kat,betrag:Number(x.betrag).toLocaleString("de-DE",{minimumFractionDigits:2,maximumFractionDigits:2}),datum:fmt(x.datum),info:x.info,foto:x.foto?"/api/dateien/"+x.foto:"",status:NF.ausstehend("belege",x.id)||(x.foto&&NF.outbox.some(o=>o.id===x.foto))?"queued":"sent"})),configurable:true},
+ arbeit:{get:()=>{const m={};NF.liste("zeiten").forEach(z=>{if(z.tech===TECH.id)m[z.datum]=z});return m},configurable:true},
+ kontakte:{get:()=>NF.eintraege("kontakte").map(e=>Object.assign({_id:e.id},e.daten)),configurable:true},
+ folgen:{get:()=>AUFTRAEGE.filter(o=>o.art==="Folgeauftrag"&&o.status!=="erledigt").map(o=>({id:o.id,job:o.folge_von,q:qOf(o.nv),text:o.grund,dring:o.dring||"",angebot:!!o.angebot,dauer:o.dauer,mat:o.mat||[],foto:(o.fotos||[]).length})),configurable:true},
+ uw:{get:()=>NF.liste("bestaetigungen").filter(x=>x.tech===TECH.id).map(x=>x.uw),configurable:true},
+ wartAktiv:{get:()=>{const w=(NF.get("einstellungen","allgemein")||{}).wartung;return!!(w&&w.aktiv&&w.datum===iso(new Date()))},configurable:true},
+ wartX:{get:()=>S.wartXDatum===iso(new Date()),configurable:true}})}
+getter();
+const GETTER=["online","queue","done","urlaub","blocks","belege","arbeit","kontakte","folgen","uw","wartAktiv","wartX"];
+function uiLaden(){try{const x=JSON.parse(localStorage.getItem(KEY+":"+NF.ich.benutzer.id))||{};for(const k of Object.keys(x))if(!GETTER.includes(k))S[k]=x[k]}catch(e){}}
+function save(){if(!NF.ich)return;try{localStorage.setItem(KEY+":"+NF.ich.benutzer.id,JSON.stringify(S))}catch(e){toast("Speicher auf dem Handy ist voll")}}
+function applyNeu(){}
+function nr(kreis){const x=NF.nummer(kreis);if(!x)toast("Keine freie Nummer auf dem Handy. Bitte einmal kurz mit Netz öffnen.");return x}
+function neueId(){return crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random().toString(36).slice(2)}
+const $=s=>document.querySelector(s);
+const main=$("#main"),top=$("#top"),tabs=$("#tabs"),foot=$("#foot");
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const today=()=>new Date().toLocaleDateString("de-DE",{weekday:"long",day:"2-digit",month:"2-digit",year:"numeric"});
+const nowT=()=>new Date().toTimeString().slice(0,5);
+const isoD=()=>new Date().toISOString().slice(0,10);
+const n=v=>{const x=parseFloat(String(v).replace(",","."));return isFinite(x)?x:null};
+const de=(x,d=1)=>x==null?"–":x.toLocaleString("de-DE",{minimumFractionDigits:d,maximumFractionDigits:d});
+
+let toastT;function toast(t){let el=$(".toast");if(!el){el=document.createElement("div");el.className="toast";el.setAttribute("role","status");$("#phone").appendChild(el)}el.textContent=t;el.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>el.hidden=true,2600)}
+
+/* ---------- Icons ---------- */
+const I={
+ heute:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>',
+ scan:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"/><path d="M7 12h10"/></svg>',
+ berichte:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 3.5h7l4 4V20a.5.5 0 0 1-.5.5h-10A.5.5 0 0 1 7 20z"/><path d="M14 3.5V8h4M9.5 12h6M9.5 15.5h6"/></svg>',
+ intra:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 10.5 12 4l8 6.5V20a.5.5 0 0 1-.5.5h-5v-6h-5v6h-5A.5.5 0 0 1 4 20z"/></svg>',
+ ich:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8.5" r="3.5"/><path d="M5 20c1.2-3.6 4-5 7-5s5.8 1.4 7 5"/></svg>'
+};
+I.lupe='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 5 5"/></svg>';
+function gruss(){const h=new Date().getHours();return h<11?"Guten Morgen":h<17?"Guten Tag":"Guten Abend"}
+I.suche=I.lupe;
+const QR="url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 7 7'%3E%3Cpath d='M0 0h3v3H0zM4 0h3v3H4zM0 4h3v3H0zM4 4h1v1H4zM6 4h1v1H6zM5 5h1v1H5zM4 6h1v1H4zM6 6h1v1H6z'/%3E%3C/svg%3E\")";
+document.documentElement.style.setProperty("--qr",QR);
+
+/* ---------- Rahmen ---------- */
+function isDesk(){return S.vt?S.vt==="pc":window.innerWidth>=1000}
+function applyDesk(){const dk=isDesk();$("#phone").classList.toggle("desk",dk);
+ document.querySelectorAll("[data-vt]").forEach(b=>b.setAttribute("aria-pressed",String((b.dataset.vt==="pc")===dk)))}
+function renderTabs(){
+ const q=S.queue.length,dk=isDesk();
+ tabs.innerHTML=`<div class="navbrand"><span><b>N</b>-FLOW</span><button type="button" class="ico" data-go="suche" aria-label="Anlage suchen">${I.lupe}</button></div>`+[["heute","Heute"],...(dk?[]:[["scan","Scannen"]]),["berichte","Berichte"],["intra","Intranet"],["ich","Ich"]].map(([k,l])=>
+  `<button type="button" data-tab="${k}" ${S.tab===k?'aria-current="page"':""}>${I[k]}<span>${l}</span>${k==="berichte"&&q?`<i class="badge">${q}</i>`:""}</button>`).join("");
+ tabs.hidden=S.view==="einsatz"&&!dk;
+}
+function header(title,back,extra){
+ top.classList.toggle("empty",!title&&!back&&!extra&&S.online);
+ top.innerHTML=(back?`<button class="back" type="button" data-back="${back}" aria-label="Zurück">‹</button>`:`<span class="brand"><b>N</b>-FLOW</span>`)+
+ (title?`<h1>${esc(title)}</h1>`:"")+(extra||"")+
+ (back?"":`<button type="button" class="ico hlupe" data-go="suche" aria-label="Anlage suchen">${I.lupe}</button>`)+
+ (S.online?"":`<span class="net off" title="Kein Netz – alles wird auf dem Handy gespeichert"><i></i>Offline${NF.outbox.length?" · "+NF.outbox.length:""}</span>`);
+}
+function go(view,extra){Object.assign(S,{view},extra||{});save();render();main.scrollTop=0}
+
+/* ---------- Ansichten ---------- */
+function vHeute(){
+ header("");foot.innerHTML="";
+ const st=id=>isDone(id)?"done":(S.reports[id]?"run":"open");
+ const offen=JOBS.filter(j=>st(j.id)!=="done").length,erledigt=JOBS.length-offen;
+ main.innerHTML=`<div class="pad">
+  <div class="greet hi"><span class="av" aria-hidden="true">${TECH.name.split(" ").map(x=>x[0]).join("")}</span><div><h2>${gruss()}, ${esc(TECH.name.split(" ")[0])}</h2><p>${esc(today())}</p></div></div>
+  ${wartHint()}
+  <div class="day"><h3 class="sub">Tour heute</h3><span class="chip ${offen?"or":"ok"}">${offen} offen</span></div>
+  ${JOBS.filter(j=>st(j.id)!=="done").map(j=>{const a=ANLAGEN[j.q],s=st(j.id),adr=a.kunde.str+", "+a.kunde.plz+" "+a.kunde.ort;return`
+  <div class="jobrow">
+  <button type="button" class="job" data-job="${j.id}">
+   <div class="t">${j.zeit}<small>${j.dauer}</small></div>
+   <div><h3>${esc(a.kunde.name1)}</h3><p>${esc(a.kunde.str)}, ${esc(a.kunde.plz)} ${esc(a.kunde.ort)}</p>
+    <p>${esc(a.hersteller)} ${esc(a.typ)}</p>
+    <div class="chips"><span class="chip ${j.prio==="cr"?"cr":""}">${j.art}</span>
+    ${s==="run"?'<span class="chip or">In Arbeit</span>':""}</div></div>
+  </button>
+  <a class="maplink" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(adr)}" target="_blank" rel="noopener" aria-label="Route zu ${esc(adr)} in Google Maps öffnen"><span class="mapimg" aria-hidden="true"></span><span>Route</span></a>
+  </div>`}).join("")}
+  ${offen?"":`<p class="empty">Alle Einsätze für heute erledigt. Feierabend in Sicht.</p>`}
+  ${poolCard()}
+  ${erledigt?`<p class="hint" style="text-align:center">${erledigt} Einsatz${erledigt>1?"e":""} heute erledigt · siehe Berichte</p>`:""}
+  ${isDesk()?"":`<button type="button" class="btn sec" data-tab="scan">${I.scan.replace('<svg','<svg width="20" height="20"')} Anlage per QR scannen</button>`}
+ </div>`;
+}
+let scanStream=null,scanLauf=false;
+function scanStopp(){scanLauf=false;if(scanStream){scanStream.getTracks().forEach(t=>t.stop());scanStream=null}}
+function vScan(){
+ header("Aufkleber scannen");foot.innerHTML="";
+ main.innerHTML=`<div class="pad">
+  <div class="scan" aria-label="Kamera"><video id="scanV" playsinline muted></video><div class="frame"></div><div class="laser"></div><p id="scanP">Kamera wird gestartet …</p></div>
+  <p class="hint">QR-Aufkleber in den Rahmen halten. Es geht auch mit der normalen Kamera-App, dann öffnet sich N-Flow direkt.</p>
+  <button type="button" class="btn sec" data-go="suche">Anlage per Nummer suchen</button>
+  <div class="eyebrow" style="margin-top:6px">Inbetriebnahme</div>
+  <button type="button" class="sticker" id="neuScan" style="border-style:dashed"><span class="qr" style="background:var(--accent)"></span><div><b>Anlage ohne Aufkleber anlegen</b><span>Das Büro druckt den Aufkleber nach</span></div></button>
+ </div>`;
+ scanStart();
+}
+async function scanStart(){scanStopp();const v=$("#scanV"),pEl=$("#scanP");if(!v)return;
+ if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){pEl.textContent="Kamera hier nicht verfügbar. Bitte die Kamera-App des Handys nutzen.";return}
+ try{scanStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"},audio:false})}catch(e){pEl.textContent="Kein Zugriff auf die Kamera. Bitte erlauben oder die Kamera-App nutzen.";return}
+ if(S.view!=="scan"){scanStopp();return}
+ v.srcObject=scanStream;await v.play().catch(()=>{});pEl.textContent="QR-Aufkleber in den Rahmen halten";scanLauf=true;
+ let det=null;if("BarcodeDetector" in window){try{det=new BarcodeDetector({formats:["qr_code"]})}catch(e){}}
+ if(!det&&!window.jsQR)await new Promise(ok=>{const s=document.createElement("script");s.src="/vendor/jsQR.js";s.onload=ok;s.onerror=ok;document.head.appendChild(s)});
+ const c=document.createElement("canvas"),ctx=c.getContext("2d",{willReadFrequently:true});
+ const schritt=async()=>{if(!scanLauf||S.view!=="scan")return scanStopp();
+  try{let text=null;
+   if(det){const r=await det.detect(v);if(r[0])text=r[0].rawValue}
+   else if(window.jsQR&&v.videoWidth){const w=Math.min(640,v.videoWidth),h=Math.round(v.videoHeight*w/v.videoWidth);c.width=w;c.height=h;ctx.drawImage(v,0,0,w,h);const r=jsQR(ctx.getImageData(0,0,w,h).data,w,h,{inversionAttempts:"dontInvert"});if(r)text=r.data}
+   if(text){scanStopp();if(navigator.vibrate)navigator.vibrate(60);kennungOeffnen(text);return}}catch(e){}
+  setTimeout(schritt,250)};
+ schritt()}
+function kennungAus(text){const m=String(text).match(/\/a\/([A-Za-z0-9]{6,16})/);if(m)return m[1];return/^[A-Za-z0-9]{6,16}$/.test(text)?text:null}
+function kennungOeffnen(text){const k=kennungAus(text);if(!k){toast("Kein NOVIS-Aufkleber erkannt");return}
+ if(ANLAGEN[k]){toast("Aufkleber erkannt: "+ANLAGEN[k].nv);go("anlage",{q:k,from:"scan"});return}
+ S.neu=neuBlank(k);toast("Neuer Aufkleber · Anlage anlegen");go("neu")}
+async function hochladen(files,fertig){const ids=[];for(const f of[...files]){try{const b=await NF.bildVerkleinern(f);ids.push(await NF.datei(b,f.name))}catch(e){toast("Datei konnte nicht gelesen werden")}}if(ids.length)fertig(ids)}
+async function fotoVorschau(){const box=$("#fotoVorschau"),r=R();if(!box||!r)return;const ids=r.fotos||[];box.innerHTML="";for(const id of ids){const im=document.createElement("img");im.alt="";im.src=await NF.dateiAdresse(id);box.appendChild(im)}}
+function vAnlage(){
+ const a=ANLAGEN[S.q];const job=JOBS.find(j=>j.q===S.q);
+ header("Anlage",S.from||"heute");
+
+ const r=job&&S.reports[job.id];const fertig=job&&isDone(job.id);
+ main.innerHTML=`<div class="hero"><span class="nv">${a.nv} · ${esc(a.vertrag)}</span><h2>${esc(a.hersteller)} ${esc(a.typ)}</h2><p>${esc(a.kunde.name1)}${a.kunde.name2?" · "+esc(a.kunde.name2):""}<br>${esc(a.kunde.str)}, ${esc(a.kunde.plz)} ${esc(a.kunde.ort)}</p></div>
+ <div class="pad">
+  ${a.maengel.map(m=>`<div class="alert wa"><b>Offener Mangel:</b> ${esc(m)}</div>`).join("")}
+  ${(S.folgen||[]).filter(f=>f.q===S.q).map(f=>`<div class="alert wa"><b>Folgeauftrag ${f.id}</b> · ${esc(f.dring)}<br>${esc(f.text)}</div>`).join("")}
+  <div class="panel"><h4>Vor Ort</h4><dl class="kv"><dt>Ansprechpartner</dt><dd>${esc(a.ansprech)}</dd><dt>Zugang</dt><dd>${esc(a.zugang)}</dd><dt>Telefon</dt><dd class="mono">${esc(a.kunde.tel)}</dd></dl></div>
+  <div class="panel"><h4>Anlagendaten</h4><dl class="kv">
+   <dt>Seriennr.</dt><dd class="mono">${esc(a.sernr)}</dd><dt>Baujahr</dt><dd>${a.baujahr}</dd><dt>Nennleistung</dt><dd>${a.kw} kW</dd>
+   ${a.energie==="Öl"?`<dt>Brennstoff</dt><dd>${esc(a.gas)}</dd>`:`<dt>Gasart</dt><dd>${esc(a.gas)}</dd><dt>Anschlussdruck</dt><dd>${a.ans} mbar</dd>`}<dt>Betriebsdruck</dt><dd>${a.druck} bar</dd></dl></div>
+  ${a.details?detailPanels(a.details):""}
+  <div class="panel"><h4>Historie</h4>${a.hist.length?`<div class="hist">${a.hist.map(h=>`<div><time>${h[0]}</time><span><b>${esc(h[1])}</b><br>${esc(h[2])}</span></div>`).join("")}</div>`:'<p class="hint">Noch keine Einsätze dokumentiert. Das ist der erste Besuch.</p>'}</div>
+  <div class="panel"><h4>Dokumente zur Anlage</h4>
+   ${a.schema?docRow("pdf","Anlagenschema","Foto oder PDF aus der Anlagenakte","/api/dateien/"+a.schema):""}
+   ${docRow("ordner","Kundenordner "+a.kunde.nr,"Serviceberichte, Fotos, Angebote","SharePoint › Kunden › "+a.kunde.name1)}
+   ${docRow("pdf","Wartungsanleitung "+a.hersteller+" "+a.typ.split(" ")[0],"Herstellerunterlage","SharePoint › Intranet › Herstellerunterlagen › "+a.hersteller)}
+   ${docRow("pdf","Ersatzteilliste "+a.typ,"Herstellerunterlage","SharePoint › Intranet › Herstellerunterlagen › "+a.hersteller)}
+   ${a.hist.length?docRow("pdf","Letzter Servicebericht · "+a.hist[0][0],a.hist[0][1],"SharePoint › Kunden › "+a.kunde.nr+" › "+a.nv):""}
+   <label class="btn ghost" for="schemaAnl">${a.schema?"Anlagenschema ersetzen":"+ Anlagenschema ablegen"}</label><input id="schemaAnl" type="file" accept="image/*,application/pdf" hidden></div>
+ </div>`;
+ foot.innerHTML=`<div class="foot">${fertig?`<button class="btn sec" type="button" data-tab="berichte">Bericht ansehen</button>`:
+  `<button class="btn sec" type="button" data-go="fehl" style="flex:0 0 38%">Kunde nicht da</button><button class="btn" type="button" id="startE">${r?"Einsatz fortsetzen":"Einsatz starten"}</button>`}</div>`;
+}
+
+/* ---------- Einsatz-Assistent ---------- */
+const STEPS=[["auftrag","Auftrag"],["befund","Befund"],["messung","Messung"],["material","Material"],["fest","Prüfung"],["zeiten","Zeiten"],["abschluss","Abschluss"]];
+function newReport(job){const a=ANLAGEN[job.q];return{
+ job:job.id,q:job.q,step:0,einsatzart:job.art,grund:job.grund,bestell:"",ansprech:a.ansprech.split(" (")[0],
+ zv:"",zb:"",fz:"",km:"",diagnose:"",arbeiten:"",fotos:[],
+ mess:newMess(a),
+ material:[],zustand:"",sbt:"ok",hinweis:"",nachverfolgen:false,merkblatt:false,nichtVorOrt:false,mailKunde:true,sigK:null,sigT:null,sigName:""}}
+function R(){return S.reports[S.cur]}
+function auftragInfo(r,a){const fo=(S.folgen||[]).filter(f=>f.q===r.q);return`
+ <div class="panel"><h4>Anlage ${a.nv}</h4><dl class="kv"><dt>Gerät</dt><dd>${esc(a.hersteller)} ${esc(a.typ)}</dd><dt>Seriennr.</dt><dd>${esc(a.sernr)}</dd><dt>Baujahr</dt><dd>${a.baujahr}</dd><dt>Leistung</dt><dd>${a.kw} kW</dd><dt>Brennstoff</dt><dd>${esc(a.gas)}</dd><dt>Vertrag</dt><dd>${esc(a.vertrag)}</dd></dl></div>
+ ${a.maengel.length||fo.length?`<div class="panel"><h4>Offen an der Anlage</h4>${a.maengel.map(m=>`<div class="alert wa">${esc(m)}</div>`).join("")}${fo.map(f=>`<div class="alert wa"><b>${f.id}</b> · ${esc(f.text)}</div>`).join("")}</div>`:""}
+ <div class="panel"><h4>Historie</h4>${a.hist.length?`<div class="hist">${a.hist.map(h=>`<div><time>${h[0]}</time><span><b>${esc(h[1])}</b><br>${esc(h[2])}</span></div>`).join("")}</div>`:'<p class="hint" style="margin:0">Erster Besuch.</p>'}</div>`}
+function aside(r,a){const job=JOBS.find(j=>j.id===r.job)||{};const fo=(S.folgen||[]).filter(f=>f.q===r.q);return`<aside class="aside">
+ <div class="panel"><h4>${esc(a.kunde.name1)}</h4><dl class="kv"><dt>Anschrift</dt><dd>${esc(a.kunde.str)}, ${a.kunde.plz} ${esc(a.kunde.ort)}</dd><dt>Telefon</dt><dd>${esc(a.kunde.tel)}</dd><dt>Vor Ort</dt><dd>${esc(a.ansprech)}</dd></dl></div>
+ <div class="panel"><h4>${a.nv} · ${esc(a.hersteller)} ${esc(a.typ)}</h4><dl class="kv"><dt>Seriennr.</dt><dd>${esc(a.sernr)}</dd><dt>Baujahr</dt><dd>${a.baujahr}</dd><dt>Leistung</dt><dd>${a.kw} kW</dd><dt>Brennstoff</dt><dd>${esc(a.gas)}</dd><dt>Vertrag</dt><dd>${esc(a.vertrag)}</dd></dl></div>
+ <div class="panel"><h4>Auftrag ${r.job}</h4><p class="hint" style="margin:0">${esc(job.grund||r.grund)}</p></div>
+ ${a.maengel.length||fo.length?`<div class="panel"><h4>Offen an der Anlage</h4>${a.maengel.map(m=>`<p class="hint" style="margin:0">• ${esc(m)}</p>`).join("")}${fo.map(f=>`<p class="hint" style="margin:0">• ${f.id}: ${esc(f.text)}</p>`).join("")}</div>`:""}
+ <div class="panel"><h4>Historie</h4>${a.hist.length?`<div class="hist">${a.hist.map(h=>`<div><time>${h[0]}</time><span><b>${esc(h[1])}</b><br>${esc(h[2])}</span></div>`).join("")}</div>`:'<p class="hint" style="margin:0">Erster Besuch.</p>'}</div>
+</aside>`}
+function isDone(id){const o=AUFTRAEGE.find(x=>x.id===id);return(o&&o.status==="erledigt")||meineBerichte().some(d=>d.job===id)}
+function arbH(r){const a=mins(r.zv),b=mins(r.zb);return a!=null&&b!=null&&b>a?(b-a)/60:0}
+function zsum(r){return`<div><b>${de(arbH(r),2)}</b><span>Arbeitszeit h</span></div><div><b>${n(r.fz)!=null?de(n(r.fz),2):"–"}</b><span>Fahrzeit h</span></div><div><b>${esc(r.km||"–")}</b><span>Fahrt km</span></div>`}
+function stepOk(i){const r=R();switch(STEPS[i][0]){
+ case"auftrag":return!!r.einsatzart;
+ case"zeiten":return arbH(r)>0&&n(r.fz)!=null;
+ case"befund":return r.diagnose.trim().length>3&&r.arbeiten.trim().length>3;
+ case"messung":{const m=mig(r);return m.ver.rows.some(x=>n(x.o2)!=null&&n(x.ta)!=null)}
+ case"material":return true;
+ case"fest":return!!r.zustand;
+ case"abschluss":return(r.nichtVorOrt||(r.papier&&r.papScan)||(r.sigK&&r.sigName.trim()));
+}}
+function vEinsatz(){
+ const r=R(),a=ANLAGEN[r.q],k=STEPS[r.step][0];
+ header(a.nv+" · "+r.einsatzart,"anlage",`<button type="button" class="ico icotxt" data-go="folge" aria-label="Folgeauftrag anlegen">${isDesk()?"+ Folgeauftrag":"+ Folge"}</button>`);
+ const sb=`<div class="steps" role="tablist">${STEPS.map(([id,l],i)=>`<button type="button" data-step="${i}" class="${i===r.step?"cur":stepOk(i)?"done":""}"><span class="dot">${stepOk(i)&&i!==r.step?"✓":i+1}</span>${l}</button>`).join("")}</div>`;
+ main.innerHTML=sb+`<div class="pad" id="stepBody">${STEP[k](r,a)}</div>`;
+ const last=r.step===STEPS.length-1;
+ foot.innerHTML=`<div class="foot">${r.step?`<button class="btn sec" type="button" id="prev" style="flex:0 0 32%">Zurück</button>`:""}
+  ${last?`<button class="btn" type="button" id="finish" ${STEPS.every((_,i)=>stepOk(i))?"":"disabled"}>Bericht abschließen</button>`:`<button class="btn" type="button" id="next">Weiter</button>`}</div>`;
+ if(k==="abschluss")initSig();
+ if(k==="messung")mSum();
+}
+const F=(id,label,val,o={})=>`<label class="f ${o.req?"req":""}"><span>${label}</span>${o.unit?`<span class="unit">`:""}<input id="${id}" type="${o.type||"text"}" ${o.num?'inputmode="decimal" class="num"':""} value="${esc(val)}" data-bind="${o.bind||id}" ${o.ph?`placeholder="${o.ph}"`:""}>${o.unit?`<em>${o.unit}</em></span>`:""}</label>`;
+const STEP={
+ auftrag:(r,a)=>`
+  <div class="panel"><h4>Auftragsdaten</h4>
+   <label class="f req"><span>Einsatzart</span><div class="seg g2" role="group">${["Wartung","Störung","Inbetriebnahme","Reparatur"].map(x=>`<button type="button" data-set="einsatzart" data-val="${x}" aria-pressed="${r.einsatzart===x}">${x}</button>`).join("")}</div></label>
+   <label class="f"><span>Anforderungsgrund</span><textarea id="grund" data-bind="grund" style="min-height:64px">${esc(r.grund)}</textarea></label>
+   <div class="grid2">${F("bestell","Bestell-Nr. Kunde",r.bestell)}${F("ansprech","Ansprechpartner",r.ansprech)}</div>
+  </div>
+  <div class="panel"><h4>Auftraggeber</h4><dl class="kv"><dt>Kunden-Nr.</dt><dd class="mono">${a.kunde.nr}</dd><dt>Name</dt><dd>${esc(a.kunde.name1)}</dd><dt>Anschrift</dt><dd>${esc(a.kunde.str)}, ${a.kunde.plz} ${esc(a.kunde.ort)}</dd><dt>Telefon</dt><dd>${esc(a.kunde.tel)}</dd><dt>Vor Ort</dt><dd>${esc(a.ansprech)}</dd><dt>E-Mail</dt><dd>${esc(a.kunde.mail)}</dd></dl>
+  <p class="hint">Kommt aus dem Auftrag des Innendienstes. Änderungen meldet der Monteur über „Hinweis an Innendienst“.</p></div>
+  ${auftragInfo(r,a)}`,
+ zeiten:(r)=>`
+  <div class="panel"><h4>Arbeitszeit vor Ort</h4>
+   <label class="f req"><span>Leistungsdatum</span><input id="zd" type="date" value="${esc(r.zd||isoD())}" max="${isoD()}" data-bind="zd"></label>
+   <div class="grid2"><label class="f req"><span>von</span><input id="zv" type="time" value="${esc(r.zv)}" data-bind="zv"></label><label class="f req"><span>bis</span><input id="zb" type="time" value="${esc(r.zb)}" data-bind="zb"></label></div></div>
+  <div class="panel"><h4>Fahrzeit</h4>
+   ${F("fz","Fahrzeit gesamt (hin und zurück)",r.fz,{num:1,unit:"h",req:1,ph:"0,5"})}
+   <div class="tb">${["0,25","0,5","0,75","1,0","1,5"].map(x=>`<button type="button" data-fz="${x}">${x} h</button>`).join("")}</div>
+   ${F("km","Fahrtkilometer",r.km,{num:1,unit:"km"})}</div>
+  <div class="panel"><h4>Für den Bericht</h4><div class="sum" id="zsum">${zsum(r)}</div>
+   <p class="hint">Diese Zeiten stehen im Servicebericht und werden vom Kunden mit unterschrieben.</p></div>`,
+ befund:(r)=>`
+  <label class="f req"><span>Diagnose / Ursache</span><textarea id="diagnose" data-bind="diagnose" placeholder="Was wurde festgestellt?">${esc(r.diagnose)}</textarea></label>
+  <div class="tb">${BAUSTEINE.diagnose.map(t=>`<button type="button" data-add="diagnose" data-t="${esc(t)}">+ ${esc(t)}</button>`).join("")}</div>
+  <label class="f req"><span>Durchgeführte Arbeiten</span><textarea id="arbeiten" data-bind="arbeiten" placeholder="Was wurde gemacht?" style="min-height:130px">${esc(r.arbeiten)}</textarea></label>
+  <div class="tb">${BAUSTEINE.arbeiten.map(t=>`<button type="button" data-add="arbeiten" data-t="${esc(t)}">+ ${esc(t)}</button>`).join("")}</div>
+  <div class="panel"><h4>Fotos</h4><p class="hint">${(r.fotos||[]).length?(r.fotos||[]).length+" Foto(s) angehängt. Sie gehören zum Bericht.":"Typenschild, Befund vorher/nachher."}</p><div class="fotos" id="fotoVorschau"></div>
+   <label class="btn sec" for="foto">Foto aufnehmen oder wählen</label><input id="foto" type="file" accept="image/*" multiple hidden></div>`,
+ messung:(r,a)=>{const m=mig(r),T=MT[m.typ];return`
+  <div class="mtyp"><span class="chip or">Messblatt ${T.label}</span><span class="hint">aus den Anlagendaten: ${esc(a.hersteller)} ${esc(a.typ)} · ${a.energie==="Öl"?"Öl":esc(a.gas)}</span></div>
+  ${mTable(r,a,"ang","Messwerte Anlage angetroffen")}
+  ${mTable(r,a,"ver","Messwerte Anlage verlassen")}
+  <div id="mSum"></div>
+  <div class="panel"><h4>Betriebsdaten</h4><div class="grid2">
+   ${F("b_s","Brennerstarts",m.betr.starts,{num:1,bind:"m.betr.starts"})}${F("b_h","Betriebsstunden",m.betr.std,{num:1,unit:"h",bind:"m.betr.std"})}
+   ${F("b_z","Zählerstand",m.betr.zaehler,{num:1,unit:m.typ==="boel"||a.energie==="Öl"?"l":"m³",bind:"m.betr.zaehler"})}${F("b_w","Betriebsweise",m.betr.weise,{bind:"m.betr.weise",ph:"z. B. witterungsgeführt"})}</div></div>
+  ${m.typ==="boel"?`<div class="panel"><h4>Ölversorgung</h4><div class="grid3">
+   ${F("o_l","Zuleitungslänge",m.oel.laenge,{num:1,unit:"m",bind:"m.oel.laenge"})}${F("o_s","Ein- / Zweistrang",m.oel.system,{bind:"m.oel.system",ph:"Einstrang"})}${F("o_v","Saughöhe / Vakuum",m.oel.saug,{bind:"m.oel.saug",ph:"m | bar"})}</div></div>`
+  :`<div class="panel"><h4>Dichtheitsprüfung Gasarmatur</h4><div class="grid3">
+   ${F("d_p","Prüfdruck",m.dicht.p,{num:1,unit:"mbar",bind:"m.dicht.p"})}${F("d_a","Druckabfall",m.dicht.abfall,{num:1,unit:"mbar",bind:"m.dicht.abfall"})}${F("d_z","Prüfzeit",m.dicht.zeit,{num:1,unit:"min",bind:"m.dicht.zeit"})}</div></div>`}
+  <label class="f"><span>Bemerkungen zur Anlage und Messung</span><textarea data-bind="m.bem" style="min-height:70px">${esc(m.bem||"")}</textarea></label>`},
+ material:(r)=>`
+  <label class="f"><span>Artikel suchen</span><input id="msearch" type="text" placeholder="Nummer oder Bezeichnung, z. B. Elektrode" autocomplete="off"></label>
+  <div id="mres" class="tb"></div>
+  <div class="panel"><h4>Verbaut / Pauschalen</h4>
+   ${r.material.length?`<table class="t"><thead><tr><th>Art.-Nr.</th><th>Bezeichnung</th><th class="r">Menge</th><th>KFZ</th></tr></thead><tbody>${r.material.map((p,i)=>`<tr><td class="mono" style="font-size:12px">${esc(p.nr)}</td><td>${esc(p.bez)}</td><td class="r"><span class="row" style="gap:4px;justify-content:flex-end"><button type="button" class="chip" data-mq="${i}" data-d="-1" aria-label="weniger">−</button><span class="mono">${p.menge}</span><button type="button" class="chip" data-mq="${i}" data-d="1" aria-label="mehr">+</button></span></td><td><input type="checkbox" data-kfz="${i}" ${p.kfz?"checked":""} aria-label="aus KFZ-Lager" style="width:20px;height:20px;accent-color:var(--accent)"></td></tr>`).join("")}</tbody></table>`:'<p class="hint">Noch kein Material erfasst. Material aus dem Fahrzeuglager wird beim Abschluss vom KFZ-Bestand abgebucht.</p>'}
+  </div>`,
+ fest:(r,a)=>{const alt=new Date().getFullYear()-a.baujahr;return`
+  <div class="panel"><h4>Folgeaufträge</h4>
+   ${folgeFor(r.job).map(f=>`<div class="check" style="align-items:flex-start;flex-direction:column;gap:4px"><span><b>${f.id}</b> <span class="chip ${f.dring==="Sofort"?"cr":"wa"}">${esc(f.dring)}</span>${f.angebot?' <span class="chip">Angebot</span>':""}</span><span style="font-size:14px">${esc(f.text)}</span>${f.mat.length?`<span class="hint">${f.mat.map(m=>esc(m.bez)).join(", ")}</span>`:""}</div>`).join("")||'<p class="hint">Ist etwas aufgefallen, das getauscht oder repariert werden muss? Lege hier einen Folgeauftrag an. Er bleibt mit diesem Einsatz verknüpft.</p>'}
+   <button type="button" class="btn sec" data-go="folge">+ Folgeauftrag anlegen</button></div>
+  <div class="panel"><h4>Zustand der Anlage</h4><div class="seg" role="group">${["In Ordnung","Mängel","Außer Betrieb"].map(x=>`<button type="button" data-set="zustand" data-val="${x}" aria-pressed="${r.zustand===x}">${x}</button>`).join("")}</div>
+   ${r.zustand==="Außer Betrieb"?'<div class="alert">Anlage bleibt außer Betrieb. Der Betreiber wird im Bericht schriftlich darauf hingewiesen, der Innendienst bekommt eine Meldung.</div>':""}</div>
+  <div class="panel"><h4>Sicherheitsrelevante Bauteile</h4>
+   <p class="hint">Anlage ist ${alt} Jahre alt (Baujahr ${a.baujahr}). Tausch nach Herstellerangabe spätestens nach 10 Jahren oder 5.000 Betriebsstunden.</p>
+   <div class="seg" role="group"><button type="button" data-set="sbt" data-val="ok" aria-pressed="${r.sbt==="ok"}">Kein Tausch fällig</button><button type="button" data-set="sbt" data-val="faellig" aria-pressed="${r.sbt==="faellig"}">Tausch fällig</button></div>
+   ${r.sbt==="faellig"?'<div class="alert wa">Der Hinweistext zu sicherheitsrelevanten Bauteilen wird auf Seite 3 gedruckt. Ein Angebot für den Tausch wird beim Innendienst angelegt.</div>':""}
+   ${alt>=10&&r.sbt==="ok"?'<div class="alert wa">Achtung: Anlage ist 10 Jahre oder älter. Bitte prüfen, ob der Tausch fällig ist.</div>':""}
+  </div>
+  <label class="f"><span>Hinweis an Betreiber</span><textarea id="hinweis" data-bind="hinweis" placeholder="Erscheint im Bericht für den Kunden">${esc(r.hinweis)}</textarea></label>
+  <label class="check"><input type="checkbox" data-flag="nachverfolgen" ${r.nachverfolgen?"checked":""}>Technisch nachverfolgen (Folgeauftrag)</label>`},
+ abschluss:(r)=>`
+  <label class="check"><input type="checkbox" data-flag="merkblatt" ${r.merkblatt?"checked":""}>Merkblatt Gasanlagen übergeben</label>
+  <label class="check"><input type="checkbox" data-flag="mailKunde" ${r.mailKunde?"checked":""}>Bericht per E-Mail an Kunden</label>
+  <label class="check"><input type="checkbox" data-flag="nichtVorOrt" ${r.nichtVorOrt?"checked":""}>Kunde bei Einsatzende nicht vor Ort</label>
+  ${isDesk()&&!r.nichtVorOrt?`<label class="check"><input type="checkbox" data-flag="papier" ${r.papier?"checked":""}>Kunde hat vor Ort auf Papier unterschrieben</label>
+   ${r.papier?`<label class="btn sec" for="papScan">${r.papScan?"✓ Unterschriebenen Bericht angehängt":"Scan / Foto des unterschriebenen Berichts anhängen"}</label><input id="papScan" type="file" accept="image/*,application/pdf" hidden>`:""}`:""}
+  ${r.nichtVorOrt||(isDesk()&&r.papier)?"":`<div class="panel"><h4>Unterschrift Kunde</h4>${F("sigName","Name in Druckbuchstaben",r.sigName,{req:1})}
+   <div class="sig"><canvas data-sig="sigK"></canvas><span class="ph">Hier unterschreiben</span><button class="clr" type="button" data-clr="sigK">Löschen</button></div>
+   <p class="hint">Mit der Unterschrift bestätigt der Kunde die Fertigstellung und die Vertragsbedingungen.</p></div>`}
+  <div class="panel"><h4>Unterschrift Techniker · ${esc(TECH.name)} <span class="hint" style="font-weight:500">(optional)</span></h4>
+   <div class="sig"><canvas data-sig="sigT"></canvas><span class="ph">${esc(TECH.name)}</span><button class="clr" type="button" data-clr="sigT">Löschen</button></div></div>
+  ${STEPS.every((_,i)=>stepOk(i))?"":`<div class="alert wa">Noch offen: ${STEPS.filter((_,i)=>!stepOk(i)).map(s=>s[1]).join(", ")}</div>`}`
+};
+
+/* Abgasverlust nach 1. BImSchV: qA = (tA − tL) · (A2/(21 − O2) + B), Erdgas A2 = 0,66, B = 0,009 */
+/* ---------- Messblatt: Spalten wie im interaktiven PDF (Servicebericht v11) ---------- */
+const MT={
+ heiz:{label:"Heizgerät",cols:[["pkt","Messpunkt",""],["last","Last","%"],["durch","Durchsatz","m³/h"],["gfd","Gasfließ\u00addruck","mbar"],["o2","O₂","Vol.-%"],["co2","CO₂","Vol.-%"],["co","CO unverd.","ppm"],["nox","NOx","ppm"],["ta","Abgas\u00adtemp.","°C"],["tl","Verbr.-luft\u00adtemp.","°C"],["qa","Abgas\u00adverlust","%"],["vl","VL-Temp.","°C"],["rl","RL-Temp.","°C"]],rows:2,
+  ubA:["Heizleistung geändert, begrenzt","Fehlerspeicher ausgelesen","Sichtprüfung Abgasanlage / Kondensat"],
+  ubV:["Heizleistung geändert, begrenzt","Fehlerspeicher ausgelesen / gelöscht","Zündung / Startverhalten geprüft","Kondensatablauf / Siphon geprüft","Wartungsanzeige zurückgesetzt"]},
+ bgas:{label:"Brenner Gas",cols:[["azl","AZL-Punkt",""],["lpos","Lastpos.","%"],["lk","Luftklappe","°"],["gs","Gas\u00adstellung","°"],["durch","Durchsatz","m³/h"],["bl","Brenner\u00adleistung","kW"],["gfd","Gasfließ\u00addruck","mbar"],["o2","O₂ trocken","Vol.-%"],["co","CO","ppm"],["nox","NOx","ppm"],["ta","Abgas\u00adtemp.","°C"],["qa","Abgas\u00adverlust","%"],["pvl","p vor Luftkl.","mbar"],["pfr","p Feuerraum","mbar"]],rows:12},
+ boel:{label:"Brenner Öl",cols:[["azl","AZL-Punkt",""],["lpos","Lastpos.","%"],["lk","Luftklappe","°"],["bs","Brennstoff","°"],["durch","Durchsatz","l/h"],["bl","Brenner\u00adleistung","kW"],["ovl","Öldruck Vorlauf","bar"],["orl","Öldruck Rücklauf","bar"],["o2","O₂ trocken","Vol.-%"],["co","CO","ppm"],["nox","NOx","ppm"],["ta","Abgas\u00adtemp.","°C"],["qa","Abgas\u00adverlust","%"],["russ","Rußzahl","-"],["pfr","p Feuerraum","mbar"]],rows:12}};
+MT.bgas.ubA=MT.boel.ubA=MT.heiz.ubA;MT.bgas.ubV=MT.boel.ubV=MT.heiz.ubV;
+const MPICK=[["Ansaugtemperatur","°C"],["Zugbedarf","Pa"],["Feuerraumdruck","mbar"],["Druck vor Luftklappe","mbar"],["Gasruhedruck","mbar"],["Gasanschlussdruck","mbar"],["Düsendruck","mbar"],["Öldruck Vorlauf","bar"],["Öldruck Rücklauf","bar"],["Öl-Unterdruck","bar"],["Öldurchsatz","kg/h"],["Ionisationsstrom","µA"],["Flammensignal","%"],["Drehzahl Gebläse","U/min"],["Stellgröße Gasventil","%"],["Frequenzumformer","%"],["O2 feucht","Vol.-%"],["Luftzahl Lambda","-"],["CO bezogen","mg/m³"],["NOx bezogen","mg/m³"],["Rußzahl","-"],["Ölderivate","ja/nein"],["Kesseltemperatur","°C"],["Vorlauftemperatur","°C"],["Rücklauftemperatur","°C"],["Wärmeleistung","kW"],["Sicherheitszeit","s"],["Abgasdruck / Zug","Pa"],["Taupunkt Abgas","°C"],["Gasmenge Zähler","m³"],["Abgasanlage dicht","ja/nein"]];
+const MMAX={ang:14,ver:14};
+const BPKT=["P0","P1","P2","P3","P4","P5","P6","P7","P8","P9","Bu","Bo"],HPKT=["Q min","Q max"];
+function typFor(a){return a.energie==="Öl"?"boel":(a.details&&a.details.Brenner)?"bgas":"heiz"}
+function blankRows(typ,k){return typ==="heiz"?HPKT.map(x=>({pkt:x})):BPKT.map(x=>({azl:x}))}
+function newMess(a){const typ=typFor(a),R0=MT[typ].rows;return{typ,ang:{rows:blankRows(typ,R0),hide:[],extra:[],ub:{}},ver:{rows:blankRows(typ,R0),hide:[],extra:[],ub:{}},
+ dicht:{p:"150",abfall:"",zeit:"5"},oel:{laenge:"",system:"",saug:""},betr:{starts:"",std:"",zaehler:"",weise:""},bem:"",pick:null}}
+function mig(r){const a=ANLAGEN[r.q];if(!r.mess||!r.mess.typ)r.mess=newMess(a);const t=typFor(a);if(r.mess.typ!==t){r.mess.typ=t;["ang","ver"].forEach(sd=>{r.mess[sd].hide=[];const rw=r.mess[sd].rows;if(t!=="heiz"){while(rw.length<12)rw.push({});rw.forEach((x,i)=>{if(!x.azl&&BPKT[i])x.azl=BPKT[i]})}else rw.forEach((x,i)=>{if(!x.pkt&&HPKT[i])x.pkt=HPKT[i]})})}return r.mess}
+function mCols(m,side){const T=MT[m.typ],sd=m[side];return T.cols.filter(c=>!sd.hide.includes(c[0])).concat(sd.extra.map(x=>["x:"+x[0],x[0],x[1]]))}
+function rowQa(r,a,row){const m=r.mess;const o2=n(row.o2),ta=n(row.ta),tl=n(row.tl)??n(row["x:Ansaugtemperatur"]);
+ if(o2==null||ta==null||tl==null||o2>=21)return null;const[A2,B]=m.typ==="boel"?[0.68,0.007]:qaK(a);return(ta-tl)*(A2/(21-o2)+B)}
+function mTable(r,a,side,title){
+ const m=r.mess,sd=m[side],T=MT[m.typ],cols=mCols(m,side),fixVis=cols.length;
+ const ub=side==="ang"?T.ubA:T.ubV;
+ return`<div class="panel mpanel"><h4>${title}${side==="ver"?' <span style="color:var(--accent)">*</span>':""}</h4>
+  <div class="mwrap"><table class="mt" lang="de"><thead><tr><th class="mrow">#</th>${cols.map(c=>`<th><span class="mh">${esc(c[1])}</span><span class="mu">${c[2]?"["+esc(c[2])+"]":"&nbsp;"}</span>${fixVis>2?`<button type="button" class="mx" data-mhide="${side}|${esc(c[0])}" aria-label="Spalte ${esc(c[1])} ausblenden">×</button>`:""}</th>`).join("")}</tr></thead>
+  <tbody>${sd.rows.map((row,i)=>`<tr><td class="mrow"><span>${i+1}</span><button type="button" class="mx" data-mdel="${side}|${i}" aria-label="Messpunkt ${i+1} löschen">×</button></td>${cols.map(c=>{
+   if(c[0]==="qa"){const q=rowQa(r,a,row);return`<td><span class="mcalc" id="qa-${side}-${i}">${q!=null?de(q,1):(row.qa||"")}</span></td>`}
+   return`<td><input type="text" inputmode="${c[2]==="ja/nein"||c[0]==="azl"||c[0]==="pkt"?"text":"decimal"}" class="mi" data-mv="${side}|${i}|${esc(c[0])}" value="${esc(row[c[0]]??"")}" aria-label="${esc(c[1])} Messpunkt ${i+1}"></td>`}).join("")}</tr>`).join("")}</tbody></table></div>
+  <div class="mtools"><button type="button" class="chip" data-madd="${side}" ${sd.rows.length>=MMAX[side]?"disabled":""}>+ Messpunkt</button>
+   <button type="button" class="chip" data-mpick="${side}" ${sd.extra.length>=6?"disabled":""}>+ Messgröße</button>
+   ${sd.hide.length||sd.extra.length?`<button type="button" class="chip" data-mreset="${side}">Spalten zurücksetzen</button>`:""}
+   <span class="hint">${sd.rows.length} von ${MMAX[side]} Messpunkten</span></div>
+  ${m.pick===side?`<div class="tb">${MPICK.filter(p=>!sd.extra.some(x=>x[0]===p[0])).map(p=>`<button type="button" data-mpickv="${side}|${esc(p[0])}">${esc(p[0])} <span style="color:var(--muted)">${esc(p[1])}</span></button>`).join("")}<button type="button" data-mpickx="1">Abbrechen</button></div>`:""}
+  <div class="ubs">${ub.map((u,j)=>`<label class="check"><input type="checkbox" data-mub="${side}|${j}" ${sd.ub[j]?"checked":""}>${u}</label>`).join("")}</div></div>`;
+}
+function mSum(){const r=R();if(!r)return;const out=$("#mSum");if(!out)return;const a=ANLAGEN[r.q],m=r.mess;
+ ["ang","ver"].forEach(side=>m[side].rows.forEach((row,i)=>{const el=$("#qa-"+side+"-"+i);if(el){const q=rowQa(r,a,row);el.textContent=q!=null?de(q,1):""}}));
+ const qs=m.ver.rows.map(x=>rowQa(r,a,x)).filter(x=>x!=null),cos=m.ver.rows.map(x=>n(x.co)).filter(x=>x!=null);
+ if(!qs.length){out.innerHTML='<p class="hint">Abgasverlust wird je Messpunkt berechnet, sobald O₂, Abgas- und Verbrennungsluft- bzw. Ansaugtemperatur eingetragen sind.</p>';return}
+ const qa=Math.max(...qs),lim=qaLimit(a.kw),cls=qa>lim?"cr":qa>lim-1?"wa":"ok",co=cos.length?Math.max(...cos):null;
+ out.innerHTML=`<div class="result ${cls}"><div>Höchster Abgasverlust verlassen<small>${m.typ==="boel"||a.energie==="Öl"?"Heizöl EL":esc(a.gas)} · Grenzwert ${lim} % bei ${a.kw} kW (1. BImSchV) · ${qs.length} Messpunkt${qs.length>1?"e":""}</small></div><b>${de(qa,1)} %</b></div>
+ ${co!=null&&co>500?`<div class="alert">CO ${de(co,0)} ppm: Verbrennung prüfen und neu einstellen.</div>`:co!=null&&co>100?`<div class="alert wa">CO ${de(co,0)} ppm erhöht. Bitte in den Bemerkungen begründen.</div>`:""}`;
+}
+function calc(){mSum()}
+/* Unterschrift */
+function initSig(){
+ document.querySelectorAll("canvas[data-sig]").forEach(cv=>{
+  const k=cv.dataset.sig,r=R(),dpr=window.devicePixelRatio||1,box=cv.getBoundingClientRect();
+  cv.width=box.width*dpr;cv.height=box.height*dpr;const c=cv.getContext("2d");c.scale(dpr,dpr);
+  const ink=getComputedStyle(document.documentElement).getPropertyValue("--fg").trim()||"#111";
+  c.lineWidth=2.2;c.lineCap="round";c.lineJoin="round";c.strokeStyle=ink;
+  if(r[k]){const im=new Image();im.onload=()=>c.drawImage(im,0,0,box.width,box.height);im.src=r[k]}
+  let down=false,last=null;
+  const p=e=>{const b=cv.getBoundingClientRect();return[e.clientX-b.left,e.clientY-b.top]};
+  cv.onpointerdown=e=>{down=true;last=p(e);cv.setPointerCapture(e.pointerId)};
+  cv.onpointermove=e=>{if(!down)return;const q=p(e);c.beginPath();c.moveTo(...last);c.lineTo(...q);c.stroke();last=q};
+  cv.onpointerup=cv.onpointercancel=()=>{if(!down)return;down=false;r[k]=cv.toDataURL("image/png");save();refreshFoot()};
+ });
+}
+function refreshFoot(){const b=$("#finish");if(b)b.disabled=!STEPS.every((_,i)=>stepOk(i))}
+
+/* Abschluss */
+async function finish(){
+ const r=R(),a=ANLAGEN[r.q],o=AUFTRAEGE.find(x=>x.id===r.job);
+ const sb=nr("SB");if(!sb)return;
+ const btn=$("#finish");if(btn)btn.disabled=true;
+ mig(r);const qs=r.mess.ver.rows.map(x=>rowQa(r,a,x)).filter(x=>x!=null),qa=qs.length?r2(Math.max(...qs)):null;
+ // Unterschriften als Dateien ablegen
+ for(const k of["sigK","sigT"])if(r[k]&&String(r[k]).startsWith("data:")){try{r[k]=await NF.datei(await NF.dataUrlZuBlob(r[k]),k+".png")}catch(e){}}
+ const daten=JSON.parse(JSON.stringify(r));delete daten.step;
+ NF.setze("berichte",sb,{sb,id:r.job,nv:a.nv,tech:TECH.id,art:r.einsatzart,datum:r.zd||iso(new Date()),status:"neu",az:r2(arbH(r)),fz:n(r.fz)||0,km:n(r.km)||0,
+  mat:r.material.length,materialListe:r.material.map(m=>({nr:m.nr,menge:m.menge})),qa,zustand:r.zustand,folge:folgeFor(r.job).length,plan:o?o.dauer:null,daten});
+ if(o)NF.setze("auftraege",r.job,{status:"erledigt"});
+ const entry={sb,job:r.job,q:r.q,kunde:a.kunde.name1,nv:a.nv,art:r.einsatzart,zeit:new Date().toLocaleString("de-DE"),status:"queued",zustand:r.zustand,qa,folge:folgeFor(r.job).length};
+ delete S.reports[r.job];S.cur=null;S.last=entry;go("berichte",{tab:"berichte"});toast(S.online?sb+" gespeichert, das Büro sieht ihn gleich":sb+" auf dem Handy gespeichert – wird bei Netz gesendet");
+}
+function vFertig(){
+ const e=S.last;header("Bericht abgeschlossen");foot.innerHTML=`<div class="foot"><button class="btn" type="button" data-tab="heute">Zur Tagesliste</button></div>`;
+ const a=ANLAGEN[e.q],y=e.sb.slice(3,7);
+ const sent=e.status==="sent";
+ main.innerHTML=`<div class="pad">
+  <div><div class="eyebrow">Servicebericht</div><p class="big mono">${e.sb}</p></div>
+  <dl class="kv"><dt>Kunde</dt><dd>${esc(e.kunde)}</dd><dt>Anlage</dt><dd>${e.nv} · ${esc(a.hersteller)} ${esc(a.typ)}</dd><dt>Einsatz</dt><dd>${e.art} · ${e.zeit}</dd>${e.qa!=null?`<dt>qA verlassen</dt><dd class="mono">${de(e.qa,1)} %</dd>`:""}</dl>
+  <div class="panel"><h4>Weg des Berichts</h4><div class="sync" id="sync">
+   <div class="ok">Auf dem Handy gespeichert<small>auch ohne Netz sicher</small></div>
+   <div class="${sent?"ok":"wait"}">${sent?"An N-Flow-Server übertragen":"Wartet auf Netz"}<small>${sent?"app.novis-anlagentechnik.de":"wird automatisch gesendet, sobald Empfang da ist"}</small></div>
+   <div class="${sent?"ok":""}">PDF erzeugt (Servicebericht + Messblatt + Merkblatt)<small>Vorlage Servicebericht_NOVIS11 · 6 Seiten</small></div>
+   <div class="${sent?"ok":""}">In SharePoint abgelegt<small>NOVIS Service › Kunden › ${esc(a.kunde.nr)} ${esc(e.kunde)} › ${e.nv} › ${y}</small></div>
+   <div class="${sent?"ok":""}">Innendienst informiert${a.kunde.mail?"<small>Kopie an "+esc(a.kunde.mail)+"</small>":""}</div>
+  </div></div>
+  ${sent?"":'<p class="hint">Schalte oben rechts auf „Online“, um das Nachsenden zu sehen.</p>'}
+ </div>`;
+}
+function vBerichte(){
+ header("Berichte");foot.innerHTML="";
+ const row=(e,q)=>`<div class="job" style="grid-template-columns:1fr auto"><div><h3 class="mono" style="font-size:15px">${e.sb}</h3><p>${esc(e.kunde)} · ${e.nv}</p><div class="chips"><span class="chip">${e.art}</span>${q?'<span class="chip wa">Nur auf dem Handy</span>':'<span class="chip ok">Übertragen</span>'}${e.zustand==="Außer Betrieb"?'<span class="chip cr">Außer Betrieb</span>':""}${e.folge?`<span class="chip or">${e.folge} Folgeauftrag${e.folge>1?"e":""}</span>`:""}</div></div><time class="mono" style="font-size:11px;color:var(--muted)">${esc(e.zeit.split(",")[0])}</time></div>`;
+ main.innerHTML=`<div class="pad">
+  <div class="eyebrow">Noch auf dem Handy</div>
+  ${S.queue.length?S.queue.map(e=>row(e,1)).join("")+(S.online?'<button class="btn" type="button" id="flush">Jetzt senden</button>':'<p class="hint">Wird automatisch gesendet, sobald das Handy wieder Netz hat.</p>'):'<p class="empty">Alles übertragen. Das Büro sieht deine Berichte sofort.</p>'}
+  <div class="eyebrow">Übertragen · letzte 14 Tage</div>
+  ${S.done.length?S.done.map(e=>row(e,0)).join(""):'<p class="empty">Noch keine Berichte. Abgeschlossene Berichte erscheinen hier mit Bericht-Nr.</p>'}
+  ${Object.keys(S.reports).length?`<div class="eyebrow">Entwürfe</div>${Object.values(S.reports).map(r=>`<button type="button" class="job" style="grid-template-columns:1fr" data-resume="${r.job}"><div><h3>${esc(ANLAGEN[r.q].kunde.name1)}</h3><p>${r.job} · Schritt ${r.step+1} von ${STEPS.length}</p><div class="chips"><span class="chip or">Entwurf</span></div></div></button>`).join("")}`:""}
+ </div>`;
+}
+function vSuche(){
+ header("Anlage suchen","berichte");foot.innerHTML="";
+ main.innerHTML=`<div class="pad">
+  <label class="search" for="q"><b>NV-</b><input id="q" type="text" inputmode="numeric" autocomplete="off" placeholder="00000" maxlength="12" aria-label="Anlagen-Nummer"></label>
+  <p class="hint">Anlagen-Nummer vom Aufkleber eingeben, z. B. 42 oder NV-00042. Auch Kundenname oder Ort funktionieren.</p>
+  <div id="qres" style="display:flex;flex-direction:column;gap:10px"></div>
+ </div>`;
+ const q=$("#q");q.value=S.lastQ||"";suche(q.value);setTimeout(()=>{try{q.focus()}catch(e){}},50);
+}
+function suche(v){
+ const box=$("#qres");if(!box)return;S.lastQ=v;v=v.trim();
+ if(!v){box.innerHTML='<p class="empty">Nummer eingeben, die Treffer erscheinen sofort.</p>';return}
+ const dig=v.replace(/\D/g,""),txt=v.toLowerCase();
+ const hits=Object.entries(ANLAGEN).filter(([k,a])=>(dig&&a.nv.replace(/\D/g,"").replace(/^0+/,"").startsWith(dig.replace(/^0+/,"")||"0"))||(!dig&&(a.kunde.name1+" "+a.kunde.ort+" "+a.hersteller+" "+a.typ).toLowerCase().includes(txt)));
+ box.innerHTML=hits.length?hits.map(([k,a])=>`<button type="button" class="sticker" data-open="${k}"><span class="qr"></span><div><b>${a.nv}</b><span>${esc(a.kunde.name1)} · ${esc(a.kunde.ort)}<br>${esc(a.hersteller)} ${esc(a.typ)}</span></div></button>`).join("")
+  :`<p class="empty">Keine Anlage mit „${esc(v)}“ gefunden. Im Notdienst bitte Innendienst oder Bereitschaftsleitung anrufen.</p>`;
+}
+function vIch(){
+ header("");foot.innerHTML="";
+ const t=S.ichTab,tab=(k,l)=>`<button type="button" data-ich="${k}" aria-pressed="${t===k}">${l}</button>`;
+ const body=({zeit:ichZeit,kal:ichKal,belege:ichBelege,abw:ichAbw,auto:ichAuto}[t]||ichZeit)();
+ main.innerHTML=`<div class="pad">
+  <div class="greet"><h2>${esc(TECH.name)}</h2><p>Kürzel ${esc(TECH.nr)}${TECH.id!==NF.ich.benutzer.id?" · Ansicht von "+esc(NF.ich.benutzer.name):""}</p></div>
+  ${RECHTE.planung?`<label class="alsbar">Arbeiten für<select id="alsTech"><option value="">mich (${esc(NF.ich.benutzer.name)})</option>${(NF.team||[]).filter(t=>t.rolle==="Monteur"&&t.aktiv&&!t.gesperrt).map(t=>`<option value="${t.id}" ${S.alsTech===t.id?"selected":""}>${esc(t.name)}</option>`).join("")}</select></label>`:""}
+  <div class="seg" role="group" aria-label="Bereich">${tab("zeit","Zeit")}${tab("kal","Kalender")}${tab("belege","Belege")}${tab("abw","Abwesend")}${tab("auto","Auto")}</div>
+  ${body}
+  <div class="row" style="gap:8px">${RECHTE.planung?'<a class="btn sec" href="/buero/" style="text-decoration:none">Zum Büro</a>':""}<button type="button" class="btn ghost" id="abmelden">Abmelden</button></div>
+  <p class="demo">N-Flow ${esc(NF.ich.version||"")} · ${esc(NF.ich.instanz||"")} · ${NF.outbox.length?NF.outbox.length+" Änderung(en) im Postausgang":"alles übertragen"}</p>
+ </div>`;
+}
+const hm=m=>m==null?"–":String(Math.floor(m/60))+":"+String(Math.round(m%60)).padStart(2,"0");
+const mins=t=>{if(!t)return null;const[a,b]=t.split(":").map(Number);return a*60+b};
+function tagMin(d){if(!d||!d.kommen)return null;const g=mins(d.gehen||nowT())-mins(d.kommen);return Math.max(0,g-(d.pause||0))}
+function ichZeit(){
+ const iso=isoD(),d=S.arbeit[iso]||{},off=S.zWeek||0;
+ const woche=[];const mo=new Date();mo.setDate(mo.getDate()-((mo.getDay()+6)%7)+off*7);
+ for(let i=0;i<5;i++){const x=new Date(mo);x.setDate(mo.getDate()+i);const k=iso8(x);woche.push([x.toLocaleDateString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit"}),S.arbeit[k],k])}
+ const sum=woche.reduce((s,w)=>s+(tagMin(w[1])||0),0);
+ const nt=S.nachDatum||"",nd=S.arbeit[nt]||{};
+ const gestern=new Date();gestern.setDate(gestern.getDate()-1);
+ return`<div class="panel"><h4>Heute</h4>
+  <div class="stamp">
+   <button type="button" data-st="kommen" class="${d.kommen&&!d.gehen?"on":""}">Arbeitsbeginn<span>${d.kommen||"--:--"}</span></button>
+   <button type="button" data-st="pause" class="${d.pauseSeit?"on":""}">${d.pauseSeit?"Pause beenden":"Pause"}<span>${d.pauseSeit?"seit "+d.pauseSeit:hm(d.pause||0)+" h"}</span></button>
+   <button type="button" data-st="gehen" class="${d.gehen?"on":""}">Feierabend<span>${d.gehen||"--:--"}</span></button>
+  </div>
+  <div class="result ${d.kommen?"ok":""}"><div>Arbeitszeit heute<small>${d.kommen?(d.gehen?"abgeschlossen":"läuft, Pause wird abgezogen"):"noch nicht gestartet"}</small></div><b>${hm(tagMin(d))}</b></div>
+  <p class="hint">Einsatzzeiten im Servicebericht laufen getrennt davon und gehen auf die Kundenrechnung.</p></div>
+ <div class="panel">
+  <div class="calhead"><button type="button" data-zw="-1" aria-label="Vorwoche">‹</button><h4>${off===0?"Diese Woche":off===-1?"Letzte Woche":"KW "+kw(mo)}</h4><button type="button" data-zw="1" aria-label="Nächste Woche" ${off>=0?"disabled":""}>›</button></div>
+  <table class="t"><tbody>${woche.map(([l,w,k])=>`<tr class="zrow" data-nach="${k}"><td>${l}</td><td class="mono">${w&&w.kommen?w.kommen+"–"+(w.gehen||"…"):"–"}${w&&w.nach?' <span class="chip wa" style="font-size:10px;padding:1px 6px">nachgetragen</span>':""}</td><td class="r mono">${hm(tagMin(w))}</td></tr>`).join("")}
+  <tr><th>Summe</th><th></th><th class="r mono">${hm(sum)} / 40:00</th></tr></tbody></table>
+  <p class="hint">Tag antippen, um Zeiten nachzutragen oder zu korrigieren.</p></div>
+ <div class="panel" id="nachPanel"><h4>Zeit nachtragen</h4>
+  <label class="f req"><span>Tag</span><input type="date" id="nd" value="${esc(nt)}" max="${iso8(gestern)}"></label>
+  <div class="grid3"><label class="f req"><span>Beginn</span><input type="time" id="nk" value="${esc(nd.kommen||"07:00")}"></label><label class="f req"><span>Ende</span><input type="time" id="ng" value="${esc(nd.gehen||"16:00")}"></label><label class="f"><span>Pause</span><span class="unit"><input type="text" inputmode="numeric" class="num" id="np" value="${nd.pause!=null?nd.pause:30}"><em>min</em></span></label></div>
+  <label class="f"><span>Bemerkung</span><input type="text" id="nb" value="${esc(nd.bem||"")}" placeholder="z. B. vergessen zu stempeln, Notdienst"></label>
+  <button type="button" class="btn sec" id="nSave">Nachtragen</button>
+  <p class="hint">Nachgetragene Tage sind für die Geschäftsführung gekennzeichnet.</p></div>`;
+}
+function iso8(x){return iso(x)}
+function kw(d){const t=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));const dn=t.getUTCDay()||7;t.setUTCDate(t.getUTCDate()+4-dn);const y=new Date(Date.UTC(t.getUTCFullYear(),0,1));return Math.ceil(((t-y)/864e5+1)/7)}
+function inUrlaub(k){return S.urlaub.find(u=>u.vonIso&&k>=u.vonIso&&k<=u.bisIso)}
+function ichKal(){
+ const now=new Date(),m=S.calM?new Date(S.calM+"-01T12:00"):new Date(now.getFullYear(),now.getMonth(),1,12);
+ const first=new Date(m.getFullYear(),m.getMonth(),1,12),start=new Date(first);start.setDate(1-((first.getDay()+6)%7));
+ const td=iso(now),sel=S.calSel||td;let cells="";
+ for(let i=0;i<42;i++){const d=new Date(start);d.setDate(start.getDate()+i);const k=iso(d);
+  const jobs=(k===td?JOBS.length:0)+PLAN.filter(p=>p.iso===k).length,bl=S.blocks.some(b=>b.iso===k),ur=inUrlaub(k);
+  if(i>=35&&d.getMonth()!==m.getMonth())break;
+  cells+=`<button type="button" data-day="${k}" class="${d.getMonth()!==m.getMonth()?"out":""} ${d.getDay()%6?"":"we"} ${k===td?"today":""} ${k===sel?"sel":""} ${ur?"urlaub":""}" aria-label="${fmt(d)}">${d.getDate()}<span class="dots">${"<i></i>".repeat(Math.min(jobs,3))}${bl?'<i class="b"></i>':""}</span></button>`}
+ const items=[...(sel===td?JOBS.map(j=>({zeit:j.zeit,q:j.q,art:j.art})):[]),...PLAN.filter(p=>p.iso===sel)].sort((a,b)=>a.zeit.localeCompare(b.zeit));
+ const ur=inUrlaub(sel),bls=S.blocks.filter(b=>b.iso===sel);
+ const next=PLAN.slice(0,6);
+ return`<div class="panel">
+  <div class="calhead"><button type="button" data-calm="-1" aria-label="Vormonat">‹</button><h4>${m.toLocaleDateString("de-DE",{month:"long",year:"numeric"})}</h4><button type="button" data-calm="1" aria-label="Nächster Monat">›</button></div>
+  <div class="cal">${["Mo","Di","Mi","Do","Fr","Sa","So"].map(x=>`<span class="h">${x}</span>`).join("")}${cells}</div>
+  <div class="legend"><span><i style="background:var(--fg);border-radius:50%"></i>Einsatz</span><span><i style="background:var(--accent-soft);border:1px solid var(--accent)"></i>Urlaub</span><span><i style="background:var(--warn);border-radius:50%"></i>Block</span></div></div>
+ <div class="panel"><h4>${new Date(sel+"T12:00").toLocaleDateString("de-DE",{weekday:"long",day:"2-digit",month:"long"})}</h4>
+  ${ur?`<div class="alert wa" style="background:var(--accent-soft);color:var(--accent)">Urlaub ${ur.von} – ${ur.bis} · ${ur.status||"offen"}</div>`:""}
+  ${bls.map(b=>`<div class="alert wa">Block ${b.von}–${b.bis}: ${esc(b.grund)}</div>`).join("")}
+  ${items.length?`<div class="agenda">${items.map(p=>{const a=p.x?{nv:p.x.nv,kunde:{name1:p.x.kunde,ort:p.x.ort}}:ANLAGEN[p.q];return`<div><time>${p.zeit}</time><span><b>${p.art}</b> · ${a.nv}<br>${esc(a.kunde.name1)}, ${esc(a.kunde.ort)}</span></div>`}).join("")}</div>`:(ur||bls.length?"":'<p class="hint">Keine Einsätze geplant.</p>')}</div>
+ <div class="panel"><h4>Als Nächstes geplant</h4><div class="agenda">${next.map(p=>{const a=ANLAGEN[p.q];return`<div><time>${new Date(p.iso+"T12:00").toLocaleDateString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit"})}<br>${p.zeit}</time><span><b>${p.art}</b> · ${a.nv}<br>${esc(a.kunde.ort)}</span></div>`}).join("")}</div></div>
+ <div class="panel"><h4>Im iPhone-Kalender anzeigen</h4>
+  <p class="hint">Einsätze, Urlaub und Blocks erscheinen automatisch im Apple Kalender und aktualisieren sich selbst. Einmal einrichten genügt.</p>
+  ${S.calAbo?`<ol class="hint" style="padding-left:18px;margin:0;display:flex;flex-direction:column;gap:4px"><li>iPhone: Einstellungen › Apps › Kalender › Kalenderaccounts › Account hinzufügen › Andere › Kalenderabo hinzufügen</li><li>Diese Adresse einfügen:</li></ol>
+   <div class="check mono" style="font-size:12px;overflow-wrap:anywhere;user-select:all">${esc(S.calAbo)}</div>
+   <button type="button" class="btn sec" id="calCopy">Adresse kopieren</button>
+   <p class="hint">Im Kalender steht nur Uhrzeit, Einsatzart, Anlagen-Nr. und Ort, keine Kundennamen. Details öffnet ein Link in N-Flow.</p>`
+  :`<button type="button" class="btn sec" id="calAbo">Mit Apple Kalender verbinden</button>`}</div>`;
+}
+const KAT=["Tanken","Material","Parken / Maut","Übernachtung","Bewirtung","Sonstiges"];
+function ichBelege(){
+ const k=S.belegKat||"Tanken";const offen=S.belege.filter(b=>b.status!=="sent").length;
+ return`<div class="panel"><h4>Beleg einreichen</h4>
+  <label class="f req"><span>Art</span><select id="bk">${KAT.map(x=>`<option ${x===k?"selected":""}>${x}</option>`).join("")}</select></label>
+  <div class="grid2"><label class="f req"><span>Betrag brutto</span><span class="unit"><input id="bb" type="text" inputmode="decimal" class="num" placeholder="0,00"><em>€</em></span></label>
+  <label class="f req"><span>Datum</span><input id="bd" type="date" value="${isoD()}"></label></div>
+  ${k==="Tanken"?`<div class="grid2"><label class="f"><span>Liter</span><span class="unit"><input id="bl" type="text" inputmode="decimal" class="num"><em>l</em></span></label><label class="f req"><span>km-Stand</span><span class="unit"><input id="bkm" type="text" inputmode="numeric" class="num"><em>km</em></span></label></div>`:`<label class="f"><span>Wofür?</span><input id="bz" type="text" placeholder="z. B. Dichtungen Baumarkt, Auftrag A-2027-0318"></label>`}
+  <label class="btn sec" for="bf">${S.belegFoto?"✓ Foto aufgenommen – neu aufnehmen":"Quittung fotografieren"}</label><input id="bf" type="file" accept="image/*" hidden>
+  <button class="btn" type="button" id="bSend">Beleg senden</button></div>
+ <div class="panel"><h4>Meine Belege ${offen?`<span class="chip wa">${offen} wartet auf Netz</span>`:""}</h4>
+  ${S.belege.length?S.belege.map(b=>`<div class="beleg"><span class="th" style="${b.foto?`background-image:url(${b.foto})`:""}"></span><div><b>${esc(b.kat)}</b><p>${esc(b.datum)}${b.info?" · "+esc(b.info):""}</p></div><div><div class="amt">${esc(b.betrag)} €</div><span class="chip ${b.status==="sent"?"ok":"wa"}">${b.status==="sent"?"übermittelt":"Postausgang"}</span></div></div>`).join(""):'<p class="hint">Noch keine Belege. Die Quittung kann danach weg – das Foto geht an die Buchhaltung und in SharePoint › Belege.</p>'}</div>`;
+}
+function ichAbw(){
+ const a=S.abwArt;const J=String(new Date().getFullYear()),rest=30-S.urlaub.filter(u=>u.status!=="abgelehnt"&&String(u.vonIso).startsWith(J)).reduce((s,u)=>s+u.tage,0);
+ return`<div class="seg" role="group"><button type="button" data-abw="urlaub" aria-pressed="${a==="urlaub"}">Urlaub</button><button type="button" data-abw="block" aria-pressed="${a==="block"}">Block</button></div>
+ ${a==="urlaub"?`<div class="panel"><h4>Urlaub beantragen · Rest ${rest} Tage</h4>
+   <div class="grid2"><label class="f"><span>von</span><input type="date" id="uv"></label><label class="f"><span>bis</span><input type="date" id="ub"></label></div>
+   <button class="btn" type="button" id="uSend">Antrag an Geschäftsführung senden</button></div>`
+ :`<div class="panel"><h4>Block eintragen</h4>
+   <p class="hint">Für kurze Abwesenheiten, z. B. früher nach Hause, Arzttermin, Behördengang. Der Innendienst plant in dieser Zeit keine Einsätze.</p>
+   <label class="f req"><span>Datum</span><input type="date" id="kd" value="${isoD()}"></label>
+   <div class="grid2"><label class="f req"><span>von</span><input type="time" id="kv" value="14:00"></label><label class="f req"><span>bis</span><input type="time" id="kb" value="16:00"></label></div>
+   <label class="f req"><span>Begründung</span><textarea id="kg" style="min-height:70px" placeholder="Pflichtfeld, z. B. Kind aus der Kita abholen"></textarea></label>
+   <button class="btn" type="button" id="kSend">Block eintragen</button></div>`}
+ <div class="panel"><h4>Meine Anträge</h4>
+  ${S.urlaub.length||S.blocks.length?[...S.urlaub.map(u=>`<div class="check" style="justify-content:space-between"><span><b>Urlaub</b><br><span class="mono" style="font-size:13px">${u.von} – ${u.bis}</span></span><span class="chip ${u.status==="genehmigt"?"ok":u.status==="abgelehnt"?"cr":"wa"}">${u.tage} T · ${u.status||"offen"}</span></div>`),
+   ...S.blocks.map(b=>`<div class="check" style="justify-content:space-between;align-items:flex-start"><span style="min-width:0"><b>Block</b> <span class="mono" style="font-size:13px">${b.datum} · ${b.von}–${b.bis}</span><br><span class="hint">${esc(b.grund)}</span></span><span class="chip ${b.status==="genehmigt"?"ok":b.status==="abgelehnt"?"cr":"wa"}">${b.status==="genehmigt"?"bestätigt":b.status||"offen"}</span></div>`)].join(""):'<p class="hint">Noch keine Anträge.</p>'}</div>`;
+}
+function ichAuto(){
+ return`<div class="panel"><h4>Fahrzeug</h4><dl class="kv"><dt>Fahrzeug</dt><dd>VW Transporter T6.1 Kasten</dd><dt>Nächster Service</dt><dd>03/2028 oder 30.000 km</dd><dt>HU</dt><dd>03/2029</dd></dl></div>
+ <div class="panel"><h4>Ansprechpartner Fahrzeug</h4>
+  ${S.kontakte.map((c,i)=>`<div class="contact"><span>${esc(c.rolle)}</span><b>${esc(c.name)}</b><span class="tel">${c.tel?esc(c.tel):"Keine Nummer"}</span><div class="acts">${c.tel?`<button type="button" class="chip" data-copy="${i}">Kopieren</button>`:""}<button type="button" class="chip" data-delk="${esc(c._id)}" aria-label="Kontakt entfernen">✕</button></div></div>`).join("")}
+  <details><summary class="hint" style="cursor:pointer;padding:6px 0">+ Ansprechpartner hinzufügen</summary>
+   <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px">
+    <label class="f req"><span>Funktion</span><input id="cr" type="text" placeholder="z. B. Werkstattmeister, Reifendienst"></label>
+    <label class="f req"><span>Name / Firma</span><input id="cn" type="text"></label>
+    <label class="f req"><span>Telefon</span><input id="ct" type="text" inputmode="tel"></label>
+    <button class="btn sec" type="button" id="cAdd">Speichern</button></div></details>
+  <p class="hint">Die Kontakte pflegt die Geschäftsführung zentral. Alle Monteure mit diesem Fahrzeug sehen sie.</p></div>`;
+}
+/* ---------- Intranet (SharePoint) ---------- */
+const DOC_ICON={ordner:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3.5 7.5a1 1 0 0 1 1-1h4.6l2 2h8.4a1 1 0 0 1 1 1V18a1 1 0 0 1-1 1h-15a1 1 0 0 1-1-1z"/></svg>',
+ pdf:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 3.5h7l4 4V20a.5.5 0 0 1-.5.5h-10A.5.5 0 0 1 7 20z"/><path d="M14 3.5V8h4"/></svg>'};
+function docRow(ic,title,sub,path){return`<button type="button" class="doc" data-doc="${esc(path)}"><span class="di ${ic}">${DOC_ICON[ic]}</span><span class="dt"><b>${esc(title)}</b><span>${esc(sub)}</span></span><span class="dg" aria-hidden="true">›</span></button>`}
+const INTRA={
+ news:[["21.10.","Abgasmessgeräte kalibriert","Beide Testo-Geräte sind zurück, gültig bis 03/2028. Prüfprotokolle liegen im Intranet."],["17.10.","Bereitschaft Winter","Ab 01.12. gilt der Bereitschaftsplan. Bitte Wünsche bis 15.11. eintragen."]],
+ unterweisung:[["uw1","Jährliche Unterweisung Arbeiten an Gasanlagen","TRGI / DVGW G 600, Dichtheitsprüfung, Gasgeruch"],["uw2","Betriebsanweisung Abgasmessgerät","Umgang, Kalibrierung, Kondensatfalle"]],
+ ordner:[["Herstellerunterlagen","Weishaupt, Buderus, Viessmann, Wolf",[["Weishaupt WTC-GW 60-C Wartungsanleitung","pdf"],["Buderus Logano plus KB372 Serviceanleitung","pdf"],["Viessmann Vitodens 200-W Störungscodes","pdf"]]],
+  ["Betriebsanweisungen","Arbeitssicherheit, Geräte, Gefahrstoffe",[["BA Arbeiten an gasführenden Leitungen","pdf"],["BA Neutralisationsgranulat","pdf"],["BA Abgasmessgerät","pdf"]]],
+  ["Formulare und Vorlagen","Servicebericht, Merkblatt, Angebote",[["Servicebericht NOVIS (Vorlage)","pdf"],["Merkblatt Gasanlagen","pdf"],["Übergabeprotokoll Inbetriebnahme","pdf"]]],
+  ["Gefährdungsbeurteilungen","je Tätigkeit",[["GBU Wartung Gasfeuerstätten","pdf"],["GBU Arbeiten im Heizraum / Enge Räume","pdf"]]],
+  ["Fahrzeug","Fahrtenbuch, Unfallbogen, Ausstattung",[["Unfallbericht (ausfüllbar)","pdf"],["Ausstattungsliste KFZ-Lager","pdf"]]]],
+ team:[["Florian Pötzsch","Geschäftsführung","florian.poetzsch@novis-anlagentechnik.de"],["Jens Röll","Geschäftsführung","jens.roell@novis-anlagentechnik.de"],["Frank Tetzlaff","Servicetechniker","frank.tetzlaff@novis-anlagentechnik.de"],["Service-Postfach","Innendienst / Berichte","service@novis-anlagentechnik.de"]]
+};
+function vIntra(){
+ header(S.intraOrdner?S.intraOrdner:"",S.intraOrdner?"intra":"");foot.innerHTML="";
+ if(S.intraOrdner){const o=INTRA.ordner.find(x=>x[0]===S.intraOrdner);
+  main.innerHTML=`<div class="pad"><p class="hint">NOVIS Intranet › Dokumente › ${esc(o[0])}</p>${o[2].map(f=>docRow(f[1],f[0],"PDF · zuletzt geändert 10/2026","SharePoint › Intranet › "+o[0])).join("")}</div>`;return}
+ const q=(S.intraQ||"").toLowerCase();
+ const offen=INTRA.unterweisung.filter(u=>!(S.uw||[]).includes(u[0]));
+ main.innerHTML=`<div class="pad">
+  <div class="greet"><h2>Intranet</h2><p>NOVIS Anlagentechnik · die SharePoint-Anbindung folgt</p></div>
+  <label class="search" style="border-width:1px" for="iq"><span style="color:var(--muted);display:grid">${I.lupe.replace('<svg','<svg width="20" height="20"')}</span><input id="iq" type="text" placeholder="Dokument suchen, z. B. Störungscodes" value="${esc(S.intraQ||"")}" style="font-size:16px;font-weight:500;letter-spacing:0"></label>
+  ${q?`<div class="panel"><h4>Treffer</h4>${INTRA.ordner.flatMap(o=>o[2].map(f=>[o,f])).filter(([o,f])=>(f[0]+" "+o[0]).toLowerCase().includes(q)).map(([o,f])=>docRow(f[1],f[0],o[0],"SharePoint › Intranet › "+o[0])).join("")||'<p class="hint">Kein Dokument gefunden.</p>'}</div>`:""}
+  ${offen.length?`<div class="panel"><h4>Zu bestätigen <span class="chip or">${offen.length}</span></h4>${offen.map(u=>`<div class="check" style="flex-direction:column;align-items:stretch;gap:8px;box-shadow:none;background:var(--surface2)"><span><b>${esc(u[1])}</b><br><span class="hint">${esc(u[2])}</span></span><span class="row"><button type="button" class="btn sec" data-doc="SharePoint › Intranet › Unterweisungen" style="padding:10px">Lesen</button><button type="button" class="btn" data-uw="${u[0]}" style="padding:10px">Gelesen und verstanden</button></span></div>`).join("")}</div>`
+   :`<div class="panel"><h4>Unterweisungen</h4><p class="hint" style="margin:0">Alles bestätigt. Danke!</p></div>`}
+  <div class="panel"><h4>Neuigkeiten</h4><div class="hist">${INTRA.news.map(n=>`<div><time>${n[0]}</time><span><b>${esc(n[1])}</b><br>${esc(n[2])}</span></div>`).join("")}</div></div>
+  <div class="panel"><h4>Dokumente</h4>${INTRA.ordner.map(o=>`<button type="button" class="doc" data-iord="${esc(o[0])}"><span class="di ordner">${DOC_ICON.ordner}</span><span class="dt"><b>${esc(o[0])}</b><span>${esc(o[1])} · ${o[2].length} Dateien</span></span><span class="dg" aria-hidden="true">›</span></button>`).join("")}</div>
+  <div class="panel"><h4>Team</h4>${[...(NF.team||[]).filter(t=>t.aktiv).map(t=>[t.name,t.rolle==="Monteur"?"Servicetechniker":t.rolle,t.email+(t.telefon?" · "+t.telefon:"")]),["Service-Postfach","Innendienst / Berichte","service@novis-anlagentechnik.de"]].map(t=>`<div class="contact"><span>${esc(t[1])}</span><b>${esc(t[0])}</b><span class="tel" style="font-size:13px">${esc(t[2])}</span></div>`).join("")}</div>
+ </div>`;
+}
+
+/* ---------- Fehlanfahrt ---------- */
+function folgeFor(job){return(S.folgen||[]).filter(f=>f.job===job)}
+function vFehl(){
+ const a=ANLAGEN[S.q],job=JOBS.find(j=>j.q===S.q);if(!job){go("heute");return}
+ const F0=S.fa&&S.fa.job===job.id?S.fa:(S.fa={job:job.id,an:nowT(),warte:"15",fz:"",km:"",klingel:true,anruf:false,ap:false,karte:false,foto:0,bem:""});
+ header("Kunde nicht angetroffen","anlage");
+ const ck=(k,l)=>`<label class="check"><input type="checkbox" data-fa="${k}" ${F0[k]?"checked":""}>${l}</label>`;
+ main.innerHTML=`<div class="pad">
+  <div class="panel"><h4>${esc(a.kunde.name1)}</h4><p class="hint" style="margin-top:-6px">${esc(a.kunde.str)}, ${esc(a.kunde.plz)} ${esc(a.kunde.ort)} · ${a.nv}</p>
+   <div class="grid2"><label class="f req"><span>Angekommen um</span><input type="time" data-fat="an" value="${esc(F0.an)}"></label>
+   <label class="f"><span>Gewartet</span><span class="unit"><input type="text" inputmode="numeric" class="num" data-fat="warte" value="${esc(F0.warte)}"><em>min</em></span></label></div></div>
+  <div class="panel"><h4>Was hast du versucht?</h4>
+   ${ck("klingel","Geklingelt / geklopft")}${ck("anruf","Kunde angerufen · "+a.kunde.tel)}${ck("ap","Ansprechpartner angerufen")}${ck("karte","Benachrichtigungskarte hinterlassen")}
+   <label class="btn sec" for="faFoto">${F0.foto?"✓ Foto angehängt":"Foto (Haustür, Karte im Briefkasten)"}</label><input id="faFoto" type="file" accept="image/*" hidden></div>
+  <div class="panel"><h4>Fahrt</h4>
+   <label class="f req"><span>Fahrzeit gesamt</span><span class="unit"><input type="text" inputmode="decimal" class="num" data-fat="fz" value="${esc(F0.fz)}" placeholder="0,5"><em>h</em></span></label>
+   <div class="tb">${["0,25","0,5","0,75","1,0"].map(x=>`<button type="button" data-fafz="${x}">${x} h</button>`).join("")}</div>
+   <label class="f"><span>Fahrtkilometer</span><span class="unit"><input type="text" inputmode="numeric" class="num" data-fat="km" value="${esc(F0.km)}"><em>km</em></span></label></div>
+  <label class="f"><span>Bemerkung</span><textarea data-fat="bem" style="min-height:70px" placeholder="z. B. Tor verschlossen, Hausmeister nicht erreichbar">${esc(F0.bem)}</textarea></label>
+  <p class="hint">Der Innendienst bekommt eine Meldung und vereinbart einen neuen Termin. Die Anfahrt wird nach Vertrag berechnet.</p>
+ </div>`;
+ foot.innerHTML=`<div class="foot"><button class="btn" type="button" id="faSave">Fehlanfahrt melden</button></div>`;
+}
+function faSave(){
+ const F0=S.fa,o=AUFTRAEGE.find(x=>x.id===F0.job);if(!o){go("heute");return}
+ if(n(F0.fz)==null){toast("Bitte Fahrzeit eintragen");return}
+ if(!F0.klingel&&!F0.anruf&&!F0.ap){toast("Bitte angeben, wie du den Kunden erreichen wolltest");return}
+ const sb=nr("SB");if(!sb)return;
+ NF.setze("berichte",sb,{sb,id:o.id,nv:o.nv,tech:TECH.id,art:"Fehlanfahrt",datum:iso(new Date()),status:"neu",az:0,fz:n(F0.fz),km:n(F0.km)||0,mat:0,materialListe:[],qa:null,zustand:"",folge:0,plan:o.dauer,daten:{einsatzart:"Fehlanfahrt",fa:F0,fotos:F0.fotos||[],zd:iso(new Date())}});
+ NF.setze("auftraege",o.id,{status:"offen",tech:null,date:null,time:null,grund:o.grund+` · Fehlanfahrt am ${fmt(new Date())}, neuen Termin vereinbaren`});
+ delete S.reports[o.id];S.fa=null;S.cur=null;go("heute",{tab:"heute"});toast("Fehlanfahrt gemeldet – das Büro plant neu");
+}
+/* ---------- Folgeauftrag ---------- */
+const FOLGE_TB=["Sicherheitsrelevante Bauteile tauschen (Gasarmatur, Feuerungsautomat)","Zündelektrode tauschen","Umwälzpumpe tauschen","MAG-Vordruck einstellen / MAG tauschen","Abgasanlage instand setzen","Wärmetauscher chemisch reinigen","Regelung / Fühler tauschen"];
+function vFolge(){
+ const r=R();if(!r){go("heute");return}const a=ANLAGEN[r.q];
+ const D=S.fd&&S.fd.job===r.job?S.fd:(S.fd={job:r.job,text:"",dring:"In 2 Wochen",angebot:true,dauer:"",mat:[],foto:0});
+ header("Folgeauftrag","einsatz");
+ main.innerHTML=`<div class="pad">
+  <div class="panel" style="gap:6px"><span class="hint">Verknüpft mit</span><b>${r.job} · ${esc(r.einsatzart)} · ${a.nv}</b><span class="hint">${esc(a.kunde.name1)}, ${esc(a.kunde.ort)}</span></div>
+  <label class="f req"><span>Was muss gemacht werden?</span><textarea data-fd="text" placeholder="Kurz beschreiben, was aufgefallen ist und was zu tun ist">${esc(D.text)}</textarea></label>
+  <div class="tb">${FOLGE_TB.map(t=>`<button type="button" data-fdadd="${esc(t)}">+ ${esc(t)}</button>`).join("")}</div>
+  <div class="panel"><h4>Wie dringend?</h4>
+   <div class="seg" role="group">${["Sofort","In 2 Wochen","Nächste Wartung"].map(x=>`<button type="button" data-fdset="dring" data-val="${x}" aria-pressed="${D.dring===x}">${x}</button>`).join("")}</div>
+   ${D.dring==="Sofort"?'<div class="alert">Bei Gefahr Anlage außer Betrieb nehmen und den Betreiber schriftlich informieren (Schritt Prüfung).</div>':""}
+   <label class="check"><input type="checkbox" data-fdchk="angebot" ${D.angebot?"checked":""}>Kunde braucht vorher ein Angebot</label></div>
+  <div class="panel"><h4>Dauer und Material</h4>
+   <label class="f"><span>Geschätzte Dauer</span><span class="unit"><input type="text" inputmode="decimal" class="num" data-fd="dauer" value="${esc(D.dauer)}" placeholder="1,5"><em>h</em></span></label>
+   <label class="f"><span>Material suchen</span><input id="fdsearch" type="text" placeholder="Nummer oder Bezeichnung" autocomplete="off"></label>
+   <div id="fdres" class="tb"></div>
+   ${D.mat.map((m,i)=>`<div class="check" style="justify-content:space-between"><span style="min-width:0">${esc(m.bez)} <span class="hint">${esc(m.nr)}</span></span><button type="button" class="chip" data-fdmdel="${i}" aria-label="entfernen">✕</button></div>`).join("")}</div>
+  <div class="panel"><h4>Foto</h4><label class="btn sec" for="fdFoto">${D.foto?"✓ "+D.foto+" Foto(s) angehängt":"Schaden fotografieren"}</label><input id="fdFoto" type="file" accept="image/*" multiple hidden></div>
+ </div>`;
+ foot.innerHTML=`<div class="foot"><button class="btn sec" type="button" data-go="einsatz" style="flex:0 0 32%">Abbrechen</button><button class="btn" type="button" id="fdSave">Folgeauftrag anlegen</button></div>`;
+}
+function fdSave(){
+ const D=S.fd,r=R();if(D.text.trim().length<5){toast("Bitte beschreiben, was zu tun ist");return}
+ const a=ANLAGEN[r.q],id=nr("A");if(!id)return;
+ NF.setze("auftraege",id,{id,nv:a.nv,art:"Folgeauftrag",quelle:`Folgeauftrag aus ${r.job}`,grund:D.text.trim(),dring:D.dring,angebot:D.angebot,dauer:n(D.dauer)||2,mat:D.mat,fotos:D.fotos||[],folge_von:r.job,tech:null,date:null,time:null,status:"offen",prio:D.dring==="Sofort"?"hoch":""});
+ r.nachverfolgen=true;S.fd=null;go("einsatz");toast(id+" angelegt – das Büro sieht ihn sofort");
+}
+/* ---------- Push: Systemwartung heute Nacht (vom Büro freigegeben) ---------- */
+const WART={get zeit(){const w=(NF.get("einstellungen","allgemein")||{}).wartung;return w&&w.zeit||"02:00"},get text(){return`Ab ${this.zeit} Uhr wird N-Flow aktualisiert, die App ist dann etwa eine Minute nicht erreichbar. Bitte offene Berichte vorher senden. Entwürfe bleiben auf dem Handy erhalten.`}};
+function showPush(){S.pushSeen=iso(new Date());save();hidePush();const el=document.createElement("div");el.className="push";el.id="push";el.setAttribute("role","alert");
+ el.innerHTML=`<button type="button" class="push-b" id="pushOpen"><span class="pp-h"><i>N</i>N-FLOW<span>jetzt</span></span><b>Wartung heute Nacht ${WART.zeit} Uhr</b><span class="pt">${WART.text}</span></button><button type="button" class="push-x" id="pushX" aria-label="Schließen">✕</button>`;
+ $("#phone").appendChild(el);if(S.view==="heute")render();clearTimeout(window.__pt);window.__pt=setTimeout(hidePush,9000)}
+function hidePush(){const el=$("#push");if(el)el.remove()}
+function wartHint(){if(!S.wartAktiv||S.wartX)return"";const q=S.queue.length;
+ return`<div class="wart"><span class="wi">!</span><span><b>Systemwartung heute Nacht ${WART.zeit} Uhr</b><small>App etwa 1 Minute nicht erreichbar.${q?` Du hast noch ${q} Bericht${q>1?"e":""} im Postausgang, bitte vorher senden.`:" Dein Postausgang ist leer, alles übertragen."}</small></span><button type="button" class="wx" id="wartX" aria-label="Hinweis ausblenden">✕</button></div>`}
+/* ---------- Mein Wartungspool ---------- */
+function poolStat(p){const pl=poolPlan(p),t=Math.round((new Date(p.due+"T12:00")-new Date(iso(new Date())+"T12:00"))/864e5);
+ if(p.done)return{k:"done",c:"ok",l:"erledigt "+fmt(p.done+"T12:00")};
+ if(pl)return{k:"plan",c:"bl",l:"Termin "+new Date(pl.date+"T12:00").toLocaleDateString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit"})+" "+pl.time};
+ if(t<0)return{k:"over",c:"cr",l:`überfällig seit ${-t} Tagen`,t};
+ if(t<=60)return{k:"due",c:"wa",l:`fällig in ${t} Tagen`,t};
+ return{k:"later",c:"",l:`fällig ${fmt(p.due+"T12:00")}`,t}}
+function poolCard(){const st=POOL.map(poolStat),ue=st.filter(x=>x.k==="over").length,f=st.filter(x=>x.k==="due").length,ok=st.filter(x=>x.k==="done"||x.k==="plan").length;
+ return`<button type="button" class="poolcard" data-go="pool"><span class="pc-t"><b>Mein Wartungspool</b><span>${ok} von ${POOL.length} Anlagen erledigt oder geplant</span></span>
+  <span class="chips">${ue?`<span class="chip cr">${ue} überfällig</span>`:""}${f?`<span class="chip wa">${f} fällig in 60 Tagen</span>`:""}${!ue&&!f?'<span class="chip ok">alles im Plan</span>':""}</span>
+  <span class="pc-bar"><i style="width:${Math.round(ok/POOL.length*100)}%"></i></span></button>`}
+function vPool(){
+ header("Mein Wartungspool","heute");foot.innerHTML="";
+ const order={over:0,due:1,later:2,plan:3,done:4},list=POOL.map(p=>({p,s:poolStat(p)})).sort((a,b)=>order[a.s.k]-order[b.s.k]||a.p.due.localeCompare(b.p.due));
+ main.innerHTML=`<div class="pad">
+  <p class="hint">Diese Anlagen hat dir das Büro zugeordnet. Plane die Wartung selbst ein, am besten so, dass sie zu deinen anderen Einsätzen in der Nähe passt. Der Termin erscheint sofort auf der Plantafel im Büro. Die automatische Terminbestätigung an den Kunden folgt.</p>
+  ${list.map(({p,s})=>`<div class="panel poolitem">
+   <div class="pi-h"><span><b>${esc(p.kunde)}</b><span class="hint">${p.nv} · ${esc(p.ort)} · ${esc(p.ger)}</span></span><span class="chip ${s.c}">${s.l}</span></div>
+   ${S.poolEdit===p.nv?`<div class="grid3"><label class="f"><span>Tag</span><input type="date" id="pd" min="${iso(new Date())}" value="${naechsterWerktag(Math.max(1,Math.min(14,s.t??7)))}"></label>
+     <label class="f"><span>Ankunft ab</span><select id="pt">${["07:30","08:00","09:00","10:00","11:00","13:00","14:00"].map(x=>`<option>${x}</option>`).join("")}</select></label>
+     <label class="f"><span>Dauer</span><input type="text" class="num" value="${de(p.dauer)} h" disabled></label></div>
+     <div class="row"><button type="button" class="btn sec" data-pedit="">Abbrechen</button><button type="button" class="btn" data-psave="${p.nv}">Termin festlegen</button></div>
+     <p class="hint">Kunde anrufen: <span style="user-select:all">${esc(p.tel||"")}</span></p>`
+   :s.k==="done"?"":`<div class="row">${s.k==="plan"&&!p.fix?`<button type="button" class="btn ghost" data-pdel="${p.nv}">Termin löschen</button>`:""}${p.fix?'<p class="hint" style="margin:0">Vom Büro eingeplant, steht in deiner Tour.</p>':`<button type="button" class="btn ${s.k==="plan"?"sec":""}" data-pedit="${p.nv}">${s.k==="plan"?"Termin ändern":"Termin festlegen"}</button>`}</div>`}
+  </div>`).join("")}
+ </div>`;
+}
+
+/* ---------- Neue Anlage (Inbetriebnahme) ---------- */
+function newCode(){const c="ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";let x="";for(let i=0;i<10;i++)x+=c[Math.floor(Math.random()*c.length)];return x}
+function nextNv(){const l=(NF.lokal.lies("nummern",{}).NV||[]);return l[0]||"neue Nummer"}
+function adhocJob(q,art,grund){const a=ANLAGEN[q],id=nr("A");if(!id||!a)return null;NF.setze("auftraege",id,{id,nv:a.nv,art,quelle:"Monteur vor Ort",grund,dauer:1,tech:TECH.id,date:iso(new Date()),time:nowT(),status:"geplant"});aufbauen();return JOBS.find(j=>j.id===id)||{id,q,zeit:nowT(),dauer:"–",art,grund,prio:""}}
+function neuBlank(code){return{code,energie:"Gas",geraet:"Brennwertkessel",kunde:"neu",k_name1:"",k_name2:"",k_str:"",k_plz:"",k_ort:"",k_tel:"",k_mail:"",ansprech:"",zugang:"",
+ hersteller:"",typ:"",sernr:"",baujahr:String(new Date().getFullYear()),ibn:isoD(),kw:"",gasart:"Erdgas H",ans:"20",
+ oel:"Heizöl EL schwefelarm",br_herst:"",br_typ:"",br_sernr:"",duese:"",winkel:"60° S",pumpdruck:"",tank:"",tankart:"Kunststoff-Batterietank",filter:"Einstrang mit Rücklaufzuführung",
+ regler_herst:"",regler_typ:"",regler_sw:"",aussenf:true,hk_gem:"1",hk_ungem:"0",glt:false,
+ pumpen:"2",weiche:"Hydraulische Weiche",mag:"",druck:"1,5",wwJa:"Ja",ww:"WW-Speicher",ww_l:"",schema:0,schemaName:"",kaskade:"Nein",
+ abgas:"LAS (raumluftunabhängig)",intervall:"12",vertrag:"Wartungsvertrag",typenschild:0}}
+const NFeld=(k,label,o={})=>{const v=S.neu[k];return`<label class="f ${o.req?"req":""}"><span>${label}</span>${o.unit?'<span class="unit">':""}${o.opts?`<select data-nb="${k}">${o.opts.map(x=>`<option ${x===v?"selected":""}>${x}</option>`).join("")}</select>`:`<input type="${o.type||"text"}" ${o.num?'inputmode="decimal" class="num"':""} data-nb="${k}" value="${esc(v)}" ${o.ph?`placeholder="${o.ph}"`:""}>`}${o.unit?`<em>${o.unit}</em></span>`:""}</label>`};
+const NSEG=(k,opts)=>`<div class="seg ${opts.length>3?"g2":""}" role="group">${opts.map(x=>`<button type="button" data-nset="${k}" data-val="${x}" aria-pressed="${S.neu[k]===x}">${x}</button>`).join("")}</div>`;
+const STEP_N=(k,label)=>{const v=+S.neu[k]||0;return`<div class="check" style="justify-content:space-between"><span>${label}</span><span class="row" style="gap:6px;flex:0 0 auto;align-items:center"><button type="button" class="chip" data-nstep="${k}" data-d="-1" aria-label="weniger">−</button><b class="mono" style="min-width:20px;text-align:center">${v}</b><button type="button" class="chip" data-nstep="${k}" data-d="1" aria-label="mehr">+</button></span></div>`};
+function vNeu(){
+ const N=S.neu;if(!N){go("scan");return}
+ header("Neue Anlage anlegen","scan");
+ const kunden=NF.liste("kunden").sort((a,b)=>String(a.name1).localeCompare(String(b.name1)));
+ const oel=N.energie==="Öl",geblaese=N.geraet==="Kessel mit Gebläsebrenner"||oel;
+ main.innerHTML=`<div class="hero" style="padding-top:12px"><span class="nv">Aufkleber ${esc(N.code)} · wird ${nextNv()}</span><h2>Anlage bei Inbetriebnahme erfassen</h2><p>Pflichtfelder sind markiert. Alles andere kann der Innendienst später ergänzen.</p></div>
+ <div class="pad">
+  <div class="panel"><h4>Kunde und Standort</h4>
+   <label class="f req"><span>Kunde</span><select data-nb="kunde"><option value="neu" ${N.kunde==="neu"?"selected":""}>Neuer Kunde</option>${kunden.map(k=>`<option value="${k.nr}" ${N.kunde===k.nr?"selected":""}>${esc(k.name1)} · ${esc(k.ort)}</option>`).join("")}</select></label>
+   ${N.kunde==="neu"?`${NFeld("k_name1","Name / Firma",{req:1})}${NFeld("k_name2","Zusatz (Objekt, Vorname)")}${NFeld("k_str","Straße, Hausnr.",{req:1})}
+   <div class="grid2" style="grid-template-columns:110px 1fr">${NFeld("k_plz","PLZ",{req:1,num:1})}${NFeld("k_ort","Ort",{req:1})}</div>
+   <div class="grid2">${NFeld("k_tel","Telefon")}${NFeld("k_mail","E-Mail")}</div>`:""}
+   ${NFeld("ansprech","Ansprechpartner vor Ort")}${NFeld("zugang","Zugang / Aufstellort",{ph:"z. B. Heizraum UG, Schlüssel beim Hausmeister"})}</div>
+
+  <div class="panel"><h4>Wärmeerzeuger</h4>
+   <label class="f req"><span>Energieart</span>${NSEG("energie",["Gas","Öl"])}</label>
+   ${oel?"":`<label class="f req"><span>Bauart</span>${NSEG("geraet",["Brennwertkessel","Wandgerät","Kessel mit Gebläsebrenner","Niedertemperatur"])}</label>`}
+   <div class="grid2">${NFeld("hersteller","Hersteller",{req:1})}${NFeld("typ","Typ / Ausführung",{req:1})}</div>
+   ${NFeld("sernr","Seriennummer",{req:1})}
+   <div class="grid3">${NFeld("baujahr","Baujahr",{req:1,num:1})}${NFeld("kw","Nennleistung",{req:1,num:1,unit:"kW"})}${NFeld("ibn","Inbetriebnahme",{type:"date"})}</div>
+   ${oel?`${NFeld("oel","Brennstoff",{opts:["Heizöl EL schwefelarm","Heizöl EL A Bio 10","Heizöl EL A Bio 20"]})}`
+    :`<div class="grid2">${NFeld("gasart","Gasart",{req:1,opts:["Erdgas H","Erdgas L","Flüssiggas"]})}${NFeld("ans","Anschlussdruck",{req:1,num:1,unit:"mbar"})}</div>`}
+  </div>
+
+  ${geblaese?`<div class="panel"><h4>Brenner</h4>
+   <div class="grid2">${NFeld("br_herst","Hersteller",{req:1})}${NFeld("br_typ","Typ",{req:1})}</div>${NFeld("br_sernr","Seriennummer")}
+   ${oel?`<div class="grid2">${NFeld("duese","Düse",{req:1,ph:"0,60",unit:"gph"})}${NFeld("winkel","Sprühwinkel",{opts:["45° S","60° S","60° H","80° S","80° H"]})}</div>
+   ${NFeld("pumpdruck","Pumpendruck",{req:1,num:1,unit:"bar"})}
+   <div class="grid2">${NFeld("tank","Tankinhalt",{num:1,unit:"l"})}${NFeld("tankart","Tankart",{opts:["Kunststoff-Batterietank","Stahltank Keller","Erdtank","Doppelwandtank"]})}</div>
+   ${NFeld("filter","Ölfilter / Leitung",{opts:["Einstrang mit Rücklaufzuführung","Einstrang","Zweistrang"]})}`:""}</div>`:""}
+
+  <div class="panel"><h4>Regelung</h4>
+   <div class="grid2">${NFeld("regler_herst","Hersteller",{req:1})}${NFeld("regler_typ","Regler / Modul",{req:1,ph:"z. B. Logamatic 5313"})}</div>
+   ${NFeld("regler_sw","Softwarestand")}
+   ${STEP_N("hk_gem","Heizkreise gemischt")}${STEP_N("hk_ungem","Heizkreise ungemischt")}
+   <label class="check"><input type="checkbox" data-nchk="aussenf" ${N.aussenf?"checked":""}>Außenfühler vorhanden</label>
+   <label class="check"><input type="checkbox" data-nchk="glt" ${N.glt?"checked":""}>Anbindung an GLT / Fernwartung</label></div>
+
+  <div class="panel"><h4>Hydraulik</h4>
+   ${STEP_N("pumpen","Anzahl Umwälzpumpen")}
+   ${NFeld("weiche","Systemtrennung",{opts:["Hydraulische Weiche","Plattenwärmetauscher","Keine"]})}
+   <div class="grid2">${NFeld("druck","Anlagendruck",{num:1,unit:"bar"})}${NFeld("mag","MAG Vordruck",{num:1,unit:"bar"})}</div>
+   <label class="f req"><span>Warmwasserbereitung über diese Anlage</span>${NSEG("wwJa",["Ja","Nein"])}</label>
+   ${N.wwJa==="Ja"?`<label class="f req"><span>Art</span>${NSEG("ww",["WW-Speicher","Frischwasserstation"])}</label>
+   <div class="grid2">${NFeld("ww_l",N.ww==="WW-Speicher"?"Speicherinhalt":"Pufferspeicher",{num:1,unit:"l"})}${NFeld("ww_herst","Hersteller / Typ")}</div>`:""}
+   ${NFeld("kaskade","Kaskade",{opts:["Nein","2 Geräte","3 Geräte","4 Geräte"]})}</div>
+
+  <div class="panel"><h4>Abgas und Wartung</h4>
+   ${NFeld("abgas","Abgasanlage",{opts:["LAS (raumluftunabhängig)","Schornstein (raumluftabhängig)","Abgasleitung im Schacht, raumluftabhängig","Außenwandanschluss"]})}
+   <div class="grid2">${NFeld("intervall","Wartungsintervall",{opts:["12","24"],unit:"Mon."})}${NFeld("vertrag","Vertrag",{opts:["Wartungsvertrag","Einzelauftrag","Noch offen"]})}</div></div>
+
+  <div class="panel"><h4>Anlagenschema</h4><p class="hint">${N.schema?"✓ "+esc(N.schemaName||"Anlagenschema")+" angehängt.":"Hydraulikschema als Foto, PDF oder Skizze. Es liegt danach in der Anlagenakte und im Kundenordner."}</p>
+   <label class="btn sec" for="schemaNeu">${N.schema?"Anderes Schema wählen":"Anlagenschema ablegen"}</label><input id="schemaNeu" type="file" accept="image/*,application/pdf" hidden></div>
+  <div class="panel"><h4>Typenschild</h4><p class="hint">${N.typenschild?"✓ Foto vom Typenschild angehängt.":"Ein Foto vom Typenschild hilft dem Innendienst beim Prüfen der Daten."}</p>
+   <label class="btn sec" for="tsFoto">Typenschild fotografieren</label><input id="tsFoto" type="file" accept="image/*" hidden></div>
+
+ </div>`;
+ foot.innerHTML=`<div class="foot"><button class="btn" type="button" id="neuSave">Anlage anlegen</button></div>`;
+}
+function neuMissing(){const N=S.neu,oel=N.energie==="Öl",gb=N.geraet==="Kessel mit Gebläsebrenner"||oel;
+ const req=[["hersteller","Hersteller"],["typ","Typ"],["sernr","Seriennummer"],["baujahr","Baujahr"],["kw","Nennleistung"],["regler_herst","Regler-Hersteller"],["regler_typ","Regler"]];
+ if(N.kunde==="neu")req.unshift(["k_name1","Kundenname"],["k_str","Straße"],["k_plz","PLZ"],["k_ort","Ort"]);
+ if(!oel)req.push(["ans","Anschlussdruck"]);
+ if(gb)req.push(["br_herst","Brenner-Hersteller"],["br_typ","Brenner-Typ"]);
+ if(oel)req.push(["duese","Düse"],["pumpdruck","Pumpendruck"]);
+ return req.filter(([k])=>!String(N[k]||"").trim()).map(x=>x[1])}
+function neuSave(){
+ const miss=neuMissing();if(miss.length){toast("Es fehlt noch: "+miss.slice(0,3).join(", ")+(miss.length>3?" …":""));return}
+ const N=S.neu,oel=N.energie==="Öl",gb=N.geraet==="Kessel mit Gebläsebrenner"||oel;
+ if(NF.liste("anlagen").some(a=>a.qr===N.code)){toast("Dieser Aufkleber gehört schon zu einer Anlage");return}
+ const nv=nr("NV");if(!nv)return;let knr=N.kunde;
+ if(knr==="neu"){knr=nr("K");if(!knr)return;NF.setze("kunden",knr,{name1:N.k_name1.trim(),name2:N.k_name2.trim(),str:N.k_str.trim(),plz:N.k_plz.trim(),ort:N.k_ort.trim(),tel:N.k_tel.trim(),mail:N.k_mail.trim()})}
+ const k=NF.get("kunden",knr)||{};
+ const details={"Regelung":[["Regler",N.regler_herst+" "+N.regler_typ],["Software",N.regler_sw||"–"],["Heizkreise",N.hk_gem+" gemischt, "+N.hk_ungem+" ungemischt"],["Außenfühler",N.aussenf?"ja":"nein"],["GLT",N.glt?"ja":"nein"]],
+  "Hydraulik":[["Pumpen",N.pumpen],["Systemtrennung",N.weiche],["MAG Vordruck",N.mag?N.mag+" bar":"–"],["Warmwasser",N.wwJa==="Nein"?"nein":N.ww+(N.ww_l?" · "+N.ww_l+" l":"")+(N.ww_herst?" · "+N.ww_herst:"")],["Kaskade",N.kaskade]],
+  "Abgas / Wartung":[["Abgasanlage",N.abgas],["Intervall",N.intervall+" Monate"],["Inbetriebnahme",fmt(N.ibn)]]};
+ if(gb)details["Brenner"]=[["Brenner",N.br_herst+" "+N.br_typ],["Seriennr.",N.br_sernr||"–"],...(oel?[["Düse",N.duese+" gph "+N.winkel],["Pumpendruck",N.pumpdruck+" bar"],["Tank",(N.tank?N.tank+" l ":"")+N.tankart],["Leitung",N.filter]]:[])];
+ const vertrag=N.vertrag==="Wartungsvertrag";
+ NF.setze("anlagen",nv,{nv,qr:N.code,knr,str:k.str||N.k_str,plz:k.plz||N.k_plz,ort:k.ort||N.k_ort,ansprech:N.ansprech,zugang:N.zugang,hersteller:N.hersteller,typ:N.typ,ger:N.hersteller+" "+N.typ,sernr:N.sernr,baujahr:+N.baujahr||null,kw:n(N.kw)||0,
+  en:oel?"Öl":"Gas",gas:oel?N.oel:N.gasart,ans:oel?"":N.ans,druck:N.druck,geraete:N.kaskade==="Nein"?1:parseInt(N.kaskade)||1,ibn:N.ibn,letzte:N.ibn,zyk:+N.intervall||12,
+  vertrag:vertrag?"Nr. folgt":"",betreuer:vertrag?TECH.id:null,details,schema:N.schema||null,typenschild:N.typenschild||null,maengel:[]});
+ aufbauen();
+ const j=adhocJob(N.code,"Inbetriebnahme","Erstinbetriebnahme, Anlage neu angelegt");
+ S.neu=null;if(j)S.reports[j.id]=newReport(j);toast(nv+" angelegt, Aufkleber zugeordnet");go("anlage",{q:N.code,from:"heute"});
+}
+function detailPanels(d){return Object.entries(d).map(([h,rows])=>`<div class="panel"><h4>${esc(h)}</h4><dl class="kv">${rows.map(([k,v])=>`<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("")}</dl></div>`).join("")}
+
+function render(){
+ aufbauen();if(S.view!=="scan")scanStopp();applyDesk();if(S.view==="scan"&&isDesk())S.view="suche";renderTabs();
+ if(S.view==="einsatz"&&!R())S.view="heute";
+ if(S.view==="anlage"&&!ANLAGEN[S.q])S.view="heute";
+ if(S.view==="neu"&&!S.neu)S.view="scan";
+ ({heute:vHeute,scan:vScan,anlage:vAnlage,einsatz:vEinsatz,fertig:vFertig,berichte:vBerichte,ich:vIch,suche:vSuche,neu:vNeu,pool:vPool,intra:vIntra,fehl:vFehl,folge:vFolge}[S.view]||vHeute)();
+ fotoVorschau();
+}
+
+/* ---------- Ereignisse ---------- */
+function setPath(r,path,val){const p=path.split(".");if(p[0]==="m"){let o=r.mess;for(let i=1;i<p.length-1;i++)o=o[p[i]];o[p[p.length-1]]=val}else r[path]=val}
+document.addEventListener("input",e=>{
+ const t=e.target,b=t.dataset.bind;
+ if(t.id==="msearch")matSearch(t.value);
+ if(t.dataset.mv&&S.view==="einsatz"&&R()){const[sd,i,c]=t.dataset.mv.split("|");R().mess[sd].rows[+i][c]=t.value;save();mSum();refreshFoot();return}
+ if(t.id==="iq"){S.intraQ=t.value;save();const pos=t.selectionStart;render();const n2=$("#iq");if(n2){n2.focus();try{n2.setSelectionRange(pos,pos)}catch(e){}}}
+ if(t.dataset.fat&&S.fa){S.fa[t.dataset.fat]=t.value;save()}
+ if(t.dataset.fd&&S.fd){S.fd[t.dataset.fd]=t.value;save()}
+ if(t.id==="fdsearch"){const q=t.value.trim().toLowerCase(),box=$("#fdres");box.innerHTML=q?KATALOG.filter(k=>(k.join(" ")).toLowerCase().includes(q)).slice(0,6).map(k=>`<button type="button" data-fdmat="${esc(k[0])}">+ ${esc(k[1])}</button>`).join(""):""}
+ if(t.id==="nd"){S.nachDatum=t.value;save();render()}
+ if(t.dataset.nb&&S.neu){S.neu[t.dataset.nb]=t.value;save();if(t.tagName==="SELECT")render()}
+ if(t.id==="q"){suche(t.value);save()}
+ if(!b)return;
+ if(S.view==="einsatz"&&R()){setPath(R(),b,t.value);save();const zs=$("#zsum");if(zs)zs.innerHTML=zsum(R());if(b.startsWith("m."))calc();refreshFoot();
+}
+});
+function matSearch(q){const box=$("#mres");q=q.trim().toLowerCase();if(!q){box.innerHTML="";return}
+ const hits=KATALOG.filter(k=>(k[0]+" "+k[1]+" "+k[2]).toLowerCase().includes(q)).slice(0,6);
+ box.innerHTML=hits.length?hits.map(k=>`<button type="button" data-mat="${esc(k[0])}">+ ${esc(k[1])} <span class="mono" style="color:var(--muted)">${esc(k[0])}</span></button>`).join(""):'<p class="hint">Kein Artikel gefunden. Freitext-Position folgt in der nächsten Version.</p>'}
+document.addEventListener("change",e=>{
+ const t=e.target,r=S.view==="einsatz"&&R();
+ if(t.dataset.fa&&S.fa){S.fa[t.dataset.fa]=t.checked;save()}
+ if(t.id==="faFoto"&&S.fa&&t.files[0]){hochladen(t.files,ids=>{S.fa.fotos=(S.fa.fotos||[]).concat(ids);S.fa.foto=S.fa.fotos.length;save();render();toast("Foto angehängt")})}
+ if(t.dataset.fdchk&&S.fd){S.fd[t.dataset.fdchk]=t.checked;save()}
+ if(t.id==="fdFoto"&&S.fd&&t.files[0]){hochladen(t.files,ids=>{S.fd.fotos=(S.fd.fotos||[]).concat(ids);S.fd.foto=S.fd.fotos.length;save();render();toast("Foto angehängt")})}
+ if(t.dataset.nchk&&S.neu){S.neu[t.dataset.nchk]=t.checked;save()}
+ if(t.id==="schemaNeu"&&S.neu&&t.files[0]){const nm=t.files[0].name;hochladen(t.files,ids=>{S.neu.schema=ids[0];S.neu.schemaName=nm;save();render();toast("Anlagenschema angehängt")})}
+ if(t.id==="schemaAnl"&&t.files[0]){const nv=ANLAGEN[S.q].nv;hochladen(t.files,ids=>{NF.setze("anlagen",nv,{schema:ids[0]});render();toast("Anlagenschema abgelegt")})}
+ if(t.id==="tsFoto"&&S.neu&&t.files[0]){hochladen(t.files,ids=>{S.neu.typenschild=ids[0];save();render();toast("Typenschild angehängt")})}
+ if(t.id==="bk"){S.belegKat=t.value;save();render()}
+ if(t.id==="bf"&&t.files[0]){const f=t.files[0];NF.bildVerkleinern(f).then(bl=>{belegDatei=bl;const u=URL.createObjectURL(bl),im=new Image();im.onload=()=>{const c=document.createElement("canvas"),sc=96/Math.max(im.width,im.height);c.width=im.width*sc;c.height=im.height*sc;c.getContext("2d").drawImage(im,0,0,c.width,c.height);S.belegFoto=c.toDataURL("image/jpeg",.7);save();render();toast("Quittung fotografiert")};im.src=u}).catch(()=>toast("Foto konnte nicht gelesen werden"))}
+ if(t.id==="papScan"&&r&&t.files[0]){hochladen(t.files,ids=>{r.papScan=ids[0];save();render();toast("Scan angehängt")})}
+ if(t.id==="foto"&&r&&t.files[0]){const nn=t.files.length;hochladen(t.files,ids=>{r.fotos=(r.fotos||[]).concat(ids);save();render();toast(nn+" Foto(s) angehängt")})}
+ if(t.id==="alsTech"){S.alsTech=t.value||null;save();render();toast(t.value?"Du arbeitest jetzt für "+TECH.name:"Wieder deine eigene Ansicht");return}
+ if(t.dataset.mub&&r){const[sd,j]=t.dataset.mub.split("|");r.mess[sd].ub[j]=t.checked;save()}
+ if(t.dataset.flag&&r){r[t.dataset.flag]=t.checked;save();if(t.dataset.flag==="nichtVorOrt"||t.dataset.flag==="papier")render();else refreshFoot()}
+ if(t.dataset.kfz&&r){r.material[+t.dataset.kfz].kfz=t.checked;save()}
+});
+document.addEventListener("click",e=>{
+ const tr=e.target.closest("tr[data-nach]");if(tr){if(tr.dataset.nach>=isoD()){toast("Heute bitte oben stempeln");return}S.nachDatum=tr.dataset.nach;save();render();const np=$("#nachPanel");if(np&&np.scrollIntoView)np.scrollIntoView({block:"start",behavior:"smooth"});return}
+ const t=e.target.closest("button,[data-q]");if(!t)return;const d=t.dataset,r=S.view==="einsatz"&&R();
+
+ if(t.id==="abmelden"){fetch("/auth/logout",{method:"POST"}).finally(()=>{location.href="/"});return}
+
+
+
+ if(d.tab){S.tab=d.tab;if(d.tab==="intra")S.intraOrdner=null;go(d.tab);return}
+
+
+ if(t.id==="pushOpen"||t.closest&&t.closest("#pushOpen")){hidePush();S.tab="heute";go("heute");return}
+ if(t.id==="pushX"){hidePush();return}
+ if(t.id==="wartX"){S.wartXDatum=iso(new Date());save();render();return}
+ if(t.id==="faSave"){faSave();return}
+ if(d.pedit!==undefined){S.poolEdit=d.pedit||null;save();render();return}
+ if(d.psave){const dt=$("#pd").value,tm=$("#pt").value;if(!dt){toast("Bitte Tag wählen");return}const w=new Date(dt+"T12:00").getDay();if(!(w%6)){toast("Bitte einen Werktag wählen");return}
+  const p0=POOL.find(x=>x.nv===d.psave),id=p0&&p0._plan?p0._plan.id:nr("A");if(!id)return;
+  NF.setze("auftraege",id,{id,nv:d.psave,art:"Wartung",quelle:"Wartungspool (Monteur)",grund:"Wartung lt. Vertrag",dauer:p0?p0.dauer:2,tech:TECH.id,date:dt,time:tm,status:"geplant"});
+  S.poolEdit=null;save();render();toast("Termin eingetragen · steht in deinem Kalender und auf der Plantafel");return}
+ if(d.pdel){const p0=POOL.find(x=>x.nv===d.pdel);if(p0&&p0._plan)NF.loesche("auftraege",p0._plan.id);render();toast("Termin gelöscht");return}
+ if(d.fafz&&S.fa){S.fa.fz=d.fafz;save();render();return}
+ if(t.id==="fdSave"){fdSave();return}
+ if(d.fdadd&&S.fd){S.fd.text=(S.fd.text.trim()?S.fd.text.trim()+"\n":"")+d.fdadd;save();render();return}
+ if(d.fdset&&S.fd){S.fd[d.fdset]=d.val;save();render();return}
+ if(d.fdmat&&S.fd){const k=KATALOG.find(x=>x[0]===d.fdmat);if(!S.fd.mat.some(m=>m.nr===k[0]))S.fd.mat.push({nr:k[0],bez:k[1]});save();render();return}
+ if(d.fdmdel!=null&&S.fd){S.fd.mat.splice(+d.fdmdel,1);save();render();return}
+ if(d.iord){S.intraOrdner=d.iord;go("intra");return}
+ if(d.uw){NF.setze("bestaetigungen",TECH.id+"_"+d.uw,{tech:TECH.id,uw:d.uw,datum:iso(new Date()),name:TECH.name});render();toast("Bestätigt – mit Datum und Name gespeichert");return}
+ if(d.doc){if(d.doc.startsWith("/api/")){window.open(d.doc,"_blank");return}toast("Kommt mit der SharePoint-Anbindung: "+d.doc);return}
+ if(d.go){go(d.go);return}
+ if(t.id==="neuScan"){const c=newCode();S.neu=neuBlank(c);toast("Aufkleber "+c+" ist noch frei");go("neu");return}
+ if(d.nset&&S.neu){S.neu[d.nset]=d.val;save();render();return}
+ if(d.nstep&&S.neu){S.neu[d.nstep]=String(Math.max(0,(+S.neu[d.nstep]||0)+ +d.d));save();render();return}
+ if(t.id==="neuSave"){neuSave();return}
+
+
+ if(d.open){toast("Anlage "+ANLAGEN[d.open].nv);go("anlage",{q:d.open,from:"suche"});return}
+ if(d.ich){S.ichTab=d.ich;save();render();return}
+ if(d.zw){S.zWeek=Math.min(0,(S.zWeek||0)+ +d.zw);save();render();return}
+ if(t.id==="nSave"){const dt=$("#nd").value,k=$("#nk").value,g=$("#ng").value,pz=parseInt($("#np").value)||0;
+  if(!dt){toast("Bitte Tag wählen");return}if(dt>=isoD()){toast("Heute bitte oben stempeln");return}if(!k||!g||g<=k){toast("Ende muss nach Beginn liegen");return}
+  NF.setze("zeiten",TECH.id+"_"+dt,{tech:TECH.id,datum:dt,kommen:k,gehen:g,pause:pz,pauseSeit:null,nach:true,bem:$("#nb").value.trim()});S.nachDatum="";save();render();toast("Arbeitszeit für "+fmt(dt+"T12:00")+" nachgetragen");return}
+ if(d.day){S.calSel=d.day;save();render();return}
+ if(d.calm){const now=new Date(),m=S.calM?new Date(S.calM+"-01T12:00"):new Date(now.getFullYear(),now.getMonth(),1,12);m.setMonth(m.getMonth()+ +d.calm);S.calM=m.getFullYear()+"-"+String(m.getMonth()+1).padStart(2,"0");save();render();return}
+ if(t.id==="calAbo"){NF.api("/api/ich/kalender",{method:"POST"}).then(x=>{S.calAbo=x.adresse;save();render()}).catch(e=>toast(e.message));return}
+ if(t.id==="calCopy"){const u=S.calAbo;try{navigator.clipboard.writeText(u).then(()=>toast("Adresse kopiert"),()=>toast("Adresse bitte markieren und kopieren"))}catch(e){toast("Adresse bitte markieren und kopieren")}return}
+ if(d.abw){S.abwArt=d.abw;save();render();return}
+ if(d.st){const iso=isoD(),x=Object.assign({},S.arbeit[iso]||{}),now=nowT();
+  if(d.st==="kommen"){if(x.kommen){toast("Arbeitsbeginn schon gestempelt: "+x.kommen);return}x.kommen=now;toast("Arbeitsbeginn "+now)}
+  if(d.st==="pause"){if(!x.kommen||x.gehen){toast("Erst Arbeitsbeginn stempeln");return}if(x.pauseSeit){x.pause=(x.pause||0)+Math.max(0,mins(now)-mins(x.pauseSeit));x.pauseSeit=null;toast("Pause beendet")}else{x.pauseSeit=now;toast("Pause ab "+now)}}
+  if(d.st==="gehen"){if(!x.kommen){toast("Erst Arbeitsbeginn stempeln");return}if(x.pauseSeit){x.pause=(x.pause||0)+Math.max(0,mins(now)-mins(x.pauseSeit));x.pauseSeit=null}x.gehen=now;toast("Feierabend "+now+" · "+hm(tagMin(x))+" h")}
+  NF.setze("zeiten",TECH.id+"_"+iso,Object.assign({},x,{tech:TECH.id,datum:iso}));
+  save();render();return}
+ if(t.id==="bSend"){const k=$("#bk").value,b=$("#bb").value.trim(),dt=$("#bd").value,km=$("#bkm")?.value.trim(),l=$("#bl")?.value.trim(),z=$("#bz")?.value.trim();
+  if(!n(b)){toast("Bitte Betrag eintragen");return}if(!dt){toast("Bitte Datum wählen");return}if(k==="Tanken"&&!km){toast("Beim Tanken bitte km-Stand eintragen");return}if(!S.belegFoto){toast("Bitte Quittung fotografieren");return}
+  (async()=>{const fid=belegDatei?await NF.datei(belegDatei,"beleg-"+dt+".jpg"):null,bid=neueId();NF.setze("belege",bid,{id:bid,tech:TECH.id,kat:k,betrag:n(b),datum:dt,info:k==="Tanken"?(l?l+" l · ":"")+km+" km":z||"",foto:fid,status:"offen"});S.belegFoto=null;belegDatei=null;save();render();toast(S.online?"Beleg übermittelt":"Beleg im Postausgang, wird bei Netz gesendet")})();return}
+ if(t.id==="kSend"){const dt=$("#kd").value,v=$("#kv").value,b=$("#kb").value,g=$("#kg").value.trim();
+  if(!dt||!v||!b||b<=v){toast("Bitte Datum und gültige Uhrzeit wählen");return}if(g.length<5){toast("Begründung ist Pflicht");$("#kg").focus();return}
+  const bid=neueId();NF.setze("abwesenheiten",bid,{id:bid,tech:TECH.id,art:"Block",von:dt,bis:dt,zeit:v+"–"+b,grund:g,status:"offen"});render();toast("Block eingetragen, das Büro ist informiert");return}
+ if(d.copy!=null){const c=S.kontakte[+d.copy];try{navigator.clipboard.writeText(c.tel).then(()=>toast("Nummer kopiert"),()=>toast(c.tel))}catch(e){toast(c.tel)}return}
+ if(d.delk!=null){NF.loesche("kontakte",d.delk);render();return}
+ if(t.id==="cAdd"){const r1=$("#cr").value.trim(),n1=$("#cn").value.trim(),t1=$("#ct").value.trim();if(!r1||!n1||!t1){toast("Bitte alle drei Felder ausfüllen");return}NF.setze("kontakte",neueId(),{rolle:r1,name:n1,tel:t1});render();toast("Ansprechpartner gespeichert");return}
+ if(d.back==="intra"){S.intraOrdner=null;go("intra");return}
+ if(d.back){if(d.back==="anlage"){go("anlage");return}go(d.back);return}
+ if(d.job){const j=JOBS.find(x=>x.id===d.job);go("anlage",{q:j.q,from:"heute"});return}
+ if(d.q&&t.classList.contains("sticker")){toast("Aufkleber erkannt: "+ANLAGEN[d.q].nv);go("anlage",{q:d.q,from:"scan"});return}
+ if(t.id==="startE"){let j=JOBS.find(x=>x.q===S.q);if(!j){j=adhocJob(S.q,"Störung","Ungeplanter Einsatz / Notdienst")}if(!j)return;if(!S.reports[j.id])S.reports[j.id]=newReport(j);go("einsatz",{cur:j.id});return}
+ if(d.resume){S.cur=d.resume;S.q=S.reports[d.resume].q;go("einsatz");return}
+ if(t.id==="flush"){NF.senden();toast("Wird gesendet");return}
+ if(t.id==="uSend"){const v=$("#uv").value,b=$("#ub").value;if(!v||!b||b<v){toast("Bitte gültigen Zeitraum wählen");return}
+  let tage=0;for(let x=new Date(v);x<=new Date(b);x.setDate(x.getDate()+1)){const w=x.getDay();if(w&&w<6)tage++}
+  const uid=neueId();NF.setze("abwesenheiten",uid,{id:uid,tech:TECH.id,art:"Urlaub",von:v,bis:b,tage,status:"offen"});render();toast("Antrag gesendet ("+tage+" Arbeitstage)");return}
+ if(!r)return;
+ if(d.step){r.step=+d.step;save();render();main.scrollTop=0;return}
+ if(t.id==="next"){if(!stepOk(r.step))toast("Pflichtfelder in diesem Schritt fehlen noch – du kannst trotzdem weiter.");r.step++;save();render();main.scrollTop=0;return}
+ if(t.id==="prev"){r.step--;save();render();main.scrollTop=0;return}
+ if(t.id==="finish"){finish();return}
+ if(d.set){r[d.set]=d.val;save();render();return}
+ if(d.mtyp){const m=mig(r);if(m.typ!==d.mtyp){m.typ=d.mtyp;["ang","ver"].forEach(sd=>{m[sd].hide=[];if(d.mtyp!=="heiz"){while(m[sd].rows.length<9)m[sd].rows.push({});m[sd].rows.forEach((x,i)=>{if(!x.azl)x.azl="P"+(i+1)})}});toast("Spalten für "+MT[d.mtyp].label+" – eingetragene Werte bleiben erhalten")}save();render();return}
+ if(d.madd){const sd=mig(r)[d.madd];if(sd.rows.length<MMAX[d.madd]){sd.rows.push({});save();render()}return}
+ if(d.mdel){const[sd,i]=d.mdel.split("|"),rows=r.mess[sd].rows;if(rows.length<=1){rows[0]={};}else rows.splice(+i,1);save();render();return}
+ if(d.mhide){const[sd,c]=d.mhide.split("|"),m=r.mess;if(mCols(m,sd).length<=2){toast("Es müssen mindestens zwei Spalten sichtbar bleiben");return}
+  if(c.startsWith("x:"))m[sd].extra=m[sd].extra.filter(x=>"x:"+x[0]!==c);else m[sd].hide.push(c);save();render();return}
+ if(d.mreset){const sd=r.mess[d.mreset];sd.hide=[];sd.extra=[];save();render();return}
+ if(d.mpick){r.mess.pick=r.mess.pick===d.mpick?null:d.mpick;save();render();return}
+ if(d.mpickx){r.mess.pick=null;save();render();return}
+ if(d.mpickv){const[sd,name]=d.mpickv.split("|"),p=MPICK.find(x=>x[0]===name);r.mess[sd].extra.push(p);r.mess.pick=null;save();render();return}
+ if(d.add){const f=d.add;r[f]=(r[f].trim()?r[f].trim()+"\n":"")+d.t+".";save();render();return}
+ if(d.fz){r.fz=d.fz;save();render();return}
+ if(t.id==="fillMess"){const a=ANLAGEN[r.q],m=mig(r);
+  const H={heiz:{ang:[{pkt:"Q min",last:"30",durch:"1,9",gfd:"20",o2:"7,4",co2:"7,0",co:"21",nox:"22",ta:"49",tl:"18",vl:"55",rl:"42"},{pkt:"Q max",last:"100",durch:"6,1",gfd:"19",o2:"6,8",co2:"7,4",co:"38",nox:"29",ta:"71",tl:"18",vl:"64",rl:"48"}],
+    ver:[{pkt:"Q min",last:"30",durch:"1,8",gfd:"20",o2:"5,3",co2:"8,6",co:"8",nox:"19",ta:"41",tl:"18",vl:"52",rl:"40"},{pkt:"Q max",last:"100",durch:"6,0",gfd:"19",o2:"4,9",co2:"8,8",co:"12",nox:"24",ta:"58",tl:"18",vl:"62",rl:"46"}]}};
+  const B=(oel)=>BPKT.map((pk,i)=>{const j=pk==="Bu"?0:pk==="Bo"?9:i,l=pk==="Bu"?10:pk==="Bo"?100:Math.min(100,j*11);return oel?{azl:pk,lpos:String(l),lk:String(8+j*8),bs:String(12+j*9),durch:de(1.4+j*0.38,1),bl:String(Math.round(15+j*3.9)),ovl:"12",orl:"2,1",o2:de(4.6-j*0.15,1),co:String(14-i),nox:String(68+j*2),ta:String(128+j*7),russ:"0",pfr:"0,1"}
+   :{azl:pk,lpos:String(l),lk:String(8+j*8),gs:String(10+j*9),durch:de(5+j*1.9,1),bl:String(Math.round(50+j*18)),gfd:String(18-i),o2:de(4.2-j*0.12,1),co:String(10+i),nox:String(55+j*2),ta:String(118+j*6),pvl:"2,4",pfr:"0,2"}});
+  if(m.typ==="heiz"){m.ang.rows=H.heiz.ang;m.ver.rows=H.heiz.ver}
+  else{const oel=m.typ==="boel";m.ang.rows=B(oel).map(x=>Object.assign({},x,{o2:de(n(x.o2)+1.1,1),ta:String(n(x.ta)+14)}));m.ver.rows=B(oel);
+   ["ang","ver"].forEach(sd=>{if(!m[sd].extra.some(x=>x[0]==="Ansaugtemperatur"))m[sd].extra.unshift(["Ansaugtemperatur","°C"]);m[sd].rows.forEach(x=>x["x:Ansaugtemperatur"]="16")})}
+  Object.assign(m.dicht,{abfall:"0"});Object.assign(m.betr,{starts:a.kw>50?"48211":"16840",std:a.kw>50?"21460":"6120",zaehler:a.kw>50?"184 220":"31 507",weise:"witterungsgeführt"});
+  save();render();toast("Werte vom Abgasmessgerät übernommen (Demo)");return}
+ if(d.mat){const k=KATALOG.find(x=>x[0]===d.mat);const ex=r.material.find(p=>p.nr===k[0]);if(ex)ex.menge++;else r.material.push({nr:k[0],bez:k[1],menge:1,kfz:true});save();render();return}
+ if(d.mq!=null){const p=r.material[+d.mq];p.menge+=+d.d;if(p.menge<=0)r.material.splice(+d.mq,1);save();render();return}
+ if(d.clr){r[d.clr]=null;save();render();return}
+});
+let lastDk=null;window.addEventListener("resize",()=>{const dk=isDesk();if(dk!==lastDk){lastDk=dk;if(S.view==="scan"&&dk)S.view="suche";render()}});
+let belegDatei=null;
+(async()=>{
+ main.innerHTML='<div class="lade">N-Flow lädt …</div>';
+ let ich=null;
+ try{ich=await NF.start({sammlungen:["kunden","anlagen","auftraege","berichte","abwesenheiten","belege","zeiten","artikel","kontakte","bestaetigungen","einstellungen"],kurz:true,nummern:["A","SB","NV","K"]})}
+ catch(e){main.innerHTML=`<div class="lade">${esc(e.message)}</div>`;return}
+ if(!ich)return;
+ RECHTE=ich.rechte||{};uiLaden();if(!S.reports)S.reports={};
+ const h=location.hash.match(/a=([A-Za-z0-9]+)/);
+ render();lastDk=isDesk();
+ if(h){history.replaceState(null,"",location.pathname);kennungOeffnen(h[1])}
+ window.addEventListener("hashchange",()=>{const x=location.hash.match(/a=([A-Za-z0-9]+)/);if(x){history.replaceState(null,"",location.pathname);kennungOeffnen(x[1])}});
+ const formular=()=>["einsatz","neu","fehl","folge"].includes(S.view)||/INPUT|TEXTAREA|SELECT/.test((document.activeElement||{}).tagName||"");
+ NF.bei("aenderung",()=>{if(formular()){aufbauen();renderTabs();return}render();wartPruefen()});
+ NF.bei("status",()=>{if(formular())renderTabs();else render()});
+ NF.bei("fehler",m=>toast("Nicht gespeichert: "+m));
+ wartPruefen();
+ if("serviceWorker" in navigator)navigator.serviceWorker.register("/app/sw.js",{scope:"/app/"}).catch(()=>{});
+})();
+function wartPruefen(){if(S.wartAktiv&&S.pushSeen!==iso(new Date()))setTimeout(showPush,800)}
+
+})();
+</script>
+</body>
+</html>

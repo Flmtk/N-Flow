@@ -9,11 +9,15 @@ import { benutzerLaden } from "./sitzung.js";
 import { anmeldungRouten } from "./routes/anmeldung.js";
 import { systemRouten } from "./routes/system.js";
 import { mitarbeiterRouten } from "./routes/mitarbeiter.js";
+import { datenRouten } from "./routes/daten.js";
+import { dateienRouten } from "./routes/dateien.js";
+import { oeffentlicheRouten } from "./routes/oeffentlich.js";
+import { kalenderRouten } from "./routes/kalender.js";
 
 const app = Fastify({
   logger: { level: config.produktion ? "info" : "debug" },
   trustProxy: true, // hinter Traefik
-  bodyLimit: 5 * 1024 * 1024,
+  bodyLimit: 4 * 1024 * 1024,
 });
 
 await app.register(cookie, { secret: config.geheimnis });
@@ -29,6 +33,10 @@ app.addHook("onSend", async (_a, antwort) => {
 await app.register(anmeldungRouten);
 await app.register(systemRouten);
 await app.register(mitarbeiterRouten);
+await app.register(datenRouten);
+await app.register(dateienRouten);
+await app.register(oeffentlicheRouten);
+await app.register(kalenderRouten);
 
 const webOrdner = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../web");
 await app.register(fastifyStatic, { root: webOrdner, index: ["index.html"] });

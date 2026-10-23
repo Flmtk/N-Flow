@@ -108,6 +108,14 @@ export async function mitarbeiterRouten(app: FastifyInstance): Promise<void> {
     },
   );
 
+  /** Alle Anmeldungen beenden, z. B. nach Verlust des Handys. Die Person meldet sich neu an. */
+  app.post<{ Params: { id: string } }>("/api/mitarbeiter/:id/abmelden", { preHandler: brauche("mitarbeiter") }, async (anfrage) => {
+    const r = await sql`delete from sitzungen where mitarbeiter_id = ${anfrage.params.id}`;
+    const [m] = await sql<{ name: string }[]>`select name from mitarbeiter where id = ${anfrage.params.id}`;
+    await protokolliere(anfrage.benutzer!.name, "Anmeldungen beendet", `${m?.name ?? anfrage.params.id}: ${r.count} Geräte`);
+    return { ok: true, geraete: r.count };
+  });
+
   /** Austritt: Zugang sperren, Wartungspool übergeben, künftige Termine zurück nach „Einzuplanen“. */
   app.post<{ Params: { id: string }; Body: { uebergabeAn?: string | null } }>(
     "/api/mitarbeiter/:id/austritt",
@@ -120,10 +128,15 @@ export async function mitarbeiterRouten(app: FastifyInstance): Promise<void> {
         const [m] = await tx<{ name: string }[]>`
           update mitarbeiter set aktiv = false, gesperrt = true, geaendert_am = now() where id = ${id} returning name`;
         if (!m) return null;
-        const pool = await tx`update vertraege set betreuer_id = ${an} where betreuer_id = ${id}`;
+        const pool = await tx`
+          update daten set daten = jsonb_set(daten, '{betreuer}', coalesce(to_jsonb(${an}::text), 'null'::jsonb)),
+            version = version + 1, geaendert_am = clock_timestamp(), geaendert_von = ${anfrage.benutzer!.name}
+          where sammlung = 'anlagen' and not geloescht and daten->>'betreuer' = ${id}`;
         const termine = await tx`
-          update auftraege set monteur_id = null, termin = null, status = 'offen'
-          where monteur_id = ${id} and status = 'geplant' and termin >= now()`;
+          update daten set daten = daten || '{"tech": null, "date": null, "time": null, "status": "offen"}'::jsonb,
+            version = version + 1, geaendert_am = clock_timestamp(), geaendert_von = ${anfrage.benutzer!.name}
+          where sammlung = 'auftraege' and not geloescht and daten->>'tech' = ${id}
+            and daten->>'status' = 'geplant' and daten->>'date' >= to_char(current_date, 'YYYY-MM-DD')`;
         await tx`delete from sitzungen where mitarbeiter_id = ${id}`;
         return { name: m.name, anlagen: pool.count, termine: termine.count };
       });

@@ -16,6 +16,10 @@ services:
     environment:
       NODE_ENV: production
       DATABASE_URL: postgres://nflow:${POSTGRES_PASSWORD}@db:5432/nflow
+      SICHERUNG_PFAD: /sicherungen
+    volumes:
+      # Für die Übersicht der Sicherungen und „Jetzt sichern“ in der Administration
+      - ${SICHERUNG_ORDNER:-./sicherungen}:/sicherungen
     depends_on:
       db:
         condition: service_healthy

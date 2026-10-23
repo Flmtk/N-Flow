@@ -7,7 +7,9 @@ set -eu
 
 ZIEL=/sicherungen
 UHRZEIT="${SICHERUNG_UHRZEIT:-02:00}"
-mkdir -p "$ZIEL/taeglich" "$ZIEL/woechentlich" "$ZIEL/monatlich"
+mkdir -p "$ZIEL/taeglich" "$ZIEL/woechentlich" "$ZIEL/monatlich" "$ZIEL/.anstoss"
+# Die App (ohne Root-Rechte) darf hier „Jetzt sichern“ anstoßen
+chmod 777 "$ZIEL/.anstoss"
 
 sichern() {
   stempel=$(date +%Y-%m-%d_%H%M)
@@ -38,6 +40,11 @@ fi
 
 echo "Sicherung eingeplant täglich um $UHRZEIT ($(date +%Z))"
 while true; do
+  # „Jetzt sichern“ aus der Administration legt diese Datei an
+  if [ -f "$ZIEL/.anstoss/jetzt" ]; then
+    rm -f "$ZIEL/.anstoss/jetzt"
+    sichern || echo "$(date '+%F %T') FEHLER: Sicherung fehlgeschlagen"
+  fi
   if [ "$(date +%H:%M)" = "$UHRZEIT" ]; then
     sichern || echo "$(date '+%F %T') FEHLER: Sicherung fehlgeschlagen"
     sleep 61

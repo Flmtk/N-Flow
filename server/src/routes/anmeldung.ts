@@ -20,6 +20,8 @@ let schluessel: ReturnType<typeof createRemoteJWKSet> | null = null;
 const jwks = () => (schluessel ??= createRemoteJWKSet(new URL(`${MS()}/discovery/v2.0/keys`)));
 
 const b64url = (b: Buffer) => b.toString("base64url");
+/** Nur Pfade innerhalb von N-Flow als Rücksprungziel zulassen */
+const sicheresZiel = (z?: string) => (z && /^\/(?!\/)[\w\-./#=?&%]*$/.test(z) ? z : "/");
 
 function kuerzelAus(name: string): string {
   return name.split(/\s+/).map((t) => t[0] ?? "").join("").slice(0, 2).toUpperCase() || "??";
@@ -48,7 +50,7 @@ async function anmelden(
 }
 
 export async function anmeldungRouten(app: FastifyInstance): Promise<void> {
-  app.get("/auth/login", async (anfrage, antwort) => {
+  app.get<{ Querystring: { ziel?: string } }>("/auth/login", async (anfrage, antwort) => {
     if (!microsoftAktiv) {
       return antwort.code(503).type("text/plain; charset=utf-8")
         .send("Die Microsoft-Anmeldung ist noch nicht eingerichtet (MS_TENANT_ID, MS_CLIENT_ID, MS_CLIENT_SECRET).");
@@ -58,7 +60,7 @@ export async function anmeldungRouten(app: FastifyInstance): Promise<void> {
     const verifier = b64url(randomBytes(32));
     const challenge = b64url(createHash("sha256").update(verifier).digest());
 
-    antwort.setCookie(TEMP_COOKIE, JSON.stringify({ status, nonce, verifier }), {
+    antwort.setCookie(TEMP_COOKIE, JSON.stringify({ status, nonce, verifier, ziel: sicheresZiel(anfrage.query.ziel) }), {
       path: "/auth", httpOnly: true, secure: config.produktion, sameSite: "lax", maxAge: 600, signed: true,
     });
 
@@ -88,7 +90,7 @@ export async function anmeldungRouten(app: FastifyInstance): Promise<void> {
       const geprueft = roh ? anfrage.unsignCookie(roh) : null;
       antwort.clearCookie(TEMP_COOKIE, { path: "/auth" });
       if (!geprueft?.valid || !geprueft.value) return zurueck("Die Anmeldung ist abgelaufen. Bitte erneut versuchen.");
-      const temp = JSON.parse(geprueft.value) as { status: string; nonce: string; verifier: string };
+      const temp = JSON.parse(geprueft.value) as { status: string; nonce: string; verifier: string; ziel?: string };
       if (!anfrage.query.code || anfrage.query.state !== temp.status) return zurueck("Ungültige Antwort von Microsoft.");
 
       const tokenAntwort = await fetch(`${MS()}/oauth2/v2.0/token`, {
@@ -123,7 +125,7 @@ export async function anmeldungRouten(app: FastifyInstance): Promise<void> {
         return zurueck(ergebnis.fehler);
       }
       await sitzungAnlegen(antwort, ergebnis.id, anfrage.headers["user-agent"] ?? "");
-      return antwort.redirect("/");
+      return antwort.redirect(sicheresZiel(temp.ziel));
     },
   );
 
@@ -134,12 +136,12 @@ export async function anmeldungRouten(app: FastifyInstance): Promise<void> {
 
   // Nur lokal zum Entwickeln: Anmeldung ohne Microsoft per ?email=
   if (config.devLogin) {
-    app.get<{ Querystring: { email?: string } }>("/auth/dev", async (anfrage, antwort) => {
+    app.get<{ Querystring: { email?: string; ziel?: string } }>("/auth/dev", async (anfrage, antwort) => {
       const email = anfrage.query.email ?? config.startAdmins[0] ?? "";
       const ergebnis = await anmelden(email, email.split("@")[0].replace(".", " "), "dev");
       if ("fehler" in ergebnis) return antwort.code(403).send(ergebnis);
       await sitzungAnlegen(antwort, ergebnis.id, "dev");
-      return antwort.redirect("/");
+      return antwort.redirect(sicheresZiel(anfrage.query.ziel));
     });
   }
 }

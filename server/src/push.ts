@@ -44,12 +44,15 @@ export async function senden(ids: string[], art: Art, titel: string, text: strin
   if (!liste.length) return;
   try {
     await schluessel();
-    const abos = await sql<{ endpoint: string; schluessel: { p256dh: string; auth: string } }[]>`
-      select p.endpoint, p.schluessel from push_abos p join mitarbeiter m on m.id = p.mitarbeiter_id
-      where p.mitarbeiter_id in ${sql(liste)} and m.aktiv and not m.gesperrt
+    // Eigene Geräte und Geräte, auf denen jemand gerade „für“ diese Person arbeitet
+    const abos = await sql<{ endpoint: string; schluessel: { p256dh: string; auth: string }; fuer_name: string | null }[]>`
+      select p.endpoint, p.schluessel,
+        case when p.mitarbeiter_id in ${sql(liste)} then null else f.name end as fuer_name
+      from push_abos p join mitarbeiter m on m.id = p.mitarbeiter_id left join mitarbeiter f on f.id = p.fuer
+      where (p.mitarbeiter_id in ${sql(liste)} or p.fuer in ${sql(liste)}) and m.aktiv and not m.gesperrt
         and coalesce((m.mitteilungen->>${art})::boolean, true)`;
-    const nutzlast = JSON.stringify({ titel, text, ziel, art });
     await Promise.all(abos.map(async (a) => {
+      const nutzlast = JSON.stringify({ titel: a.fuer_name ? `${titel} (für ${a.fuer_name})` : titel, text, ziel, art });
       try {
         await webpush.sendNotification({ endpoint: a.endpoint, keys: a.schluessel }, nutzlast, { TTL: 6 * 3600, urgency: art === "stoerung" || art === "termine" ? "high" : "normal" });
       } catch (e) {
@@ -135,14 +138,22 @@ export function vorschauPlanen(): void {
 export async function pushRouten(app: FastifyInstance): Promise<void> {
   app.get("/api/push/schluessel", { preHandler: brauche() }, async () => ({ schluessel: await schluessel() }));
 
-  app.post<{ Body: { abo: { endpoint: string; keys: { p256dh: string; auth: string } }; geraet?: string } }>(
+  app.post<{ Body: { abo: { endpoint: string; keys: { p256dh: string; auth: string } }; geraet?: string; fuer?: string | null } }>(
     "/api/push/abo", { preHandler: brauche() }, async (anfrage, antwort) => {
       const a = anfrage.body?.abo;
       if (!a?.endpoint || !/^https:\/\//.test(a.endpoint) || !a.keys?.p256dh || !a.keys?.auth) return antwort.code(400).send({ fehler: "Ungültiges Abo." });
+      // „Arbeiten für“ nur mit Recht Planung und nur für aktive Kollegen
+      const b = anfrage.benutzer!;
+      let fuer: string | null = null;
+      const gewuenscht = String(anfrage.body.fuer ?? "");
+      if (/^[0-9a-f-]{36}$/i.test(gewuenscht) && gewuenscht !== b.id && (await rechteLaden())[b.rolle].planung) {
+        const [m] = await sql<{ id: string }[]>`select id from mitarbeiter where id = ${gewuenscht} and aktiv and not gesperrt`;
+        fuer = m?.id ?? null;
+      }
       await sql`
-        insert into push_abos (endpoint, mitarbeiter_id, schluessel, geraet)
-        values (${a.endpoint}, ${anfrage.benutzer!.id}, ${sql.json(a.keys)}, ${String(anfrage.body.geraet ?? "").slice(0, 200)})
-        on conflict (endpoint) do update set mitarbeiter_id = excluded.mitarbeiter_id, schluessel = excluded.schluessel`;
+        insert into push_abos (endpoint, mitarbeiter_id, schluessel, geraet, fuer)
+        values (${a.endpoint}, ${b.id}, ${sql.json(a.keys)}, ${String(anfrage.body.geraet ?? "").slice(0, 200)}, ${fuer})
+        on conflict (endpoint) do update set mitarbeiter_id = excluded.mitarbeiter_id, schluessel = excluded.schluessel, fuer = excluded.fuer`;
       return { ok: true };
     });
 

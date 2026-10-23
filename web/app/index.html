@@ -1303,7 +1303,7 @@ document.addEventListener("change",e=>{
  if(t.id==="papScan"&&r&&t.files[0]){hochladen(t.files,ids=>{r.papScan=ids[0];save();render();toast("Scan angehängt")})}
  if(t.id==="foto"&&r&&t.files[0]){const nn=t.files.length;hochladen(t.files,ids=>{r.fotos=(r.fotos||[]).concat(ids);save();render();toast(nn+" Foto(s) angehängt")})}
  if(t.dataset.mtart&&MT_EIN){MT_EIN.einstellung[t.dataset.mtart]=t.checked;NF.api("/api/ich/mitteilungen",{method:"PUT",body:{[t.dataset.mtart]:t.checked}}).catch(e=>toast(e.message));return}
- if(t.id==="alsTech"){S.alsTech=t.value||null;save();render();toast(t.value?"Du arbeitest jetzt für "+TECH.name:"Wieder deine eigene Ansicht");return}
+ if(t.id==="alsTech"){S.alsTech=t.value||null;save();render();pushPruefen();toast(t.value?"Du arbeitest jetzt für "+TECH.name:"Wieder deine eigene Ansicht");return}
  if(t.dataset.mub&&r){const[sd,j]=t.dataset.mub.split("|");r.mess[sd].ub[j]=t.checked;save()}
  if(t.dataset.flag&&r){r[t.dataset.flag]=t.checked;save();if(t.dataset.flag==="nichtVorOrt"||t.dataset.flag==="papier")render();else refreshFoot()}
  if(t.dataset.kfz&&r){r.material[+t.dataset.kfz].kfz=t.checked;save()}
@@ -1462,12 +1462,12 @@ async function pushAnmelden(){
  try{const ok=await Notification.requestPermission();if(ok!=="granted"){toast("Mitteilungen wurden nicht erlaubt");render();return}
   const reg=await navigator.serviceWorker.ready,{schluessel}=await NF.api("/api/push/schluessel");
   const abo=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64zuBytes(schluessel)});
-  await NF.api("/api/push/abo",{method:"POST",body:{abo:abo.toJSON(),geraet:navigator.userAgent.slice(0,120)}});
+  await NF.api("/api/push/abo",{method:"POST",body:{abo:abo.toJSON(),geraet:navigator.userAgent.slice(0,120),fuer:S.alsTech||null}});
   S.pushAn=true;save();render();toast("Mitteilungen sind an")}
  catch(e){toast("Mitteilungen konnten nicht eingerichtet werden: "+e.message)}}
 async function pushAbmelden(){try{const reg=await navigator.serviceWorker.ready,abo=await reg.pushManager.getSubscription();if(abo){await NF.api("/api/push/abo",{method:"DELETE",body:{endpoint:abo.endpoint}});await abo.unsubscribe()}S.pushAn=false;save();render();toast("Mitteilungen auf diesem Handy aus")}catch(e){toast(e.message)}}
 async function pushPruefen(){if(!pushMoeglich()||Notification.permission!=="granted")return;try{const reg=await navigator.serviceWorker.ready,abo=await reg.pushManager.getSubscription();
- if(abo){S.pushAn=true;NF.api("/api/push/abo",{method:"POST",body:{abo:abo.toJSON(),geraet:navigator.userAgent.slice(0,120)}}).catch(()=>{})}else if(S.pushAn){S.pushAn=false;save()}}catch(e){}}
+ if(abo){S.pushAn=true;NF.api("/api/push/abo",{method:"POST",body:{abo:abo.toJSON(),geraet:navigator.userAgent.slice(0,120),fuer:S.alsTech||null}}).catch(()=>{})}else if(S.pushAn){S.pushAn=false;save()}}catch(e){}}
 function wartPruefen(){if(S.wartAktiv&&S.pushSeen!==iso(new Date()))setTimeout(showPush,800)}
 
 })();

@@ -5,8 +5,8 @@ import { sql } from "../db.js";
 import { brauche } from "../sitzung.js";
 
 /**
- * Kalenderabo (webcal) für iPhone und Outlook. Enthält nur Uhrzeit, Einsatzart, Anlagen-Nr. und Ort,
- * keine Kundennamen. Die Adresse enthält ein geheimes Token je Mitarbeiter.
+ * Kalenderabo (webcal) für iPhone und Outlook. Enthält Uhrzeit, Einsatzart, Anlagen-Nr. und Adresse
+ * (für die Navigation, auch in CarPlay), keine Kundennamen. Die Adresse enthält ein geheimes Token je Mitarbeiter.
  */
 
 type Daten = Record<string, string | number | null>;
@@ -48,8 +48,9 @@ export async function kalenderRouten(app: FastifyInstance): Promise<void> {
       select daten as d from daten where sammlung = 'auftraege' and not geloescht
         and daten->>'tech' = ${m.id} and daten->>'date' >= ${ab} and daten->>'status' <> 'storniert'`;
     const anlagen = new Map(
-      (await sql<{ id: string; ort: string }[]>`select id, daten->>'ort' as ort from daten where sammlung = 'anlagen'`)
-        .map((a) => [a.id, a.ort]),
+      (await sql<{ id: string; ort: string; str: string; plz: string }[]>`
+        select id, daten->>'ort' as ort, daten->>'str' as str, daten->>'plz' as plz from daten where sammlung = 'anlagen'`)
+        .map((a) => [a.id, a]),
     );
     const abw = await sql<{ d: Daten }[]>`
       select daten as d from daten where sammlung = 'abwesenheiten' and not geloescht
@@ -60,11 +61,15 @@ export async function kalenderRouten(app: FastifyInstance): Promise<void> {
     const jetzt = new Date().toISOString().replace(/[-:]/g, "").slice(0, 15) + "Z";
     for (const { d } of auftraege) {
       if (!d.date || !d.time) continue;
-      const ort = d.nv === "INTERN" ? "intern" : anlagen.get(String(d.nv)) ?? "";
+      const a = anlagen.get(String(d.nv));
+      const ort = d.nv === "INTERN" ? "intern" : a?.ort ?? "";
+      // Adresse als Ort: Apple Kalender und CarPlay bieten damit direkt die Navigation an
+      const adresse = a ? [a.str, [a.plz, a.ort].filter(Boolean).join(" ")].filter(Boolean).join(", ") : "";
       z.push("BEGIN:VEVENT", `UID:${d.id}@n-flow`, `DTSTAMP:${jetzt}`,
         `DTSTART;TZID=Europe/Berlin:${stempel(String(d.date), String(d.time))}`,
         `DTEND;TZID=Europe/Berlin:${stempel(String(d.date), plusMinuten(String(d.time), Number(d.dauer || 1) * 60))}`,
         `SUMMARY:${ics(`${d.art} · ${d.nv === "INTERN" ? "intern" : d.nv} · ${ort}`)}`,
+        ...(adresse ? [`LOCATION:${ics(adresse)}`] : []),
         `URL:${config.baseUrl}/app/`, `STATUS:${d.status === "erledigt" ? "CONFIRMED" : "TENTATIVE"}`, "END:VEVENT");
     }
     for (const { d } of abw) {

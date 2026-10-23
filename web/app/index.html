@@ -383,6 +383,17 @@ table.mt th .mx{position:absolute;top:-4px;right:0;opacity:.55}
 .mx:hover{background:var(--crit-soft);color:var(--crit);opacity:1}
 table.mt td.mrow .mx{opacity:.5}
 .mtools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.mpts{display:flex;gap:6px;overflow-x:auto;padding:2px 0 4px;-webkit-overflow-scrolling:touch}
+.mpts button{flex:0 0 auto;min-width:46px;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:var(--surface);font-weight:700;font-size:14px}
+.mpts button.ok{border-color:var(--ok);color:var(--ok)}
+.mpts button.cur{background:var(--accent);border-color:var(--accent);color:#fff}
+.mpnav{display:grid;grid-template-columns:52px 1fr 52px;gap:10px;align-items:center;text-align:center}
+.mpnav .btn{padding:10px 0;font-size:22px}.mpnav div{display:flex;flex-direction:column}.mpnav b{font-size:20px}
+.mpform{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mpform input.mi{width:100%!important;max-width:none!important;min-width:0;font-size:18px;padding:12px;text-align:right}
+.mpform .f em{font-style:normal;color:var(--muted);font-weight:500}
+.mpform .mqa{justify-content:flex-end}.mpform .mqa b{font-size:20px;padding:10px 0}
+.chip.mview{font-size:12px}
 .mtools .chip{cursor:pointer;font-size:13px;padding:6px 12px;background:var(--accent-soft);color:var(--accent)}
 .mtools .chip:disabled{opacity:.4;cursor:not-allowed}
 .mtools .hint{margin-left:auto}
@@ -772,14 +783,38 @@ function mig(r){const a=ANLAGEN[r.q];if(!r.mess||!r.mess.typ)r.mess=newMess(a);c
 function mCols(m,side){const T=MT[m.typ],sd=m[side];return T.cols.filter(c=>!sd.hide.includes(c[0])).concat(sd.extra.map(x=>["x:"+x[0],x[0],x[1]]))}
 function rowQa(r,a,row){const m=r.mess;const o2=n(row.o2),ta=n(row.ta),tl=n(row.tl)??n(row["x:Ansaugtemperatur"]);
  if(o2==null||ta==null||tl==null||o2>=21)return null;const[A2,B]=m.typ==="boel"?[0.68,0.007]:qaK(a);return(ta-tl)*(A2/(21-o2)+B)}
-function mTable(r,a,side,title){
+/* Messpunkte einzeln: ein Punkt pro Seite, mit Sprung zu jedem Punkt und Weiter/Zurück */
+function mAnsicht(){return S.mAnsicht||(isDesk()?"tabelle":"punkt")}
+function mLabel(row,i){return row.pkt||row.azl||"#"+(i+1)}
+function mGefuellt(row){return Object.entries(row).some(([k,v])=>k!=="pkt"&&k!=="azl"&&String(v??"").trim()!=="")}
+function mTable(r,a,side,title){return mAnsicht()==="punkt"?mPunkt(r,a,side,title):mTabelle(r,a,side,title)}
+function mUmschalter(){const p=mAnsicht()==="punkt";return`<button type="button" class="chip mview" data-mview="${p?"tabelle":"punkt"}">${p?"Als Tabelle":"Punkt für Punkt"}</button>`}
+function mPunkt(r,a,side,title){
+ const m=r.mess,sd=m[side],T=MT[m.typ],cols=mCols(m,side),n=sd.rows.length;
+ const sel=Math.min(Math.max(0,+(sd.sel||0)),n-1),row=sd.rows[sel]||{},ub=side==="ang"?T.ubA:T.ubV;
+ return`<div class="panel mpanel"><h4 style="display:flex;align-items:center;gap:8px">${title}${side==="ver"?' <span style="color:var(--accent)">*</span>':""}<span style="margin-left:auto">${mUmschalter()}</span></h4>
+  <div class="mpts" role="tablist" aria-label="Messpunkte">${sd.rows.map((x,i)=>`<button type="button" role="tab" data-mpsel="${side}|${i}" aria-selected="${i===sel}" class="${i===sel?"cur":""} ${mGefuellt(x)?"ok":""}">${esc(mLabel(x,i))}</button>`).join("")}${n<MMAX[side]?`<button type="button" data-madd="${side}" aria-label="Messpunkt hinzufügen">+</button>`:""}</div>
+  <div class="mpnav"><button type="button" class="btn sec" data-mpgo="${side}|-1" ${sel<=0?"disabled":""} aria-label="Vorheriger Messpunkt">‹</button>
+   <div><b>${esc(mLabel(row,sel))}</b><span class="hint">Messpunkt ${sel+1} von ${n}</span></div>
+   <button type="button" class="btn sec" data-mpgo="${side}|1" ${sel>=n-1?"disabled":""} aria-label="Nächster Messpunkt">›</button></div>
+  <div class="mpform">${cols.filter(c=>c[0]!=="pkt"&&c[0]!=="azl").map(c=>{
+   if(c[0]==="qa"){const q=rowQa(r,a,row);return`<div class="f mqa"><span>${esc(c[1])} [%]</span><b class="mcalc" id="qa-${side}-${sel}">${q!=null?de(q,1):(row.qa||"–")}</b></div>`}
+   return`<label class="f"><span>${esc(c[1])}${c[2]?` <em>[${esc(c[2])}]</em>`:""}</span><input type="text" inputmode="${c[2]==="ja/nein"||c[0]==="azl"||c[0]==="pkt"?"text":"decimal"}" enterkeyhint="next" class="mi" data-mv="${side}|${sel}|${esc(c[0])}" value="${esc(row[c[0]]??"")}"></label>`}).join("")}</div>
+  <div class="row" style="gap:8px">${sel<n-1?`<button type="button" class="btn" data-mpgo="${side}|1">Weiter zu ${esc(mLabel(sd.rows[sel+1],sel+1))} ›</button>`:`<button type="button" class="btn sec" data-madd="${side}" ${n>=MMAX[side]?"disabled":""}>+ Messpunkt anlegen</button>`}</div>
+  <div class="mtools">${sel>0?`<button type="button" class="chip" data-mcopy="${side}|${sel}">Werte von ${esc(mLabel(sd.rows[sel-1],sel-1))} übernehmen</button>`:""}
+   <button type="button" class="chip" data-mpick="${side}" ${sd.extra.length>=6?"disabled":""}>+ Messgröße</button>
+   ${sd.hide.length||sd.extra.length?`<button type="button" class="chip" data-mreset="${side}">Spalten zurücksetzen</button>`:""}
+   <button type="button" class="chip" data-mdel="${side}|${sel}">Punkt löschen</button></div>
+  ${m.pick===side?`<div class="tb">${MPICK.filter(p=>!sd.extra.some(x=>x[0]===p[0])).map(p=>`<button type="button" data-mpickv="${side}|${esc(p[0])}">${esc(p[0])} <span style="color:var(--muted)">${esc(p[1])}</span></button>`).join("")}<button type="button" data-mpickx="1">Abbrechen</button></div>`:""}
+  <div class="ubs">${ub.map((u,j)=>`<label class="check"><input type="checkbox" data-mub="${side}|${j}" ${sd.ub[j]?"checked":""}>${u}</label>`).join("")}</div></div>`}
+function mTabelle(r,a,side,title){
  const m=r.mess,sd=m[side],T=MT[m.typ],cols=mCols(m,side),fixVis=cols.length;
  const ub=side==="ang"?T.ubA:T.ubV;
- return`<div class="panel mpanel"><h4>${title}${side==="ver"?' <span style="color:var(--accent)">*</span>':""}</h4>
+ return`<div class="panel mpanel"><h4 style="display:flex;align-items:center;gap:8px">${title}${side==="ver"?' <span style="color:var(--accent)">*</span>':""}<span style="margin-left:auto">${mUmschalter()}</span></h4>
   <div class="mwrap"><table class="mt" lang="de"><thead><tr><th class="mrow">#</th>${cols.map(c=>`<th><span class="mh">${esc(c[1])}</span><span class="mu">${c[2]?"["+esc(c[2])+"]":"&nbsp;"}</span>${fixVis>2?`<button type="button" class="mx" data-mhide="${side}|${esc(c[0])}" aria-label="Spalte ${esc(c[1])} ausblenden">×</button>`:""}</th>`).join("")}</tr></thead>
   <tbody>${sd.rows.map((row,i)=>`<tr><td class="mrow"><span>${i+1}</span><button type="button" class="mx" data-mdel="${side}|${i}" aria-label="Messpunkt ${i+1} löschen">×</button></td>${cols.map(c=>{
    if(c[0]==="qa"){const q=rowQa(r,a,row);return`<td><span class="mcalc" id="qa-${side}-${i}">${q!=null?de(q,1):(row.qa||"")}</span></td>`}
-   return`<td><input type="text" inputmode="${c[2]==="ja/nein"||c[0]==="azl"||c[0]==="pkt"?"text":"decimal"}" class="mi" data-mv="${side}|${i}|${esc(c[0])}" value="${esc(row[c[0]]??"")}" aria-label="${esc(c[1])} Messpunkt ${i+1}"></td>`}).join("")}</tr>`).join("")}</tbody></table></div>
+   return`<td><input type="text" inputmode="${c[2]==="ja/nein"||c[0]==="azl"||c[0]==="pkt"?"text":"decimal"}" enterkeyhint="next" class="mi" data-mv="${side}|${i}|${esc(c[0])}" value="${esc(row[c[0]]??"")}" aria-label="${esc(c[1])} Messpunkt ${i+1}"></td>`}).join("")}</tr>`).join("")}</tbody></table></div>
   <div class="mtools"><button type="button" class="chip" data-madd="${side}" ${sd.rows.length>=MMAX[side]?"disabled":""}>+ Messpunkt</button>
    <button type="button" class="chip" data-mpick="${side}" ${sd.extra.length>=6?"disabled":""}>+ Messgröße</button>
    ${sd.hide.length||sd.extra.length?`<button type="button" class="chip" data-mreset="${side}">Spalten zurücksetzen</button>`:""}
@@ -944,7 +979,7 @@ function ichKal(){
   ${S.calAbo?`<ol class="hint" style="padding-left:18px;margin:0;display:flex;flex-direction:column;gap:4px"><li>iPhone: Einstellungen › Apps › Kalender › Kalenderaccounts › Account hinzufügen › Andere › Kalenderabo hinzufügen</li><li>Diese Adresse einfügen:</li></ol>
    <div class="check mono" style="font-size:12px;overflow-wrap:anywhere;user-select:all">${esc(S.calAbo)}</div>
    <button type="button" class="btn sec" id="calCopy">Adresse kopieren</button>
-   <p class="hint">Im Kalender steht nur Uhrzeit, Einsatzart, Anlagen-Nr. und Ort, keine Kundennamen. Details öffnet ein Link in N-Flow.</p>`
+   <p class="hint">Im Kalender stehen Uhrzeit, Einsatzart, Anlagen-Nr. und Adresse, keine Kundennamen. Über die Adresse startet die Navigation direkt aus dem Kalender, auch im Auto über CarPlay. Details öffnet ein Link in N-Flow.</p>`
   :`<button type="button" class="btn sec" id="calAbo">Mit Apple Kalender verbinden</button>`}</div>`;
 }
 const KAT=["Tanken","Material","Parken / Maut","Übernachtung","Bewirtung","Sonstiges"];
@@ -1345,8 +1380,12 @@ document.addEventListener("click",e=>{
  if(t.id==="finish"){finish();return}
  if(d.set){r[d.set]=d.val;save();render();return}
  if(d.mtyp){const m=mig(r);if(m.typ!==d.mtyp){m.typ=d.mtyp;["ang","ver"].forEach(sd=>{m[sd].hide=[];if(d.mtyp!=="heiz"){while(m[sd].rows.length<9)m[sd].rows.push({});m[sd].rows.forEach((x,i)=>{if(!x.azl)x.azl="P"+(i+1)})}});toast("Spalten für "+MT[d.mtyp].label+" – eingetragene Werte bleiben erhalten")}save();render();return}
- if(d.madd){const sd=mig(r)[d.madd];if(sd.rows.length<MMAX[d.madd]){sd.rows.push({});save();render()}return}
- if(d.mdel){const[sd,i]=d.mdel.split("|"),rows=r.mess[sd].rows;if(rows.length<=1){rows[0]={};}else rows.splice(+i,1);save();render();return}
+ if(d.madd){const sd=mig(r)[d.madd];if(sd.rows.length<MMAX[d.madd]){sd.rows.push({});sd.sel=sd.rows.length-1;save();render();mFokus(d.madd)}return}
+ if(d.mview){S.mAnsicht=d.mview;save();render();return}
+ if(d.mpsel){const[sd,i]=d.mpsel.split("|");r.mess[sd].sel=+i;save();render();mFokus(sd);return}
+ if(d.mpgo){const[sd,k]=d.mpgo.split("|"),x=r.mess[sd];x.sel=Math.max(0,Math.min(x.rows.length-1,(+x.sel||0)+ +k));save();render();mFokus(sd);return}
+ if(d.mcopy){const[sd,i]=d.mcopy.split("|"),rows=r.mess[sd].rows,von=rows[+i-1],nach=rows[+i];Object.keys(von).forEach(k=>{if(k!=="pkt"&&k!=="azl"&&!String(nach[k]??"").trim())nach[k]=von[k]});save();render();mSum();toast("Leere Felder übernommen, bitte prüfen");return}
+ if(d.mdel){const[sd,i]=d.mdel.split("|"),rows=r.mess[sd].rows;if(rows.length<=1){rows[0]={};}else rows.splice(+i,1);r.mess[sd].sel=Math.max(0,Math.min(+i,rows.length-1));save();render();return}
  if(d.mhide){const[sd,c]=d.mhide.split("|"),m=r.mess;if(mCols(m,sd).length<=2){toast("Es müssen mindestens zwei Spalten sichtbar bleiben");return}
   if(c.startsWith("x:"))m[sd].extra=m[sd].extra.filter(x=>"x:"+x[0]!==c);else m[sd].hide.push(c);save();render();return}
  if(d.mreset){const sd=r.mess[d.mreset];sd.hide=[];sd.extra=[];save();render();return}
@@ -1369,6 +1408,11 @@ document.addEventListener("click",e=>{
  if(d.mq!=null){const p=r.material[+d.mq];p.menge+=+d.d;if(p.menge<=0)r.material.splice(+d.mq,1);save();render();return}
  if(d.clr){r[d.clr]=null;save();render();return}
 });
+function mFokus(sd){setTimeout(()=>{const el=document.querySelector(`.mpform input[data-mv^="${sd}|"]`);if(el){el.focus({preventScroll:true});el.scrollIntoView({block:"center",behavior:"smooth"})}},30)}
+document.addEventListener("keydown",e=>{const t=e.target;if(e.key!=="Enter"||!t.dataset||!t.dataset.mv)return;e.preventDefault();
+ const alle=[...document.querySelectorAll("input[data-mv]")],i=alle.indexOf(t);
+ if(i>=0&&i<alle.length-1&&alle[i+1].dataset.mv.split("|")[0]===t.dataset.mv.split("|")[0]&&(mAnsicht()==="tabelle"||alle[i+1].dataset.mv.split("|")[1]===t.dataset.mv.split("|")[1])){alle[i+1].focus();alle[i+1].select&&alle[i+1].select();return}
+ const[sd]=t.dataset.mv.split("|"),r=R();if(mAnsicht()==="punkt"&&r){const x=r.mess[sd];if((+x.sel||0)<x.rows.length-1){x.sel=(+x.sel||0)+1;save();render();mFokus(sd);return}}t.blur()});
 let lastDk=null;window.addEventListener("resize",()=>{const dk=isDesk();if(dk!==lastDk){lastDk=dk;if(S.view==="scan"&&dk)S.view="suche";render()}});
 let belegDatei=null;
 (async()=>{

@@ -5,8 +5,8 @@ import { sql } from "../db.js";
 import { brauche } from "../sitzung.js";
 
 /**
- * Kalenderabo (webcal) für iPhone und Outlook. Enthält Uhrzeit, Einsatzart, Anlagen-Nr. und Adresse
- * (für die Navigation, auch in CarPlay), keine Kundennamen. Die Adresse enthält ein geheimes Token je Mitarbeiter.
+ * Kalenderabo (webcal) für iPhone und Outlook: Uhrzeit, Einsatzart, Anlagen-Nr., Adresse (Navigation,
+ * auch in CarPlay) und in der Notiz Ansprechpartner und Telefon (Anruf per Siri-Kurzbefehl). Die Adresse enthält ein geheimes Token je Mitarbeiter.
  */
 
 type Daten = Record<string, string | number | null>;
@@ -22,6 +22,41 @@ function tagDanach(datum: string): string {
   const d = new Date(datum + "T12:00Z");
   d.setUTCDate(d.getUTCDate() + 1);
   return d.toISOString().slice(0, 10).replace(/-/g, "");
+}
+
+/** Zeilen über 75 Byte nach RFC 5545 umbrechen (Folgezeile beginnt mit Leerzeichen) */
+function falten(zeile: string): string {
+  const teile: string[] = [];
+  let akt = "", bytes = 0;
+  for (const z of zeile) {
+    const b = Buffer.byteLength(z);
+    if (bytes + b > (teile.length ? 74 : 75)) { teile.push(akt); akt = ""; bytes = 0; }
+    akt += z; bytes += b;
+  }
+  teile.push(akt);
+  return teile.join("\r\n ");
+}
+
+/** Telefonnummer aus Freitext wie „Hr. Seibel (Hausmeister) 0171 445 22 10“ */
+function nummerAus(text?: string | null): string | null {
+  const m = String(text ?? "").match(/\+?\d[\d\s/()-]{4,}\d/);
+  return m ? m[0].replace(/[\s/()-]/g, " ").replace(/\s+/g, " ").trim() : null;
+}
+
+/**
+ * Notiz im Termin. Die erste Zeile „Anrufen: …“ ist die Nummer, die der iPhone-Kurzbefehl
+ * „Ansprechpartner anrufen“ wählt: Ansprechpartner vor Ort, sonst Melder der Störung, sonst Kunde.
+ */
+function beschreibung(d: Daten, a?: { ansprech: string; zugang: string; tel: string; kunde: string }): string {
+  const nr = nummerAus(a?.ansprech) ?? nummerAus(String(d.melder ?? "")) ?? nummerAus(a?.tel);
+  return [
+    nr ? `Anrufen: ${nr}` : "",
+    a?.ansprech ? `Vor Ort: ${a.ansprech}` : "",
+    d.melder ? `Gemeldet von: ${d.melder}` : "",
+    a?.kunde ? `Kunde: ${a.kunde}${a.tel ? ", Tel. " + a.tel : ""}` : "",
+    a?.zugang ? `Zugang: ${a.zugang}` : "",
+    d.grund ? `Auftrag ${d.id}: ${d.grund}` : "",
+  ].filter(Boolean).join("\n");
 }
 
 export async function kalenderRouten(app: FastifyInstance): Promise<void> {
@@ -48,8 +83,12 @@ export async function kalenderRouten(app: FastifyInstance): Promise<void> {
       select daten as d from daten where sammlung = 'auftraege' and not geloescht
         and daten->>'tech' = ${m.id} and daten->>'date' >= ${ab} and daten->>'status' <> 'storniert'`;
     const anlagen = new Map(
-      (await sql<{ id: string; ort: string; str: string; plz: string }[]>`
-        select id, daten->>'ort' as ort, daten->>'str' as str, daten->>'plz' as plz from daten where sammlung = 'anlagen'`)
+      (await sql<{ id: string; ort: string; str: string; plz: string; ansprech: string; zugang: string; tel: string; kunde: string }[]>`
+        select a.id, a.daten->>'ort' as ort, a.daten->>'str' as str, a.daten->>'plz' as plz,
+          a.daten->>'ansprech' as ansprech, a.daten->>'zugang' as zugang,
+          k.daten->>'tel' as tel, concat_ws(', ', k.daten->>'name1', nullif(k.daten->>'name2', '')) as kunde
+        from daten a left join daten k on k.sammlung = 'kunden' and k.id = a.daten->>'knr'
+        where a.sammlung = 'anlagen'`)
         .map((a) => [a.id, a]),
     );
     const abw = await sql<{ d: Daten }[]>`
@@ -70,6 +109,7 @@ export async function kalenderRouten(app: FastifyInstance): Promise<void> {
         `DTEND;TZID=Europe/Berlin:${stempel(String(d.date), plusMinuten(String(d.time), Number(d.dauer || 1) * 60))}`,
         `SUMMARY:${ics(`${d.art} · ${d.nv === "INTERN" ? "intern" : d.nv} · ${ort}`)}`,
         ...(adresse ? [`LOCATION:${ics(adresse)}`] : []),
+        `DESCRIPTION:${ics(beschreibung(d, a))}`,
         `URL:${config.baseUrl}/app/`, `STATUS:${d.status === "erledigt" ? "CONFIRMED" : "TENTATIVE"}`, "END:VEVENT");
     }
     for (const { d } of abw) {
@@ -83,6 +123,6 @@ export async function kalenderRouten(app: FastifyInstance): Promise<void> {
       z.push(`SUMMARY:${ics(`${d.art}${d.status === "offen" ? " (beantragt)" : ""}`)}`, "END:VEVENT");
     }
     z.push("END:VCALENDAR");
-    return antwort.type("text/calendar; charset=utf-8").header("Cache-Control", "no-store").send(z.join("\r\n") + "\r\n");
+    return antwort.type("text/calendar; charset=utf-8").header("Cache-Control", "no-store").send(z.map(falten).join("\r\n") + "\r\n");
   });
 }

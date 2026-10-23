@@ -979,7 +979,13 @@ function ichKal(){
   ${S.calAbo?`<ol class="hint" style="padding-left:18px;margin:0;display:flex;flex-direction:column;gap:4px"><li>iPhone: Einstellungen › Apps › Kalender › Kalenderaccounts › Account hinzufügen › Andere › Kalenderabo hinzufügen</li><li>Diese Adresse einfügen:</li></ol>
    <div class="check mono" style="font-size:12px;overflow-wrap:anywhere;user-select:all">${esc(S.calAbo)}</div>
    <button type="button" class="btn sec" id="calCopy">Adresse kopieren</button>
-   <p class="hint">Im Kalender stehen Uhrzeit, Einsatzart, Anlagen-Nr. und Adresse, keine Kundennamen. Über die Adresse startet die Navigation direkt aus dem Kalender, auch im Auto über CarPlay. Details öffnet ein Link in N-Flow.</p>`
+   <p class="hint">Im Termin stehen Adresse, Ansprechpartner und Telefon. Über die Adresse startet die Navigation direkt aus dem Kalender, auch im Auto über CarPlay.</p>
+   <details><summary class="hint" style="cursor:pointer;padding:6px 0"><b>„Hey Siri, Ansprechpartner anrufen“ einrichten</b></summary>
+   <ol class="hint" style="padding-left:18px;margin:6px 0 0;display:flex;flex-direction:column;gap:4px"><li>App „Kurzbefehle“ öffnen, oben rechts <b>+</b>.</li>
+    <li>Aktion <b>„Kalenderereignisse suchen“</b>: Kalender ist „N-Flow“, Startdatum ist heute, sortiert nach Startdatum (älteste zuerst), Limit 1. Filter hinzufügen: Enddatum ist nach „Aktuelles Datum“.</li>
+    <li>Aktion <b>„Telefonnummern aus Eingabe abrufen“</b> anhängen (Eingabe: Notizen des Kalenderereignisses).</li>
+    <li>Aktion <b>„Element aus Liste abrufen“</b>: erstes Objekt. Danach Aktion <b>„Anrufen“</b>.</li>
+    <li>Kurzbefehl <b>„Ansprechpartner anrufen“</b> nennen. Fertig, auch im Auto über CarPlay.</li></ol></details><p class="hint" style="display:none"> Details öffnet ein Link in N-Flow.</p>`
   :`<button type="button" class="btn sec" id="calAbo">Mit Apple Kalender verbinden</button>`}</div>`;
 }
 const KAT=["Tanken","Material","Parken / Maut","Übernachtung","Bewirtung","Sonstiges"];

@@ -3,6 +3,7 @@ import { config, microsoftAktiv } from "./config.js";
 import { sql } from "./db.js";
 import { protokolliere } from "./protokoll.js";
 import { brauche } from "./sitzung.js";
+import { pdfErzeugen } from "./druck.js";
 
 /**
  * E-Mail-Versand über Microsoft Graph aus dem Service-Postfach.
@@ -14,7 +15,7 @@ type Daten = Record<string, unknown>;
 const ABSENDER = () => (process.env.MAIL_ABSENDER || "service@novis-anlagentechnik.de").trim();
 
 let token: { wert: string; bis: number } | null = null;
-async function graphToken(): Promise<string> {
+export async function graphToken(): Promise<string> {
   if (token && token.bis > Date.now() + 60_000) return token.wert;
   const r = await fetch(`https://login.microsoftonline.com/${config.microsoft.mandant}/oauth2/v2.0/token`, {
     method: "POST",
@@ -30,7 +31,7 @@ async function graphToken(): Promise<string> {
   return token.wert;
 }
 
-interface Anhang { name: string; typ: string; inhalt: string }
+interface Anhang { name: string; typ: string; inhalt: string | Buffer }
 export async function mailSenden(an: string, betreff: string, text: string, anhaenge: Anhang[] = []): Promise<void> {
   if (!microsoftAktiv) throw new Error("Microsoft ist nicht eingerichtet.");
   const r = await fetch(`https://graph.microsoft.com/v1.0/users/${encodeURIComponent(ABSENDER())}/sendMail`, {
@@ -43,7 +44,7 @@ export async function mailSenden(an: string, betreff: string, text: string, anha
         toRecipients: [{ emailAddress: { address: an } }],
         attachments: anhaenge.map((a) => ({
           "@odata.type": "#microsoft.graph.fileAttachment", name: a.name, contentType: a.typ,
-          contentBytes: Buffer.from(a.inhalt, "utf8").toString("base64"),
+          contentBytes: (typeof a.inhalt === "string" ? Buffer.from(a.inhalt, "utf8") : a.inhalt).toString("base64"),
         })),
       },
       saveToSentItems: true,
@@ -62,6 +63,11 @@ const ARTTEXT: Record<string, string> = {
   Reparatur: "die Reparatur an Ihrer Heizungsanlage", Folgeauftrag: "die vereinbarten Arbeiten an Ihrer Heizungsanlage",
   Inbetriebnahme: "die Inbetriebnahme Ihrer neuen Heizungsanlage", Umbau: "die vereinbarten Arbeiten an Ihrer Heizungsanlage",
 };
+function anredeFuer(kd: Daten): string {
+  const name1 = String(kd.name1 ?? ""), name2 = String(kd.name2 ?? "");
+  const firma = /gmbh|e\.v\.|eg\b|ag\b|kg\b|gbr|praxis|gemeinde|stadt|verwaltung|bäckerei|metzgerei|autohaus|wohnungsbau|kita/i.test(name1);
+  return name2 && !firma ? (/ und /.test(name2) ? `Sehr geehrte Familie ${name1},` : `Guten Tag ${name2} ${name1},`) : "Sehr geehrte Damen und Herren,";
+}
 const zeitPlus = (t: string, min: number) => { const [h, m] = t.split(":").map(Number); const x = h * 60 + m + min; return `${String(Math.floor(x / 60)).padStart(2, "0")}:${String(x % 60).padStart(2, "0")}`; };
 const icsText = (t: string) => t.replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\n/g, "\\n");
 
@@ -137,6 +143,56 @@ export async function mailRouten(app: FastifyInstance): Promise<void> {
           where sammlung = 'auftraege' and id = ${String(m.auftrag.id)}`;
       }
       await protokolliere(anfrage.benutzer!.name, test ? "Testmail gesendet" : "Terminbestätigung gesendet", `${m.auftrag.id} an ${an}`);
+      return { ok: true, an };
+    } catch (e) {
+      return antwort.code(502).send({ fehler: (e as Error).message });
+    }
+  });
+  /** Rechnung als PDF (mit Servicebericht als Anlage) an den Kunden */
+  app.post<{ Body: { re: string; an?: string } }>("/api/mail/rechnung", { preHandler: brauche("rechnungen") }, async (anfrage, antwort) => {
+    try {
+      const re = String(anfrage.body?.re ?? "");
+      const [z] = await sql<{ d: Daten }[]>`select daten as d from daten where sammlung = 'rechnungen' and id = ${re} and not geloescht`;
+      if (!z) return antwort.code(404).send({ fehler: "Rechnung nicht gefunden." });
+      const r = z.d;
+      const [a] = await sql<{ d: Daten }[]>`select daten as d from daten where sammlung = 'anlagen' and id = ${String(r.nv ?? "")}`;
+      const [k] = await sql<{ d: Daten }[]>`select daten as d from daten where sammlung = 'kunden' and id = ${String(a?.d.knr ?? "")}`;
+      const kd = k?.d ?? {};
+      const test = Boolean(anfrage.body?.an);
+      const an = (anfrage.body?.an || String(kd.mail ?? "")).trim();
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(an)) return antwort.code(400).send({ fehler: "Beim Kunden ist keine gültige E-Mail-Adresse hinterlegt." });
+      // Microsoft nimmt Mails bis etwa 3 MB an; bei vielen Fotos ohne Fotoseite senden
+      let pdf = await pdfErzeugen("rechnung", re);
+      if (pdf.length > 2.8 * 1024 * 1024) pdf = await pdfErzeugen("rechnung", re, { ohneFotos: true });
+      const fmt = (d: unknown) => new Date(String(d) + "T12:00").toLocaleDateString("de-DE");
+      const faellig = new Date(String(r.datum) + "T12:00"); faellig.setDate(faellig.getDate() + 14);
+      const betrag = Number(r.brutto ?? 0).toLocaleString("de-DE", { style: "currency", currency: "EUR" });
+      const [allg] = await sql<{ d: Daten }[]>`select daten as d from daten where sammlung = 'einstellungen' and id = 'allgemein'`;
+      const tel = ((allg?.d?.firma ?? {}) as Record<string, string>).tel || "";
+      const text = `${anredeFuer(kd)}
+
+vielen Dank für Ihren Auftrag. Anbei erhalten Sie unsere Rechnung ${re} vom ${fmt(r.datum)} über ${betrag} für die Arbeiten an Ihrer Heizungsanlage am ${fmt(r.leist)}. Der Servicebericht ${r.sb ?? ""} mit Messblatt ist der Rechnung als Anlage beigefügt.
+
+Bitte überweisen Sie den Betrag bis zum ${faellig.toLocaleDateString("de-DE")} unter Angabe der Rechnungsnummer.
+
+Bei Fragen sind wir gern für Sie da.
+
+Mit freundlichen Grüßen
+Ihr Service-Team der NOVIS Anlagentechnik
+
+—
+NOVIS Anlagentechnik GmbH i. G.
+Bornweg 34a · 63599 Biebergemünd
+Telefon: ${tel || "Service-Hotline (Nummer folgt)"}
+E-Mail: ${ABSENDER()}
+www.novis-anlagentechnik.de`;
+      await mailSenden(an, `${test ? "[Test] " : ""}Rechnung ${re} – NOVIS Anlagentechnik`, text, [{ name: `${re}.pdf`, typ: "application/pdf", inhalt: pdf }]);
+      if (!test) {
+        await sql`update daten set daten = daten || ${sql.json({ versendet: new Date().toISOString(), versendetAn: an })},
+          version = version + 1, geaendert_am = clock_timestamp(), geaendert_von = ${anfrage.benutzer!.name}
+          where sammlung = 'rechnungen' and id = ${re}`;
+      }
+      await protokolliere(anfrage.benutzer!.name, test ? "Testmail Rechnung" : "Rechnung versendet", `${re} an ${an}`);
       return { ok: true, an };
     } catch (e) {
       return antwort.code(502).send({ fehler: (e as Error).message });

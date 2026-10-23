@@ -3,6 +3,7 @@ import type { FastifyReply, FastifyRequest } from "fastify";
 import { config } from "./config.js";
 import { sql } from "./db.js";
 import { darf, type Recht, type Rolle } from "./rechte.js";
+import { DRUCK_BENUTZER, DRUCK_COOKIE, druckSchluessel } from "./druck.js";
 
 export const SITZUNGS_COOKIE = "nflow_sitzung";
 
@@ -49,7 +50,17 @@ export async function sitzungBeenden(anfrage: FastifyRequest, antwort: FastifyRe
 }
 
 /** Liest den angemeldeten Benutzer aus dem Cookie. Gesperrte oder ausgetretene Personen fliegen raus. */
-export async function benutzerLaden(anfrage: FastifyRequest): Promise<void> {
+export async function benutzerLaden(anfrage: FastifyRequest, antwort: FastifyReply): Promise<void> {
+  // Interner PDF-Browser (druck.ts): nur vom Server selbst und nur lesend
+  const druck = anfrage.cookies[DRUCK_COOKIE];
+  if (druck) {
+    if (druck !== druckSchluessel || !["127.0.0.1", "::1", "::ffff:127.0.0.1"].includes(anfrage.ip)) return;
+    if (anfrage.method !== "GET" && anfrage.method !== "HEAD") {
+      return antwort.code(403).send({ fehler: "Der Druckmodus darf nichts ändern." });
+    }
+    anfrage.benutzer = { ...DRUCK_BENUTZER };
+    return;
+  }
   const token = anfrage.cookies[SITZUNGS_COOKIE];
   if (!token) return;
   const [z] = await sql<Benutzer[]>`

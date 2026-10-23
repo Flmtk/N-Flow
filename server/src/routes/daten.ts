@@ -5,6 +5,7 @@ import { protokolliere } from "../protokoll.js";
 import { rechteLaden, type Recht } from "../rechte.js";
 import { brauche, type Benutzer } from "../sitzung.js";
 import { nachSpeichern } from "../push.js";
+import { nachSpeichernAblage } from "../ablage.js";
 
 /**
  * Gemeinsamer Datenspeicher für Büro und Monteur-App.
@@ -222,7 +223,10 @@ export async function datenRouten(app: FastifyInstance): Promise<void> {
       }
     });
     // Mitteilungen erst nach dem Speichern, ohne auf sie zu warten
-    if ("zeile" in erg && erg.zeile) void nachSpeichern(s, id, erg.alt ?? null, erg.zeile.daten, b);
+    if ("zeile" in erg && erg.zeile) {
+      void nachSpeichern(s, id, erg.alt ?? null, erg.zeile.daten, b);
+      void nachSpeichernAblage(s, id, erg.alt ?? null, erg.zeile.daten);
+    }
     return erg;
   }
 

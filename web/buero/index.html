@@ -360,6 +360,10 @@ table.rtb td,table.rtb th{text-align:left}table.rtb td:nth-child(n+4),table.rtb 
 }
 /* Betrieb: Vollbild statt Prototyp-Rahmen */
 .pg .fotos{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:6px}.pg .fotos img{width:100%;height:190px;object-fit:cover;border:1px solid #e1e4e8}
+.kdgrid{display:grid;grid-template-columns:1fr 1fr;gap:30px;margin-bottom:6px}.kdgrid .rkv dd{text-align:left}.kdh{margin:16px 0 6px;font-size:12px;letter-spacing:.05em;text-transform:uppercase}.kdpg .rtb{font-size:10.5px}.kdpg .rtb small{color:#5d636c}.kdpg .rt{margin-top:28px}
+/* Druckmodus (PDF auf dem Server): keine Leerseiten durch Rundung */
+.druckmodus,.druckmodus .a4v,.druckmodus .a4s,.druckmodus .a4p,.druckmodus .annexp{margin:0!important;padding:0!important;gap:0!important;display:block!important;position:static!important;overflow:visible!important}
+@media print{.druckmodus .pg{height:793px!important}.druckmodus .pg.pt{height:1122px!important}.druckmodus .a4p .pg:last-child,.druckmodus .annexp>.pg:last-child{break-after:auto!important}}
 @page quer{size:A4 landscape;margin:0}
 @page hoch{size:A4 portrait;margin:0}
 @media print{
@@ -940,16 +944,52 @@ function reDoc(r){const a=anl(r.nv),x=reLines(r),[n1,n2]=a.kunde.split(", ");
  <p class="rp">Bitte überweisen Sie den Rechnungsbetrag ohne Abzug bis zum <b>${fmt(addD(r.datum,14))}</b> unter Angabe der Rechnungsnummer.<br><br>Mit freundlichen Grüßen<br>Ihr Service-Team der NOVIS Anlagentechnik</p>
  <p class="rp" style="font-size:11.5px;color:#5d636c"><b style="color:#1d222b">Anlage:</b> Servicebericht ${r.sb} mit Messblatt${a.en!=="Öl"?" und Merkblatt Gasanlagen":""}</p>
  ${SWOOSH}<div class="rf"><div><b>NOVIS Anlagentechnik GmbH i. G.</b><br>Bornweg 34a<br>63599 Biebergemünd</div><div><b>Kontakt</b><br>${esc(S.cfg.firma.mail)}${S.cfg.firma.tel?"<br>Tel. "+esc(S.cfg.firma.tel):""}<br>www.novis-anlagentechnik.de</div><div><b>Geschäftsführung</b><br>Jens Röll, Florian Pötzsch<br>Amtsgericht Hanau, ${esc(S.cfg.firma.hrb?"HRB "+S.cfg.firma.hrb:"HRB folgt")}</div><div><b>Bank / Steuer</b><br>${esc(S.cfg.firma.iban||"IBAN folgt")}<br>${esc(S.cfg.firma.ust?"USt-IdNr. "+S.cfg.firma.ust:"USt-IdNr. folgt")}</div></div></div>`}
+/* ---------- Druckmodus für die PDF-Ablage (Server, druck.ts) ---------- */
+async function drucken(art,id){
+ const fertig=f=>{window.NF_DRUCK={fertig:true,fehler:f||""}};
+ try{
+  document.body.innerHTML="";document.body.classList.add("druckmodus");
+  const L=document.createElement("div");L.id=art==="rechnung"?"relayer":"a4layer";document.body.appendChild(L);
+  let html="";
+  if(art==="bericht"){const b=S.ber.find(x=>x.sb===id);if(!b)return fertig("Bericht "+id+" nicht gefunden");await vollLaden(b.sb);html=a4Doc(b)}
+  else if(art==="rechnung"){const r=S.rech.find(x=>x.re===id);if(!r)return fertig("Rechnung "+id+" nicht gefunden");if(r.sb)await vollLaden(r.sb);html=reDoc(r)+(r.sb?`<div class="annexp">${a4Doc(berFor(r))}</div>`:"")}
+  else if(art==="kunde"){if(!NF.get("kunden",id))return fertig("Kunde "+id+" nicht gefunden");html=kdDoc(id)}
+  else return fertig("Unbekannte Druckart");
+  L.innerHTML=`<div class="a4v"><div class="a4s"><div class="a4p">${html}</div></div></div>`;
+  await Promise.all([...L.querySelectorAll("img")].map(im=>im.complete?0:new Promise(r=>{im.onload=im.onerror=r})));
+  if(document.fonts&&document.fonts.ready)await document.fonts.ready;
+  fertig();
+ }catch(e){fertig(e.message||String(e))}}
+/** Kundenstammblatt (A4 hoch) für die Kundenakte in SharePoint */
+function kdDoc(nr){const k=NF.get("kunden",nr)||{},A=S.anl.filter(a=>a.knr===nr),nvs=new Set(A.map(a=>a.nv));
+ const B=S.ber.filter(b=>nvs.has(b.nv)).sort((x,y)=>String(y.datum).localeCompare(String(x.datum))).slice(0,12);
+ const R=S.rech.filter(r=>nvs.has(r.nv)).sort((x,y)=>String(y.datum).localeCompare(String(x.datum))).slice(0,12);
+ const kv=(l,v)=>`<dt>${l}</dt><dd>${v?esc(String(v)):"–"}</dd>`;
+ return`<div class="pg pt kdpg"><img class="rhimg" src="${IMG_HEAD}" alt="NOVIS Anlagentechnik · Service redefined.">
+ <h2 class="rt">Kundenstammblatt ${esc(nr)}</h2>
+ <div class="kdgrid"><dl class="rkv">${kv("Name / Firma",k.name1)}${kv("Vorname / Zusatz",k.name2)}${kv("Straße",k.str)}${kv("PLZ / Ort",[k.plz,k.ort].filter(Boolean).join(" "))}</dl>
+ <dl class="rkv">${kv("Telefon",k.tel)}${kv("E-Mail",k.mail)}${kv("Kundennummer",nr)}${kv("Stand",fmt(TODAY))}</dl></div>
+ <h3 class="kdh">Anlagen</h3>
+ <table class="mtb rtb"><thead><tr><th>Anlage</th><th>Gerät</th><th>Standort</th><th>Energie</th><th>Vertrag</th><th>Letzte Wartung</th><th>Nächste fällig</th></tr></thead><tbody>
+ ${A.map(a=>`<tr><td>${a.nv}</td><td>${esc(a.ger)}${a.kw?" · "+de(a.kw,0)+" kW":""}</td><td>${esc(a.obj&&a.obj!==a.str?a.obj+", ":"")}${esc(a.str||"")}, ${esc(a.plz||"")} ${esc(a.ort||"")}${a.ansprech?"<br><small>Ansprechpartner: "+esc(a.ansprech)+"</small>":""}</td><td>${esc(a.en||"")}</td><td>${esc(a.vertrag||"–")}</td><td>${fmt(lastDone(a))}</td><td>${a.vertrag?fmt(due(a)):"–"}</td></tr>`).join("")||'<tr><td colspan="7">Keine Anlagen.</td></tr>'}</tbody></table>
+ <h3 class="kdh">Letzte Serviceberichte</h3>
+ <table class="mtb rtb"><thead><tr><th>Bericht</th><th>Datum</th><th>Anlage</th><th>Art</th><th>Zustand</th></tr></thead><tbody>
+ ${B.map(b=>`<tr><td>${b.sb}</td><td>${fmt(b.datum)}</td><td>${b.nv}</td><td>${esc(b.art||"")}</td><td>${esc(b.zustand||"")}</td></tr>`).join("")||'<tr><td colspan="5">Noch keine.</td></tr>'}</tbody></table>
+ <h3 class="kdh">Rechnungen</h3>
+ <table class="mtb rtb"><thead><tr><th>Rechnung</th><th>Datum</th><th>Anlage</th><th>Betrag</th><th>Status</th></tr></thead><tbody>
+ ${R.map(r=>`<tr><td>${r.re}</td><td>${fmt(r.datum)}</td><td>${r.nv}</td><td>${eur(r.brutto||0)}</td><td>${esc(r.status||"")}</td></tr>`).join("")||'<tr><td colspan="5">Noch keine.</td></tr>'}</tbody></table>
+ ${SWOOSH}<div class="rf"><div><b>NOVIS Anlagentechnik GmbH i. G.</b><br>Bornweg 34a<br>63599 Biebergemünd</div><div><b>Kontakt</b><br>${esc(S.cfg.firma.mail)}${S.cfg.firma.tel?"<br>Tel. "+esc(S.cfg.firma.tel):""}</div><div><b>Erstellt</b><br>automatisch aus N-Flow</div><div></div></div></div>`}
 function berFor(r){return S.ber.find(b=>b.sb===r.sb)||{sb:r.sb,id:"",nv:r.nv,tech:"",art:"",datum:r.leist,az:r.az,fz:0,km:r.km,mat:0,qa:null,zustand:"",folge:0}}
 function reViewer(){
  let L=$("#relayer");if(!L){L=document.createElement("div");L.id="relayer";document.body.appendChild(L)}
  if(!S.rv){L.innerHTML="";return}const r=S.rech.find(x=>x.re===S.rv);if(!r){S.rv=null;L.innerHTML="";return}
  if(r.sb&&!S.voll[r.sb]){L.innerHTML=`<div class="a4v"><header><b>${r.re}</b><span class="hint">wird geladen …</span></header></div>`;vollLaden(r.sb).then(reViewer);return}
  L.innerHTML=`<div class="a4v" role="dialog" aria-label="Rechnung ${r.re}"><header><b>${r.re}</b><span class="hint">${esc(anl(r.nv).kunde)} · ${fmt(r.datum)} · A4 hoch</span>
-  <span style="margin-left:auto;display:flex;gap:8px">${r.status==="offen"?`<button type="button" class="btn sm" data-repaid="${r.re}">Als bezahlt markieren</button>`:'<span class="chip ok">bezahlt</span>'}<button type="button" class="btn sec sm" data-a4print="1">Drucken / PDF</button><button type="button" class="ico" data-rvclose="1" aria-label="Schließen">${I.x}</button></span></header>
+  <span style="margin-left:auto;display:flex;gap:8px;align-items:center">${r.versendet?`<span class="chip ok">gesendet ${fmt(iso(r.versendet))}</span>`:""}<button type="button" class="btn sec sm" data-remail="${r.re}">${r.versendet?"Erneut senden":"Per E-Mail senden"}</button>${r.status==="offen"?`<button type="button" class="btn sm" data-repaid="${r.re}">Als bezahlt markieren</button>`:'<span class="chip ok">bezahlt</span>'}<button type="button" class="btn sec sm" data-a4print="1">Drucken / PDF</button><button type="button" class="ico" data-rvclose="1" aria-label="Schließen">${I.x}</button></span></header>
   <div class="a4s" id="res"><div class="a4p">${reDoc(r)}<div class="annex"><span>Anlage zur Rechnung ${r.re}</span><b>Servicebericht ${r.sb}</b></div><div class="annexp">${a4Doc(berFor(r))}</div></div></div>
-  <p class="hint" style="text-align:center;padding:6px">„Drucken / PDF“ ergibt ein PDF mit Rechnung und Servicebericht als Anlage. Versand per E-Mail und XRechnung folgen.</p></div>`;
- fitRe();
+  <div class="remail" style="display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;padding:6px"><span class="hint">An ${esc(anl(r.nv).mail||"– keine E-Mail beim Kunden –")}</span><span class="hint">·</span><input id="reTest" type="email" placeholder="Test an eigene Adresse" value="${esc(UI.testMail||"")}" style="max-width:240px"><button type="button" class="btn ghost sm" data-retest="${r.re}">Test senden</button></div>
+  <p class="hint" style="text-align:center;padding:0 6px 6px">„Drucken / PDF“ ergibt ein PDF mit Rechnung und Servicebericht als Anlage. <span id="resp"></span></p></div>`;
+ fitRe();spLink("rechnung",r.re,"#resp");
 }
 /* ---------- Team ---------- */
 function vTeam(){
@@ -1004,6 +1044,7 @@ function docData(b){const a=anl(b.nv),t=tech(b.tech),r=(S.voll[b.sb]&&S.voll[b.s
   arb:fa?(fa.bem||""):(r.arbeiten||""),hinweis:r.hinweis||"",zustand:r.zustand||b.zustand||""}}
 const PH=(title,nr,slogan)=>`<div class="pg-h"><div class="pg-t"><i></i>${title}</div><div class="pg-nr">BERICHT-NR.<b>${nr}</b></div>${slogan?'<div class="pg-sl"><i></i>service redefined.</div>':`<img class="pg-img" src="${IMG_LOGO}" alt="NOVIS Anlagentechnik">`}</div>`;
 let PGT=3;
+const DRUCK_Q=new URLSearchParams(location.search),DRUCK=DRUCK_Q.get("druck"),DRUCK_OHNE_FOTOS=DRUCK_Q.get("ohneFotos")==="1";
 const PF=(label,n)=>`<div class="pg-f"><span>NOVIS Anlagentechnik GmbH i. G. · Heizungs- und Anlagentechnik · Rhein-Main</span><span>${label} · Seite ${n} / ${PGT}</span></div>`;
 const FL=(l,v)=>`<div class="fl"><span>${l}</span><b>${v==null||v===""?"&nbsp;":esc(v)}</b></div>`;
 const SEC=t=>`<div class="sec"><i></i>${t}</div>`;
@@ -1017,7 +1058,7 @@ function a4Page1(b,mini){const d=docData(b),a=d.a,r=d.r,k=NF.get("kunden",a.knr)
   <div class="fl tall"><span>Durchgeführte Arbeiten</span><b class="box2">${esc(d.arb).replace(/\n/g,"<br>")}</b></div>
  </div>${PF("Servicebericht",1)}</div>`}
 function a4Doc(b){const d=docData(b),a=d.a,r=d.r,m=d.m,sumA=d.zt.filter(z=>z.art==="Arbeitszeit").reduce((s,z)=>s+z.h,0),sumR=d.zt.filter(z=>z.art==="Reisezeit").reduce((s,z)=>s+z.h,0);
- const fotos=Array.isArray(r.fotos)?r.fotos:[],mb=d.gas&&!!m&&r.merkblatt!==false;
+ const fotos=Array.isArray(r.fotos)&&!DRUCK_OHNE_FOTOS?r.fotos:[],mb=d.gas&&!!m&&r.merkblatt!==false;
  PGT=3+(m?2:0)+(mb?1:0)+(fotos.length?1:0);let n=1;
  const img=id=>id?`<img class="sigimg" src="/api/dateien/${esc(id)}" alt="">`:"";
  const p2=`<div class="pg">${PH("SERVICEBERICHT",b.sb)}<div class="pg-b"><div class="c2 w7">
@@ -1060,8 +1101,8 @@ function viewer(){
  L.innerHTML=`<div class="a4v" role="dialog" aria-label="Servicebericht ${b.sb}"><header><b>${b.sb}</b><span class="hint">${esc(anl(b.nv).kunde)} · ${fmt(b.datum)} · A4 quer</span>
   <span style="margin-left:auto;display:flex;gap:8px">${b.status==="neu"&&RECHTE.berichte_pruefen?`<button type="button" class="btn sm" data-bcheck="${b.sb}">Als geprüft markieren</button>`:b.status==="geprüft"&&RECHTE.rechnungen?`<button type="button" class="btn sm" data-bre="${b.sb}">Rechnung erzeugen</button>`:""}<button type="button" class="btn sec sm" data-a4print="1">Drucken / PDF</button><button type="button" class="ico" data-a4close="1" aria-label="Schließen">${I.x}</button></span></header>
   <div class="a4s" id="a4s"><div class="a4p">${a4Doc(b)}</div></div>
-  <p class="hint" style="text-align:center;padding:6px">Aus den Berichtsdaten der Monteur-App. „Drucken / PDF“ speichert ihn als PDF. Die automatische Ablage im Kundenordner in SharePoint folgt.</p></div>`;
- fitA4();
+  <p class="hint" style="text-align:center;padding:6px">Aus den Berichtsdaten der Monteur-App. „Drucken / PDF“ speichert ihn als PDF. <span id="a4sp"></span></p></div>`;
+ fitA4();spLink("bericht",b.sb,"#a4sp");
 }
 function fitRe(){const s=$("#res");if(!s)return;const k=Math.min((s.clientWidth-32)/794,1.15);s.style.setProperty("--k",k);s.style.setProperty("--kl",k*794/1123)}
 window.addEventListener("resize",fitRe);
@@ -1198,11 +1239,11 @@ function dbRows(tb){return NF.eintraege(tb).map(e=>Object.assign({_id:e.id},e.da
 function vAdm(){
  if(!ISADM()){S.view="dash";vDash();return}
  if(Date.now()-(S.admZeit||0)>20000){S.admZeit=Date.now();adminLaden()}
- const tabs=[["user","Mitarbeiter und Rechte"],["db","Datenbank"],["bk","Sicherung"],["sys","System und Updates"],["log","Protokoll"]];
+ const tabs=[["user","Mitarbeiter und Rechte"],["db","Datenbank"],["bk","Sicherung"],["sys","System und Updates"],["sp","SharePoint"],["log","Protokoll"]];
  if(!tabs.some(x=>x[0]===S.admTab))S.admTab="user";const T=S.admTab;
- top("Administration",T==="user"?`<button type="button" class="btn" data-empnew="1">+ Neuer Mitarbeiter</button>`:T==="bk"?`<button type="button" class="btn" id="bkNow">Jetzt sichern</button>`:T==="log"?`<button type="button" class="btn sec" id="logNeu">Aktualisieren</button>`:"");
+ top("Administration",T==="user"?`<button type="button" class="btn" data-empnew="1">+ Neuer Mitarbeiter</button>`:T==="bk"?`<button type="button" class="btn" id="bkNow">Jetzt sichern</button>`:T==="log"?`<button type="button" class="btn sec" id="logNeu">Aktualisieren</button>`:T==="sp"?`<button type="button" class="btn sec" id="spNeu">Aktualisieren</button>`:"");
  const bar=`<div class="stabs" role="tablist">${tabs.map(([k,l])=>`<button type="button" role="tab" data-atab="${k}" aria-selected="${T===k}">${l}</button>`).join("")}</div>`;
- $("#view").innerHTML=`<div class="pad">${bar}${({user:admUser,db:admDb,bk:admBk,sys:admSys,log:admLog})[T]()}</div>`;
+ $("#view").innerHTML=`<div class="pad">${bar}${({user:admUser,db:admDb,bk:admBk,sys:admSys,sp:admSp,log:admLog})[T]()}</div>`;
 }
 function admUser(){const E=S.emp,R=["Monteur","Innendienst","Geschäftsführung"];if(!S.rights)rechteAusMatrix();
  return`<div class="panel"><h3>Mitarbeiter und Zugänge <span class="hint">${TECHS.filter(t=>t.aktiv!==false).length} aktiv</span></h3><div class="tbwrap"><table class="tb"><thead><tr><th></th><th>Name</th><th>Rolle</th><th>Qualifikationen</th><th>Zugang</th><th>Microsoft 365</th><th>Letzte Anmeldung</th><th>Status</th></tr></thead><tbody>
@@ -1285,6 +1326,23 @@ function admSys(){const Y=S.sysInfo;if(!Y)return'<p class="hint">Wird geladen �
     :`<div class="f2"><label class="f">Uhrzeit<select id="wartZeit">${["22:00","01:00","02:00","03:00"].map(x=>`<option ${x==="02:00"?"selected":""}>${x}</option>`).join("")}</select></label><span></span></div>
      <button type="button" class="btn sec sm" style="align-self:flex-start" id="wartAn">Hinweis für heute Nacht an die App senden</button>
      <p class="hint">Wer in der App Mitteilungen erlaubt hat, bekommt sofort eine Push-Nachricht. Alle anderen sehen den Hinweis beim Öffnen der App.</p>`}</div></div>`}
+const SPART={kunde:"Kundenstammblatt",bericht:"Servicebericht",rechnung:"Rechnung",beleg:"Beleg"};
+function admSp(){const X=S.sp;if(!X)return'<p class="hint">Wird geladen …</p>';const P=X.sharepoint,Z=X.zahlen||{};
+ return`<div class="grid2"><div class="panel"><h3>Verbindung</h3>
+  ${P.ok?`<span class="chip ok" style="align-self:flex-start">Verbunden</span><dl class="kv"><dt>Website</dt><dd>${esc(P.seite)}</dd><dt>Bibliothek</dt><dd><a href="${esc(P.bibliothek)}" target="_blank" rel="noopener">In SharePoint öffnen</a></dd></dl>`
+  :`<span class="chip ${P.eingerichtet?"crit":"wa"}" style="align-self:flex-start">${P.eingerichtet?"Kein Zugriff":"Nicht eingerichtet"}</span><p class="hint">${esc(P.meldung)}</p>
+`}
+  ${P.eingerichtet?'<p class="hint">Einmalig bei der Einrichtung: In Entra der App N-Flow vorübergehend „Sites.FullControl.All“ geben, hier freischalten, danach diese Berechtigung wieder entfernen (Anleitung docs/sharepoint.md).</p><button type="button" class="btn ghost sm" style="align-self:flex-start" id="spFrei">N-Flow für die Website freischalten</button>':""}
+  <p class="hint">Aufbau: Kunden › Kunde › Kundenstammblatt, Rechnungen, je Anlage Berichte und Fotos. Belege nach Jahr und Monat.</p></div>
+  <div class="panel"><h3>Ablage</h3><dl class="kv"><dt>Abgelegt</dt><dd>${Z.erledigt||0}</dd><dt>Wartet</dt><dd>${Z.offen||0}</dd><dt>Fehlgeschlagen</dt><dd>${Z.fehler||0}</dd></dl>
+   <div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn sec sm" id="spNach">Alles nachholen</button>${(X.fehler||[]).length?'<button type="button" class="btn ghost sm" id="spWdh">Fehler erneut versuchen</button>':""}</div>
+   <p class="hint">„Alles nachholen“ legt alle vorhandenen Kunden, Berichte, Rechnungen und Belege ab. Danach läuft es automatisch bei jeder Änderung.</p></div></div>
+ ${(X.fehler||[]).length?`<div class="panel"><h3>Hinweise und Fehler</h3><div class="tbwrap"><table class="tb"><thead><tr><th>Dokument</th><th>Versuche</th><th>Meldung</th><th>Status</th></tr></thead><tbody>
+  ${X.fehler.map(f=>`<tr><td><b>${esc(SPART[f.art]||f.art)}</b> ${esc(f.ref)}</td><td>${f.versuche}</td><td class="hint">${esc(f.fehler)}</td><td><span class="chip ${f.status==="fehler"?"crit":"wa"}">${f.status==="fehler"?"abgebrochen":"nächster Versuch "+new Date(f.naechster).toTimeString().slice(0,5)}</span></td></tr>`).join("")}</tbody></table></div></div>`:""}
+ <div class="panel"><h3>Zuletzt abgelegt</h3><div class="tbwrap"><table class="tb"><thead><tr><th>Dokument</th><th>Zeit</th><th></th></tr></thead><tbody>
+  ${(X.zuletzt||[]).map(f=>`<tr><td><b>${esc(SPART[f.art]||f.art)}</b> ${esc(f.ref)}</td><td>${fmt(iso(f.erledigt_am))} ${new Date(f.erledigt_am).toTimeString().slice(0,5)}</td><td>${f.url?`<a href="${esc(f.url)}" target="_blank" rel="noopener">öffnen</a>`:""}</td></tr>`).join("")||'<tr><td colspan="3" class="empty">Noch nichts abgelegt.</td></tr>'}</tbody></table></div></div>`}
+async function spLink(art,ref,el){try{const x=await NF.api(`/api/ablage/link?art=${art}&ref=${encodeURIComponent(ref)}`);const n=$(el);if(!n)return;
+ n.innerHTML=x.url?`<a href="${esc(x.url)}" target="_blank" rel="noopener">In SharePoint öffnen</a>`:x.status==="offen"?"Wird gerade in SharePoint abgelegt …":"Noch nicht in SharePoint abgelegt."}catch(e){}}
 function pushText(z){return`Ab ${z} Uhr wird N-Flow aktualisiert, die App ist dann etwa eine Minute nicht erreichbar. Bitte offene Berichte vorher senden. Entwürfe bleiben auf dem Handy erhalten.`}
 function admLog(){if(!S.log)return'<p class="hint">Wird geladen …</p>';return`<div class="panel"><h3>Protokoll <span class="hint">wer hat wann was geändert · letzte ${S.log.length} Einträge</span></h3><div class="tbwrap"><table class="tb"><thead><tr><th>Zeit</th><th>Wer</th><th>Aktion</th><th>Details</th></tr></thead><tbody>
  ${S.log.map(l=>`<tr><td class="hint" style="white-space:nowrap">${fmt(l[0].slice(0,10))} ${l[0].slice(11)}</td><td>${esc(l[1])}</td><td><b>${esc(l[2])}</b></td><td>${esc(l[3])}</td></tr>`).join("")}</tbody></table></div>
@@ -1292,7 +1350,8 @@ function admLog(){if(!S.log)return'<p class="hint">Wird geladen …</p>';return`
 async function adminLaden(){
  try{if(RECHTE.mitarbeiter){S.matrix=(await NF.api("/api/rechte")).matrix;rechteAusMatrix()}
   if(RECHTE.admin){const[log,sys]=await Promise.all([NF.api("/api/protokoll?limit=300"),NF.api("/api/system")]);
-   S.log=log.map(l=>[iso(l.zeit)+" "+new Date(l.zeit).toTimeString().slice(0,5),l.wer,l.aktion,l.details]);S.sysInfo=sys}
+   S.log=log.map(l=>[iso(l.zeit)+" "+new Date(l.zeit).toTimeString().slice(0,5),l.wer,l.aktion,l.details]);S.sysInfo=sys;
+   NF.api("/api/ablage").then(x=>{S.sp=x;if(S.view==="adm"&&S.admTab==="sp"&&!S.drawer)render()}).catch(()=>{})}
   if(S.view==="adm"&&!S.drawer&&!S.emp)render()}catch(e){if(e.code!==401)toast("Administration: "+e.message)}}
 /* ---------- Sprache: Oberfläche auf Englisch (Texte als ganze Textknoten) ---------- */
 const EN={"Auftrag":"Job","Arbeitszeit":"Working time","Fahrzeit":"Travel time","Material":"Material","Abgasverlust":"Flue gas loss","Zeit geplant":"Planned time","Ergebnis dieses Einsatzes (intern)":"Result of this job (internal)","Leistungsdatum":"Service date","Empfehlung nach Dringlichkeit":"Suggestion by urgency","Empfehlung für die Einplanung":"Scheduling suggestion","Gelesen und verstanden":"Read and understood","Übersicht": "Overview", "Plantafel": "Planning board", "Wartungsplanung": "Maintenance planning", "Kunden und Anlagen": "Customers and systems", "Berichte": "Reports", "Rechnungen": "Invoices", "Team": "Team", "Einstellungen": "Settings", "Büro · Planung": "Office · Planning", "Angemeldet als": "Signed in as", "Geschäftsführung": "Management", "Monteur": "Technician", "Innendienst": "Office staff", "Zur Plantafel": "Go to planning board", "Einsätze heute": "Jobs today", "Wartungen fällig in 30 Tagen": "Maintenance due in 30 days", "Berichte zu prüfen": "Reports to review", "Anträge und Belege": "Requests and receipts", "Braucht Aufmerksamkeit": "Needs attention", "Heute unterwegs": "On the road today", "Keine Einsätze.": "No jobs.", "Alles erledigt.": "All done.", "Einzuplanen": "To schedule", "Alle": "All", "Störung": "Breakdown", "Wartung": "Maintenance", "Folge": "Follow-up", "Sonstige": "Other", "Folgeauftrag": "Follow-up job", "Reparatur": "Repair", "Umbau": "Conversion", "Sonstiges": "Other work", "Intern": "Internal", "Inbetriebnahme": "Commissioning", "Diese Woche": "This week", "+ Neuer Auftrag": "+ New job", "dringend": "urgent", "erledigt": "done", "Montag": "Monday", "Dienstag": "Tuesday", "Mittwoch": "Wednesday", "Donnerstag": "Thursday", "Freitag": "Friday", "Übernehmen": "Accept", "Andere Empfehlung": "Other suggestion", "Verwerfen": "Discard", "Vorschau": "Preview", "Einplanen": "Schedule", "beste Wahl": "best choice", "Vorschlag": "Suggestion", "Speichern": "Save", "Abbrechen": "Cancel", "Schließen": "Close", "Aus dem Plan nehmen": "Remove from plan", "Auf der Plantafel antippen": "Tap on planning board", "Adresse in Google Maps": "Address in Google Maps", "Kunde": "Customer", "Anschrift": "Address", "Telefon": "Phone", "Anlage": "System", "Vertrag": "Contract", "Monteur ": "Technician ", "Datum": "Date", "Uhrzeit": "Time", "Dauer (h)": "Duration (h)", "Fällige Wartungen": "Maintenance due", "Wartungsverträge": "Maintenance contracts", "Pool anzeigen": "Show pool", "Zuordnung": "Assignment", "Ohne Monteur": "Unassigned", "Ohne Monteur: nach Region zuordnen": "Unassigned: assign by region", "Anlagen": "Systems", "Kunde ": "Customer ", "Ort": "Location", "Gerät": "Unit", "Leistung": "Output", "Letzte Wartung": "Last maintenance", "Fällig": "Due", "Status": "Status", "Monteur (Pool)": "Technician (pool)", "Eingang aus der Monteur-App": "Received from technician app", "Bericht": "Report", "Art": "Type", "Zeit": "Time", "Zustand": "Condition", "A4 ansehen": "View A4", "In Ordnung": "OK", "Mängel": "Defects", "Als geprüft markieren": "Mark as reviewed", "Rechnung erzeugen": "Create invoice", "Servicebericht ansehen": "View service report", "neu": "new", "geprüft": "reviewed", "abgerechnet": "invoiced", "Offen": "Open", "Überfällig": "Overdue", "Bezahlt": "Paid", "Offen gesamt (brutto)": "Open total (gross)", "Davon überfällig": "Of which overdue", "Rechnung": "Invoice", "Netto": "Net", "Brutto": "Gross", "bezahlt": "paid", "Erinnern": "Remind", "Als bezahlt markieren": "Mark as paid", "Urlaub und Block": "Leave and time blocks", "Belege": "Receipts", "Arbeitszeit diese Woche": "Working time this week", "Genehmigen": "Approve", "Bestätigen": "Confirm", "Ablehnen": "Decline", "An Buchhaltung": "To accounting", "Summe": "Total", "Soll": "Target", "Urlaub": "Leave", "Block": "Block", "genehmigt": "approved", "abgelehnt": "declined", "Allgemein": "General", "Benachrichtigungen": "Notifications", "Warnungen": "Alerts", "Mitarbeiter": "Staff", "Preise und Material": "Prices and materials", "Arbeitsmittel": "Equipment", "Sprache": "Language", "Darstellung": "Appearance", "Wie System": "System", "Hell": "Light", "Dunkel": "Dark", "Konto": "Account", "Konto wechseln": "Switch account", "Wechseln": "Switch", "Abmelden": "Sign out", "Firmendaten": "Company details", "Service-Telefon": "Service phone", "Service-E-Mail": "Service e-mail", "Handelsregister (HRB)": "Commercial register (HRB)", "IBAN": "IBAN", "USt-IdNr.": "VAT ID", "Push aufs Handy": "Push to phone", "Per E-Mail": "By e-mail", "Bei diesen Ereignissen": "For these events", "Neue Störmeldung": "New breakdown report", "Neuer Bericht eingegangen": "New report received", "Urlaubs- oder Blockantrag": "Leave or time-block request", "Rechnung überzogen": "Invoice overdue", "Kunde hat einen Termin abgelehnt": "Customer declined an appointment", "Prüfung eines Arbeitsmittels fällig": "Equipment inspection due", "Zyklische Meldungen und Statusberichte": "Scheduled updates and status reports", "Tagesbericht": "Daily report", "Wochenbericht": "Weekly report", "Monatsbericht": "Monthly report", "Tag": "Day", "Am Tag": "On day", "Inhalt der Berichte": "Report contents", "Empfänger": "Recipients", "Einsätze": "Jobs", "Umsatz": "Revenue", "Offene Posten": "Open items", "Wartungsquote": "Maintenance rate", "Auslastung Monteure": "Technician utilisation", "Wochenbericht als Beispiel ansehen": "View sample weekly report", "Offene Posten zu hoch": "Open items too high", "Auftrag im Minus": "Job at a loss", "Zeit überzogen": "Time overrun", "Prüfung Arbeitsmittel": "Equipment inspection", "Warnen ab": "Alert from", "Vorlauf": "Lead time", "Stundensätze und Zuschläge": "Hourly rates and surcharges", "Stundensatz Servicetechniker": "Service technician hourly rate", "Notdienstzuschlag": "Emergency surcharge", "Samstag / Sonntag": "Saturday / Sunday", "Materialaufschlag auf EK": "Material mark-up on cost", "Wartungspauschale nach Formular K-01": "Maintenance flat rate (form K-01)", "Sockelzeit je Gerät": "Base time per unit", "Reinigungszeit je kW": "Cleaning time per kW", "Nebenposten": "Extras", "Messgerätepauschale": "Measuring device fee", "Wartungsmaterial": "Maintenance material", "Rücklage, Ersatzteile, Wagnis": "Reserve, parts, risk", "Pauschalen der Wartungsverträge": "Flat rates of maintenance contracts", "Geräte": "Units", "Zone": "Zone", "Vertraglich": "Contractual", "Material und Artikel": "Materials and items", "+ Artikel": "+ Item", "Art.-Nr.": "Item no.", "Bezeichnung": "Description", "Hersteller": "Manufacturer", "EK netto": "Cost net", "VK netto": "Price net", "Arbeitsmittel und Prüffristen": "Equipment and inspection dates", "Serien-/Inv.-Nr.": "Serial / inv. no.", "Bei": "With", "Prüfung": "Inspection", "Intervall": "Interval", "Letzte Prüfung": "Last inspection", "Nächste": "Next", "Lager": "Store", "+ Arbeitsmittel": "+ Equipment", "bald fällig": "due soon", "überfällig": "overdue", "ok": "ok", "aktiv": "active", "inaktiv": "inactive", "+ Neuer Mitarbeiter": "+ New staff member", "Name": "Name", "Rolle": "Role", "Standort": "Base", "Qualifikationen": "Qualifications", "Std./Woche": "Hrs/week", "Seit": "Since", "Neuer Auftrag": "New job", "Auftrag anlegen": "Create job", "Abrechnung": "Billing"};
@@ -1321,6 +1380,11 @@ document.addEventListener("click",e=>{
  if(t.id==="kfSave"){const nr=S.kf._for,F=S.kf,tr=x=>String(x??"").trim();if(!tr(F.name1)){toast("Bitte einen Namen eintragen");return}NF.setze("kunden",nr,{name1:tr(F.name1),name2:tr(F.name2),str:tr(F.str),plz:tr(F.plz),ort:tr(F.ort),tel:tr(F.tel),mail:tr(F.mail)});S.kf=null;aufbauen();save();render();toast(nr+" gespeichert");return}
  if(d.aufkgo){const x=d.aufkgo,nn=Math.max(1,Math.min(96,+$("#aufkN").value||1)),st=Math.max(1,Math.min(24,+$("#aufkS").value||1));
   const liste=x==="leer"?Array.from({length:nn},()=>({code:newCode(),nv:""})):Array.from({length:nn},()=>({code:anl(x).qr,nv:x}));aufkleberDrucken(liste,st);return}
+ if(d.remail||d.retest){const re=d.remail||d.retest,an=d.retest?($("#reTest").value||"").trim():"";if(d.retest&&!an){toast("Bitte eine E-Mail-Adresse eintragen");return}
+  if(d.remail&&!anl((S.rech.find(x=>x.re===re)||{}).nv).mail){toast("Beim Kunden ist keine E-Mail-Adresse hinterlegt");return}
+  if(an){UI.testMail=an;save()}t.disabled=true;toast("PDF wird erstellt und gesendet …");
+  (async()=>{try{if(NF.ausstehend("rechnungen",re))await NF.senden();const x=await NF.api("/api/mail/rechnung",{method:"POST",body:{re,an:an||undefined}});
+   toast((an?"Test":"Rechnung")+" gesendet an "+x.an);if(!an){await NF.abholen();aufbauen();reViewer()}}catch(e){toast(e.message)}finally{t.disabled=false}})();return}
  if(d.tbsend||d.tbtest){const id=d.tbsend||d.tbtest,an=d.tbtest?($("#tbTest").value||"").trim():"";if(d.tbtest&&!an){toast("Bitte eine E-Mail-Adresse eintragen");return}
   if(an){UI.testMail=an;save()}t.disabled=true;
   (async()=>{try{if(NF.ausstehend("auftraege",id))await NF.senden();const r=await NF.api("/api/mail/terminbestaetigung",{method:"POST",body:{auftrag:id,an:an||undefined}});
@@ -1329,6 +1393,10 @@ document.addEventListener("click",e=>{
  if(d.a4print){window.print();return}
  if(t.id==="demoGo"){t.disabled=true;NF.api("/api/admin/demodaten",{method:"POST"}).then(async r=>{await teamNeu();await NF.abholen();aufbauen();render();toast(`Beispieldaten eingespielt: ${r.anlagen} Anlagen, ${r.auftraege} Aufträge`)}).catch(e=>{t.disabled=false;toast(e.message)});return}
  if(t.id==="logNeu"){S.admZeit=0;adminLaden();return}
+ if(t.id==="spNeu"){S.sp=null;render();NF.api("/api/ablage").then(x=>{S.sp=x;render()}).catch(e=>toast(e.message));return}
+ if(t.id==="spNach"){t.disabled=true;NF.api("/api/ablage/nachholen",{method:"POST"}).then(x=>{toast(x.anzahl+" Dokumente werden abgelegt");return NF.api("/api/ablage")}).then(x=>{S.sp=x;render()}).catch(e=>{t.disabled=false;toast(e.message)});return}
+ if(t.id==="spWdh"){NF.api("/api/ablage/wiederholen",{method:"POST"}).then(x=>{toast(x.anzahl+" werden erneut versucht");return NF.api("/api/ablage")}).then(x=>{S.sp=x;render()}).catch(e=>toast(e.message));return}
+ if(t.id==="spFrei"){t.disabled=true;NF.api("/api/ablage/freischalten",{method:"POST"}).then(p=>{toast(p.ok?"SharePoint verbunden. Jetzt Sites.FullControl.All in Entra wieder entfernen.":p.meldung);return NF.api("/api/ablage")}).then(x=>{S.sp=x;render()}).catch(e=>{t.disabled=false;toast(e.message)});return}
  if(t.id==="wartAn"){S.cfg.wartung={aktiv:true,datum:TODAY,zeit:$("#wartZeit").value};NF.setze("einstellungen","allgemein",{wartung:S.cfg.wartung});render();toast("Hinweis an die Monteur-App gesendet");return}
  if(t.id==="wartAus"){S.cfg.wartung={aktiv:false};NF.setze("einstellungen","allgemein",{wartung:S.cfg.wartung});render();toast("Hinweis zurückgenommen");return}
  if(d.view){S.view=d.view;S.drawer=null;S.sel=null;save();render();$("#view").scrollTop=0;return}
@@ -1419,9 +1487,10 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape"&&(S.drawer||S.sel||S
 (async()=>{
  $("#view").innerHTML='<div class="lade">N-Flow lädt …</div>';
  let ich=null;
- try{ich=await NF.start({sammlungen:["kunden","anlagen","auftraege","berichte","rechnungen","abwesenheiten","belege","zeiten","artikel","arbeitsmittel","einstellungen"],kurz:true,nummern:["A","NV","K"]})}
- catch(e){$("#view").innerHTML=`<div class="lade">${esc(e.message)}</div>`;return}
- if(!ich)return;
+ try{ich=await NF.start({sammlungen:["kunden","anlagen","auftraege","berichte","rechnungen","abwesenheiten","belege","zeiten","artikel","arbeitsmittel","einstellungen"],kurz:true,nummern:DRUCK?[]:["A","NV","K"]})}
+ catch(e){if(DRUCK){window.NF_DRUCK={fertig:true,fehler:e.message};return}$("#view").innerHTML=`<div class="lade">${esc(e.message)}</div>`;return}
+ if(!ich){if(DRUCK)window.NF_DRUCK={fertig:true,fehler:"Druckmodus nicht angemeldet"};return}
+ if(DRUCK){RECHTE=ich.rechte||{};S.voll={};aufbauen();drucken(DRUCK,DRUCK_Q.get("id")||"");return}
  RECHTE=ich.rechte||{};
  if(!RECHTE.planung){location.replace("/app/");return}
  S.voll={};aufbauen();render();adminLaden();

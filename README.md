@@ -10,7 +10,8 @@ Service-Software der NOVIS Anlagentechnik GmbH: Monteur-App (PWA), Planung im B�
 | Büro (`/buero/`) | Übersicht, Plantafel mit Empfehlung, Wartungsplanung, Kunden und Anlagen, Berichte (A4), Rechnungen, Team, Einstellungen, Administration | läuft |
 | Monteur-App (`/app/`) | Tour, QR-Scan, Anlagenakte, Einsatz mit Messblatt, Inbetriebnahme, Folgeauftrag, Fehlanfahrt, Wartungspool, Zeit, Belege, Urlaub/Block, Kalenderabo, offline-fähig | läuft |
 | QR-Aufkleber (`/a/<Kennung>`) | öffentlich: Störung melden; Kunde mit PIN: Historie; Mitarbeiter: Anlagenakte | läuft |
-| Microsoft 365 | Ablage in SharePoint, Mailversand (Terminbestätigung, Bericht, Rechnung), Push | als Nächstes |
+| Microsoft 365 | Mail (Terminbestätigung, Rechnung mit PDF), Push | läuft |
+| SharePoint | automatische Ablage nach Kunde: Kundenstammblatt, Berichte, Fotos, Rechnungen, Belege (`docs/sharepoint.md`) | läuft |
 
 ## Datenmodell
 

@@ -14,6 +14,7 @@ import { dateienRouten } from "./routes/dateien.js";
 import { oeffentlicheRouten } from "./routes/oeffentlich.js";
 import { kalenderRouten } from "./routes/kalender.js";
 import { pushRouten, vorschauPlanen } from "./push.js";
+import { mailRouten } from "./mail.js";
 
 const app = Fastify({
   logger: { level: config.produktion ? "info" : "debug" },
@@ -39,6 +40,7 @@ await app.register(dateienRouten);
 await app.register(oeffentlicheRouten);
 await app.register(kalenderRouten);
 await app.register(pushRouten);
+await app.register(mailRouten);
 
 const webOrdner = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../web");
 await app.register(fastifyStatic, { root: webOrdner, index: ["index.html"] });

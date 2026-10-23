@@ -171,7 +171,7 @@ export async function pushRouten(app: FastifyInstance): Promise<void> {
     await schluessel();
     let ok = 0;
     for (const a of abos) {
-      try { await webpush.sendNotification({ endpoint: a.endpoint, keys: a.schluessel }, JSON.stringify({ titel: "N-Flow", text: "Mitteilungen funktionieren.", ziel: "/app/" })); ok++; }
+      try { await webpush.sendNotification({ endpoint: a.endpoint, keys: a.schluessel }, JSON.stringify({ titel: "Test erfolgreich", text: "Mitteilungen funktionieren auf diesem Handy.", ziel: "/app/" })); ok++; }
       catch (e) { const c = (e as { statusCode?: number }).statusCode; if (c === 404 || c === 410) await sql`delete from push_abos where endpoint = ${a.endpoint}`; }
     }
     return { geraete: n.n, gesendet: ok };

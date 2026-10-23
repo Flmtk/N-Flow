@@ -738,7 +738,11 @@ function dOrder(id){
    <label class="f">Datum<input type="date" id="o_date" value="${o.date||""}"></label>
    <label class="f">Uhrzeit<input type="time" id="o_time" value="${o.time||""}"></label></div>
   <a class="btn sec sm" style="align-self:flex-start;text-decoration:none" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(a.str+", "+a.plz+" "+a.ort)}" target="_blank" rel="noopener">Adresse in Google Maps</a>
-  ${a.intern?'<p class="hint">Interne Tätigkeit: keine Terminbestätigung, keine Rechnung.</p>':`<div><b style="font-size:14px">Terminbestätigung an ${esc(a.mail)}</b><p class="hint">Der automatische Versand vom Service-Postfach mit Kalendereinladung folgt mit der Microsoft-Anbindung. Bis dahin Text kopieren.</p><button type="button" class="btn sec sm" data-copymail="1" style="align-self:flex-start">Text kopieren</button><p class="hint" style="display:none"></p></div>
+  ${a.intern?'<p class="hint">Interne Tätigkeit: keine Terminbestätigung, keine Rechnung.</p>':`<div><b style="font-size:14px">Terminbestätigung an ${esc(a.mail)}</b><p class="hint">Wird vom Service-Postfach gesendet, mit Kalendereinladung im Anhang.</p>
+  ${o.bestaetigt?`<span class="chip ok" style="align-self:flex-start">gesendet am ${fmt(iso(o.bestaetigt))} an ${esc(o.bestaetigtAn||"")}</span>`:""}
+  <div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-tbsend="${o.id}" ${o.date&&o.time&&a.mail?"":"disabled"}>${o.bestaetigt?"Erneut senden":"Terminbestätigung senden"}</button><button type="button" class="btn sec sm" data-copymail="1">Text kopieren</button></div>
+  ${o.date&&o.time?"":'<p class="hint">Erst Termin eintragen und speichern, dann senden.</p>'}
+  <div style="display:flex;gap:8px;align-items:flex-end"><label class="f" style="flex:1">Test an eigene Adresse<input id="tbTest" type="email" placeholder="z. B. deine private Adresse" value="${esc(UI.testMail||"")}"></label><button type="button" class="btn ghost sm" data-tbtest="${o.id}">Test senden</button></div><p class="hint" style="display:none"></p></div>
   <div class="mail">${esc(mail)}</div>
   ${o.date&&o.time?invite(o,a,t):`<p class="hint">Die Kalendereinladung wird angehängt, sobald Datum und Uhrzeit stehen.</p>`}`}`,
   foot:`${o.status==="offen"?`<button type="button" class="btn sec" data-selmode="${o.id}">Auf der Plantafel antippen</button>`:""}<button type="button" class="btn" data-osave="${o.id}">Speichern</button>${o.tech&&o.status!=="erledigt"?`<button type="button" class="btn ghost" data-ounplan="${o.id}">Aus dem Plan nehmen</button>`:""}`};
@@ -1317,6 +1321,10 @@ document.addEventListener("click",e=>{
  if(t.id==="kfSave"){const nr=S.kf._for,F=S.kf,tr=x=>String(x??"").trim();if(!tr(F.name1)){toast("Bitte einen Namen eintragen");return}NF.setze("kunden",nr,{name1:tr(F.name1),name2:tr(F.name2),str:tr(F.str),plz:tr(F.plz),ort:tr(F.ort),tel:tr(F.tel),mail:tr(F.mail)});S.kf=null;aufbauen();save();render();toast(nr+" gespeichert");return}
  if(d.aufkgo){const x=d.aufkgo,nn=Math.max(1,Math.min(96,+$("#aufkN").value||1)),st=Math.max(1,Math.min(24,+$("#aufkS").value||1));
   const liste=x==="leer"?Array.from({length:nn},()=>({code:newCode(),nv:""})):Array.from({length:nn},()=>({code:anl(x).qr,nv:x}));aufkleberDrucken(liste,st);return}
+ if(d.tbsend||d.tbtest){const id=d.tbsend||d.tbtest,an=d.tbtest?($("#tbTest").value||"").trim():"";if(d.tbtest&&!an){toast("Bitte eine E-Mail-Adresse eintragen");return}
+  if(an){UI.testMail=an;save()}t.disabled=true;
+  (async()=>{try{if(NF.ausstehend("auftraege",id))await NF.senden();const r=await NF.api("/api/mail/terminbestaetigung",{method:"POST",body:{auftrag:id,an:an||undefined}});
+   toast((an?"Test":"Terminbestätigung")+" gesendet an "+r.an);if(!an){await NF.abholen();aufbauen();drawer()}}catch(e){toast(e.message)}finally{t.disabled=false}})();return}
  if(d.copymail){const el=document.querySelector(".drawer .mail");if(el)navigator.clipboard.writeText(el.textContent).then(()=>toast("Text kopiert"),()=>toast("Bitte Text markieren und kopieren"));return}
  if(d.a4print){window.print();return}
  if(t.id==="demoGo"){t.disabled=true;NF.api("/api/admin/demodaten",{method:"POST"}).then(async r=>{await teamNeu();await NF.abholen();aufbauen();render();toast(`Beispieldaten eingespielt: ${r.anlagen} Anlagen, ${r.auftraege} Aufträge`)}).catch(e=>{t.disabled=false;toast(e.message)});return}

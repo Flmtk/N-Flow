@@ -33,7 +33,15 @@ Unter **API-Berechtigungen** steht bereits `Microsoft Graph → User.Read`. Das 
 
 SharePoint-Rechte (Berichte und Rechnungen ablegen) kommen erst in Etappe 3 dazu.
 
-## 4. Live-Adresse später ergänzen
+## 4. E-Mails aus N-Flow senden (Terminbestätigungen)
+
+1. **Postfach anlegen:** admin.microsoft.com → Teams & Gruppen → **Freigegebene Postfächer** → Postfach hinzufügen, Name `NOVIS Service`, Adresse `service@novis-anlagentechnik.de`. Kostet keine Lizenz. Dich und Jens als Mitglieder eintragen, dann seht ihr Antworten von Kunden in Outlook.
+2. **Berechtigung:** Entra → App-Registrierungen → N-Flow → **API-Berechtigungen → Berechtigung hinzufügen → Microsoft Graph → Anwendungsberechtigungen → `Mail.Send`** → Hinzufügen → **Administratorzustimmung erteilen**.
+3. In der `.env` steht `MAIL_ABSENDER=service@novis-anlagentechnik.de`. Danach `docker compose up -d`.
+
+> Vor dem Echtbetrieb einschränken, dass N-Flow nur aus diesem Postfach senden darf (Exchange-Zugriffsrichtlinie für Anwendungen). Ohne Einschränkung könnte die App technisch aus jedem Postfach der Firma senden.
+
+## 5. Live-Adresse später ergänzen
 
 Wenn die Live-Umgebung startet: unter **Authentifizierung → URI hinzufügen** zusätzlich `https://app.novis-anlagentechnik.de/auth/callback` eintragen.
 

@@ -1,0 +1,63 @@
+# N-Flow auf dem Hostinger-VPS
+# Läuft hinter dem vorhandenen Traefik (/docker/traefik), der die Zertifikate holt.
+# Je Umgebung ein eigener Ordner mit eigener .env (z. B. /docker/n-flow-test und später /docker/n-flow).
+
+name: nflow-${INSTANZ:-test}
+
+services:
+  app:
+    build:
+      context: .
+      args:
+        APP_VERSION: ${APP_VERSION:-0.1.0}
+    image: nflow-app:${INSTANZ:-test}
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgres://nflow:${POSTGRES_PASSWORD}@db:5432/nflow
+    depends_on:
+      db:
+        condition: service_healthy
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.nflow-${INSTANZ:-test}.rule=Host(`${DOMAIN}`)
+      - traefik.http.routers.nflow-${INSTANZ:-test}.entrypoints=websecure
+      - traefik.http.routers.nflow-${INSTANZ:-test}.tls.certresolver=letsencrypt
+      - traefik.http.services.nflow-${INSTANZ:-test}.loadbalancer.server.port=3000
+
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: nflow
+      POSTGRES_USER: nflow
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nflow -d nflow"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  backup:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGHOST: db
+      PGUSER: nflow
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      PGDATABASE: nflow
+      TZ: Europe/Berlin
+      SICHERUNG_UHRZEIT: ${SICHERUNG_UHRZEIT:-02:00}
+    volumes:
+      - ./ops/backup/backup.sh:/backup.sh:ro
+      - ${SICHERUNG_ORDNER:-./sicherungen}:/sicherungen
+    entrypoint: ["/bin/sh", "/backup.sh"]
+
+volumes:
+  db:

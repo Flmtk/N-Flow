@@ -16,6 +16,7 @@ export const ARTEN = {
   genehmigung: "Urlaub und Block genehmigt oder abgelehnt",
   system: "Wartung und Updates von N-Flow",
   stoerung: "Neue Störmeldung über QR-Aufkleber (Büro)",
+  info: "Neue Infos vom Büro (Bereich Info)",
 } as const;
 export type Art = keyof typeof ARTEN;
 

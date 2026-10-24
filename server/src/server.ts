@@ -17,6 +17,7 @@ import { pushRouten, vorschauPlanen } from "./push.js";
 import { mailRouten } from "./mail.js";
 import { ablageRouten, ablageStarten } from "./ablage.js";
 import { druckBeenden } from "./druck.js";
+import { infoBeobachten, infoRouten } from "./info.js";
 
 const app = Fastify({
   logger: { level: config.produktion ? "info" : "debug" },
@@ -44,6 +45,7 @@ await app.register(kalenderRouten);
 await app.register(pushRouten);
 await app.register(mailRouten);
 await app.register(ablageRouten);
+await app.register(infoRouten);
 
 const webOrdner = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../web");
 await app.register(fastifyStatic, { root: webOrdner, index: ["index.html"] });
@@ -65,6 +67,7 @@ app.setErrorHandler((fehler, anfrage, antwort) => {
 await migrieren((t) => app.log.info(t));
 vorschauPlanen();
 ablageStarten();
+infoBeobachten();
 await app.listen({ host: "0.0.0.0", port: config.port });
 app.log.info(`N-Flow ${config.version} (${config.instanz}) läuft auf ${config.baseUrl}`);
 

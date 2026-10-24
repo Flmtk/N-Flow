@@ -94,7 +94,7 @@ function pruefe(s: string, b: Benutzer, r: Rechte, alt: Daten | null, neu: Daten
   }
   if (s === "anlagen" && !r.planung && alt) {
     // Vertragsdaten und Pool-Zuordnung bestimmt das Büro
-    for (const k of ["betreuer", "pausch", "vertrag", "zyk"]) neu[k] = alt[k];
+    for (const k of ["betreuer", "pausch", "vertrag", "zyk", "hinweise"]) neu[k] = alt[k];
   }
   return null;
 }

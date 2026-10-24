@@ -18,7 +18,7 @@ export class GraphFehler extends Error {
   constructor(public status: number, text: string) { super(text); }
 }
 
-async function graph(pfad: string, init: RequestInit & { roh?: boolean } = {}): Promise<Response> {
+export async function graph(pfad: string, init: RequestInit & { roh?: boolean } = {}): Promise<Response> {
   const r = await fetch(pfad.startsWith("http") ? pfad : GRAPH + pfad, {
     ...init,
     headers: { authorization: `Bearer ${await graphToken()}`, ...(init.roh ? {} : { "content-type": "application/json" }), ...(init.headers ?? {}) },

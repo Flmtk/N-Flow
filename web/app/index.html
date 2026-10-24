@@ -534,7 +534,7 @@ const I={
  heute:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>',
  scan:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"/><path d="M7 12h10"/></svg>',
  berichte:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 3.5h7l4 4V20a.5.5 0 0 1-.5.5h-10A.5.5 0 0 1 7 20z"/><path d="M14 3.5V8h4M9.5 12h6M9.5 15.5h6"/></svg>',
- intra:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 10.5 12 4l8 6.5V20a.5.5 0 0 1-.5.5h-5v-6h-5v6h-5A.5.5 0 0 1 4 20z"/></svg>',
+ info:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5.5M12 7.6v.4"/></svg>',
  ich:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8.5" r="3.5"/><path d="M5 20c1.2-3.6 4-5 7-5s5.8 1.4 7 5"/></svg>'
 };
 I.lupe='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 5 5"/></svg>';
@@ -549,7 +549,7 @@ function applyDesk(){const dk=isDesk();$("#phone").classList.toggle("desk",dk);
  document.querySelectorAll("[data-vt]").forEach(b=>b.setAttribute("aria-pressed",String((b.dataset.vt==="pc")===dk)))}
 function renderTabs(){
  const q=S.queue.length,dk=isDesk();
- tabs.innerHTML=`<div class="navbrand">${NFDESIGN.logo()}<button type="button" class="ico" data-go="suche" aria-label="Anlage suchen">${I.lupe}</button></div>`+[["heute","Heute"],...(dk?[]:[["scan","Scannen"]]),["berichte","Berichte"],["intra","Intranet"],["ich","Ich"]].map(([k,l])=>
+ tabs.innerHTML=`<div class="navbrand">${NFDESIGN.logo()}<button type="button" class="ico" data-go="suche" aria-label="Anlage suchen">${I.lupe}</button></div>`+[["heute","Heute"],...(dk?[]:[["scan","Scannen"]]),["berichte","Berichte"],["info","Info"],["ich","Ich"]].map(([k,l])=>
   `<button type="button" data-tab="${k}" ${S.tab===k?'aria-current="page"':""}>${I[k]}<span>${l}</span>${k==="berichte"&&q?`<i class="badge">${q}</i>`:""}</button>`).join("");
  tabs.hidden=S.view==="einsatz"&&!dk;
 }
@@ -637,13 +637,7 @@ function vAnlage(){
    ${a.energie==="Öl"?`<dt>Brennstoff</dt><dd>${esc(a.gas)}</dd>`:`<dt>Gasart</dt><dd>${esc(a.gas)}</dd><dt>Anschlussdruck</dt><dd>${a.ans} mbar</dd>`}<dt>Betriebsdruck</dt><dd>${a.druck} bar</dd></dl></div>
   ${a.details?detailPanels(a.details):""}
   <div class="panel"><h4>Historie</h4>${a.hist.length?`<div class="hist">${a.hist.map(h=>`<div><time>${h[0]}</time><span><b>${esc(h[1])}</b><br>${esc(h[2])}</span></div>`).join("")}</div>`:'<p class="hint">Noch keine Einsätze dokumentiert. Das ist der erste Besuch.</p>'}</div>
-  <div class="panel"><h4>Dokumente zur Anlage</h4>
-   ${a.schema?docRow("pdf","Anlagenschema","Foto oder PDF aus der Anlagenakte","/api/dateien/"+a.schema):""}
-   ${docRow("ordner","Kundenordner "+a.kunde.nr,"Serviceberichte, Fotos, Angebote","SharePoint › Kunden › "+a.kunde.name1)}
-   ${docRow("pdf","Wartungsanleitung "+a.hersteller+" "+a.typ.split(" ")[0],"Herstellerunterlage","SharePoint › Intranet › Herstellerunterlagen › "+a.hersteller)}
-   ${docRow("pdf","Ersatzteilliste "+a.typ,"Herstellerunterlage","SharePoint › Intranet › Herstellerunterlagen › "+a.hersteller)}
-   ${a.hist.length?docRow("pdf","Letzter Servicebericht · "+a.hist[0][0],a.hist[0][1],"SharePoint › Kunden › "+a.kunde.nr+" › "+a.nv):""}
-   <label class="btn ghost" for="schemaAnl">${a.schema?"Anlagenschema ersetzen":"+ Anlagenschema ablegen"}</label><input id="schemaAnl" type="file" accept="image/*,application/pdf" hidden></div>
+  ${unterlagenPanel(a)}
  </div>`;
  foot.innerHTML=`<div class="foot">${fertig?`<button class="btn sec" type="button" data-tab="berichte">Bericht ansehen</button>`:
   `<button class="btn sec" type="button" data-go="fehl" style="flex:0 0 38%">Kunde nicht da</button><button class="btn" type="button" id="startE">${r?"Einsatz fortsetzen":"Einsatz starten"}</button>`}</div>`;
@@ -913,18 +907,41 @@ function suche(v){
 }
 function vIch(){
  header("");foot.innerHTML="";
- const t=S.ichTab,tab=(k,l)=>`<button type="button" data-ich="${k}" aria-pressed="${t===k}">${l}</button>`;
- const body=({zeit:ichZeit,kal:ichKal,belege:ichBelege,abw:ichAbw,auto:ichAuto}[t]||ichZeit)();
+ const t=["zeiten","belege","fahrzeug","einst"].includes(S.ichTab)?S.ichTab:"zeiten";
+ const tab=(k,l)=>`<button type="button" role="tab" data-ich="${k}" aria-selected="${t===k}" aria-pressed="${t===k}">${l}</button>`;
+ const body={zeiten:ichZeiten,belege:ichBelege,fahrzeug:ichFahrzeug,einst:ichEinst}[t]();
  main.innerHTML=`<div class="pad">
   <div class="greet"><h2>${esc(TECH.name)}</h2><p>Kürzel ${esc(TECH.nr)}${TECH.id!==NF.ich.benutzer.id?" · Ansicht von "+esc(NF.ich.benutzer.name):""}</p></div>
   ${RECHTE.planung?`<label class="alsbar">Arbeiten für<select id="alsTech"><option value="">mich (${esc(NF.ich.benutzer.name)})</option>${(NF.team||[]).filter(t=>t.rolle==="Monteur"&&t.aktiv&&!t.gesperrt).map(t=>`<option value="${t.id}" ${S.alsTech===t.id?"selected":""}>${esc(t.name)}</option>`).join("")}</select></label>`:""}
-  <div class="seg" role="group" aria-label="Bereich">${tab("zeit","Zeit")}${tab("kal","Kalender")}${tab("belege","Belege")}${tab("abw","Abwesend")}${tab("auto","Auto")}</div>
+  <div class="seg ichtabs" role="tablist" aria-label="Bereich">${tab("zeiten","Zeiten")}${tab("belege","Belege")}${tab("fahrzeug","Fahrzeug")}${tab("einst","Einstellungen")}</div>
   ${body}
-  ${mitteilungenPanel()}
-  <div class="row" style="gap:8px">${RECHTE.planung?'<a class="btn sec" href="/buero/" style="text-decoration:none">Zum Büro</a>':""}<button type="button" class="btn ghost" id="abmelden">Abmelden</button></div>
-  <p class="demo">N-Flow ${esc(NF.ich.version||"")} · ${esc(NF.ich.instanz||"")} · ${NF.outbox.length?NF.outbox.length+" Änderung(en) im Postausgang":"alles übertragen"}</p>
  </div>`;
 }
+function ichZeiten(){const z=["stempeln","abw","kal"].includes(S.zeitTab)?S.zeitTab:"stempeln";
+ return`<div class="seg unterseg" role="group" aria-label="Zeiten">${[["stempeln","Stempeln"],["abw","Urlaub und Block"],["kal","Kalender"]].map(([k,l])=>`<button type="button" data-zt="${k}" aria-pressed="${z===k}">${l}</button>`).join("")}</div>`+({stempeln:ichZeit,abw:ichAbw,kal:ichKal}[z])()}
+function ichEinst(){const th=NFDESIGN.theme();
+ return`<div class="panel"><h4>Farbschema</h4><div class="schemawahl">${Object.entries(NFDESIGN.schemata).map(([k,l])=>`<button type="button" data-schema="${k}" aria-pressed="${NFDESIGN.schema()===k}"><span class="sw sw-${k}">${NFDESIGN.n()}</span>${l}</button>`).join("")}</div></div>
+ <div class="panel"><h4>Darstellung</h4><div class="seg" role="group">${[["auto","Wie Handy"],["light","Hell"],["dark","Dunkel"]].map(([k,l])=>`<button type="button" data-themeset="${k}" aria-pressed="${th===k}">${l}</button>`).join("")}</div></div>
+ <div class="panel"><h4>Sprache</h4><dl class="kv"><dt>Sprache</dt><dd>Deutsch</dd></dl><p class="hint" style="margin:0">Weitere Sprachen folgen.</p></div>
+ ${kalAboPanel()}
+ ${mitteilungenPanel()}
+ <div class="panel"><h4>Software</h4><dl class="kv"><dt>Version</dt><dd>N-Flow ${esc(NF.ich.version||"")}</dd><dt>Umgebung</dt><dd>${NF.ich.instanz==="live"?"Echtbetrieb":"Testumgebung"}</dd><dt>Übertragung</dt><dd>${NF.outbox.length?NF.outbox.length+" Änderung(en) im Postausgang":"alles übertragen"}</dd><dt>Offline gespeichert</dt><dd>${Object.keys(dokListe()).length} Dokument(e)</dd></dl>
+  <button type="button" class="btn sec" id="appNeu">Nach Update suchen</button></div>
+ <div class="row" style="gap:8px">${RECHTE.planung?'<a class="btn sec" href="/buero/" style="text-decoration:none">Zum Büro</a>':""}<button type="button" class="btn ghost" id="abmelden">Abmelden</button></div>`}
+function ichFahrzeug(){return ichAuto()}
+function kalAboPanel(){return`<div class="panel"><h4>Im iPhone-Kalender anzeigen</h4>
+  <p class="hint">Einsätze, Urlaub und Blocks erscheinen automatisch im Apple Kalender und aktualisieren sich selbst. Einmal einrichten genügt.</p>
+  ${S.calAbo?`<ol class="hint" style="padding-left:18px;margin:0;display:flex;flex-direction:column;gap:4px"><li>iPhone: Einstellungen › Apps › Kalender › Kalenderaccounts › Account hinzufügen › Andere › Kalenderabo hinzufügen</li><li>Diese Adresse einfügen:</li></ol>
+   <div class="check mono" style="font-size:12px;overflow-wrap:anywhere;user-select:all">${esc(S.calAbo)}</div>
+   <button type="button" class="btn sec" id="calCopy">Adresse kopieren</button>
+   <p class="hint">Im Termin stehen Adresse, Ansprechpartner und Telefon. Über die Adresse startet die Navigation direkt aus dem Kalender, auch im Auto über CarPlay.</p>
+   <details><summary class="hint" style="cursor:pointer;padding:6px 0"><b>„Hey Siri, Ansprechpartner anrufen“ einrichten</b></summary>
+   <ol class="hint" style="padding-left:18px;margin:6px 0 0;display:flex;flex-direction:column;gap:4px"><li>App „Kurzbefehle“ öffnen, oben rechts <b>+</b>.</li>
+    <li>Aktion <b>„Kalenderereignisse suchen“</b>: Kalender ist „N-Flow“, Startdatum ist heute, sortiert nach Startdatum (älteste zuerst), Limit 1. Filter hinzufügen: Enddatum ist nach „Aktuelles Datum“.</li>
+    <li>Aktion <b>„Telefonnummern aus Eingabe abrufen“</b> anhängen (Eingabe: Notizen des Kalenderereignisses).</li>
+    <li>Aktion <b>„Element aus Liste abrufen“</b>: erstes Objekt. Danach Aktion <b>„Anrufen“</b>.</li>
+    <li>Kurzbefehl <b>„Ansprechpartner anrufen“</b> nennen. Fertig, auch im Auto über CarPlay.</li></ol></details><p class="hint" style="display:none"> Details öffnet ein Link in N-Flow.</p>`
+  :`<button type="button" class="btn sec" id="calAbo">Mit Apple Kalender verbinden</button>`}</div>`}
 const hm=m=>m==null?"–":String(Math.floor(m/60))+":"+String(Math.round(m%60)).padStart(2,"0");
 const mins=t=>{if(!t)return null;const[a,b]=t.split(":").map(Number);return a*60+b};
 function tagMin(d){if(!d||!d.kommen)return null;const g=mins(d.gehen||nowT())-mins(d.kommen);return Math.max(0,g-(d.pause||0))}
@@ -977,20 +994,7 @@ function ichKal(){
   ${ur?`<div class="alert wa" style="background:var(--accent-soft);color:var(--accent)">Urlaub ${ur.von} – ${ur.bis} · ${ur.status||"offen"}</div>`:""}
   ${bls.map(b=>`<div class="alert wa">Block ${b.von}–${b.bis}: ${esc(b.grund)}</div>`).join("")}
   ${items.length?`<div class="agenda">${items.map(p=>{const a=p.x?{nv:p.x.nv,kunde:{name1:p.x.kunde,ort:p.x.ort}}:ANLAGEN[p.q];return`<div><time>${p.zeit}</time><span><b>${p.art}</b> · ${a.nv}<br>${esc(a.kunde.name1)}, ${esc(a.kunde.ort)}</span></div>`}).join("")}</div>`:(ur||bls.length?"":'<p class="hint">Keine Einsätze geplant.</p>')}</div>
- <div class="panel"><h4>Als Nächstes geplant</h4><div class="agenda">${next.map(p=>{const a=ANLAGEN[p.q];return`<div><time>${new Date(p.iso+"T12:00").toLocaleDateString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit"})}<br>${p.zeit}</time><span><b>${p.art}</b> · ${a.nv}<br>${esc(a.kunde.ort)}</span></div>`}).join("")}</div></div>
- <div class="panel"><h4>Im iPhone-Kalender anzeigen</h4>
-  <p class="hint">Einsätze, Urlaub und Blocks erscheinen automatisch im Apple Kalender und aktualisieren sich selbst. Einmal einrichten genügt.</p>
-  ${S.calAbo?`<ol class="hint" style="padding-left:18px;margin:0;display:flex;flex-direction:column;gap:4px"><li>iPhone: Einstellungen › Apps › Kalender › Kalenderaccounts › Account hinzufügen › Andere › Kalenderabo hinzufügen</li><li>Diese Adresse einfügen:</li></ol>
-   <div class="check mono" style="font-size:12px;overflow-wrap:anywhere;user-select:all">${esc(S.calAbo)}</div>
-   <button type="button" class="btn sec" id="calCopy">Adresse kopieren</button>
-   <p class="hint">Im Termin stehen Adresse, Ansprechpartner und Telefon. Über die Adresse startet die Navigation direkt aus dem Kalender, auch im Auto über CarPlay.</p>
-   <details><summary class="hint" style="cursor:pointer;padding:6px 0"><b>„Hey Siri, Ansprechpartner anrufen“ einrichten</b></summary>
-   <ol class="hint" style="padding-left:18px;margin:6px 0 0;display:flex;flex-direction:column;gap:4px"><li>App „Kurzbefehle“ öffnen, oben rechts <b>+</b>.</li>
-    <li>Aktion <b>„Kalenderereignisse suchen“</b>: Kalender ist „N-Flow“, Startdatum ist heute, sortiert nach Startdatum (älteste zuerst), Limit 1. Filter hinzufügen: Enddatum ist nach „Aktuelles Datum“.</li>
-    <li>Aktion <b>„Telefonnummern aus Eingabe abrufen“</b> anhängen (Eingabe: Notizen des Kalenderereignisses).</li>
-    <li>Aktion <b>„Element aus Liste abrufen“</b>: erstes Objekt. Danach Aktion <b>„Anrufen“</b>.</li>
-    <li>Kurzbefehl <b>„Ansprechpartner anrufen“</b> nennen. Fertig, auch im Auto über CarPlay.</li></ol></details><p class="hint" style="display:none"> Details öffnet ein Link in N-Flow.</p>`
-  :`<button type="button" class="btn sec" id="calAbo">Mit Apple Kalender verbinden</button>`}</div>`;
+ <div class="panel"><h4>Als Nächstes geplant</h4><div class="agenda">${next.map(p=>{const a=ANLAGEN[p.q];return`<div><time>${new Date(p.iso+"T12:00").toLocaleDateString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit"})}<br>${p.zeit}</time><span><b>${p.art}</b> · ${a.nv}<br>${esc(a.kunde.ort)}</span></div>`}).join("")}</div></div>`;
 }
 const KAT=["Tanken","Material","Parken / Maut","Übernachtung","Bewirtung","Sonstiges"];
 function ichBelege(){
@@ -1033,34 +1037,92 @@ function ichAuto(){
     <button class="btn sec" type="button" id="cAdd">Speichern</button></div></details>
   <p class="hint">Die Kontakte pflegt die Geschäftsführung zentral. Alle Monteure mit diesem Fahrzeug sehen sie.</p></div>`;
 }
-/* ---------- Intranet (SharePoint) ---------- */
+/* ---------- Info (SharePoint: Neuigkeiten und Dokumente) ---------- */
+let INFO=Object.assign({news:null,ordner:{},beitrag:{},treffer:null,fehler:null},(()=>{try{return NF.lokal.lies("info",{})}catch(e){return{}}})());
+function infoSichern(){try{NF.lokal.schreib("info",{news:INFO.news,ordner:INFO.ordner,beitrag:INFO.beitrag})}catch(e){}}
+async function infoLaden(){try{INFO.news=await NF.api("/api/info/neuigkeiten");INFO.fehler=null;infoSichern()}catch(e){INFO.fehler=e.message;if(!INFO.news)INFO.news=[]}if(S.view==="info")render()}
+async function ordnerLaden(p){try{INFO.ordner[p]=await NF.api("/api/info/ordner?pfad="+encodeURIComponent(p));infoSichern()}catch(e){if(!INFO.ordner[p])INFO.ordner[p]={fehler:e.message}}if(S.view==="info")render()}
+async function beitragLaden(id){try{INFO.beitrag[id]=await NF.api("/api/info/neuigkeiten/"+encodeURIComponent(id));infoSichern()}catch(e){if(!INFO.beitrag[id])INFO.beitrag[id]={fehler:e.message}}if(S.view==="info")render()}
+let infoSuchTimer=null;
+function infoSuchen(q){clearTimeout(infoSuchTimer);if(q.trim().length<2){INFO.treffer=null;return}
+ infoSuchTimer=setTimeout(async()=>{try{INFO.treffer=await NF.api("/api/info/suche?q="+encodeURIComponent(q.trim()))}catch(e){INFO.treffer={fehler:e.message}}if(S.view==="info"){const pos=($("#iq")||{}).selectionStart;render();const n=$("#iq");if(n){n.focus();try{n.setSelectionRange(pos,pos)}catch(x){}}}},350)}
 const DOC_ICON={ordner:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3.5 7.5a1 1 0 0 1 1-1h4.6l2 2h8.4a1 1 0 0 1 1 1V18a1 1 0 0 1-1 1h-15a1 1 0 0 1-1-1z"/></svg>',
- pdf:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 3.5h7l4 4V20a.5.5 0 0 1-.5.5h-10A.5.5 0 0 1 7 20z"/><path d="M14 3.5V8h4"/></svg>'};
-function docRow(ic,title,sub,path){return`<button type="button" class="doc" data-doc="${esc(path)}"><span class="di ${ic}">${DOC_ICON[ic]}</span><span class="dt"><b>${esc(title)}</b><span>${esc(sub)}</span></span><span class="dg" aria-hidden="true">›</span></button>`}
-const INTRA={
- news:[["21.10.","Abgasmessgeräte kalibriert","Beide Testo-Geräte sind zurück, gültig bis 03/2028. Prüfprotokolle liegen im Intranet."],["17.10.","Bereitschaft Winter","Ab 01.12. gilt der Bereitschaftsplan. Bitte Wünsche bis 15.11. eintragen."]],
- unterweisung:[["uw1","Jährliche Unterweisung Arbeiten an Gasanlagen","TRGI / DVGW G 600, Dichtheitsprüfung, Gasgeruch"],["uw2","Betriebsanweisung Abgasmessgerät","Umgang, Kalibrierung, Kondensatfalle"]],
- ordner:[["Herstellerunterlagen","Weishaupt, Buderus, Viessmann, Wolf",[["Weishaupt WTC-GW 60-C Wartungsanleitung","pdf"],["Buderus Logano plus KB372 Serviceanleitung","pdf"],["Viessmann Vitodens 200-W Störungscodes","pdf"]]],
-  ["Betriebsanweisungen","Arbeitssicherheit, Geräte, Gefahrstoffe",[["BA Arbeiten an gasführenden Leitungen","pdf"],["BA Neutralisationsgranulat","pdf"],["BA Abgasmessgerät","pdf"]]],
-  ["Formulare und Vorlagen","Servicebericht, Merkblatt, Angebote",[["Servicebericht NOVIS (Vorlage)","pdf"],["Merkblatt Gasanlagen","pdf"],["Übergabeprotokoll Inbetriebnahme","pdf"]]],
-  ["Gefährdungsbeurteilungen","je Tätigkeit",[["GBU Wartung Gasfeuerstätten","pdf"],["GBU Arbeiten im Heizraum / Enge Räume","pdf"]]],
-  ["Fahrzeug","Fahrtenbuch, Unfallbogen, Ausstattung",[["Unfallbericht (ausfüllbar)","pdf"],["Ausstattungsliste KFZ-Lager","pdf"]]]],
- team:[["Florian Pötzsch","Geschäftsführung","florian.poetzsch@novis-anlagentechnik.de"],["Jens Röll","Geschäftsführung","jens.roell@novis-anlagentechnik.de"],["Frank Tetzlaff","Servicetechniker","frank.tetzlaff@novis-anlagentechnik.de"],["Service-Postfach","Innendienst / Berichte","service@novis-anlagentechnik.de"]]
-};
-function vIntra(){
- header(S.intraOrdner?S.intraOrdner:"",S.intraOrdner?"intra":"");foot.innerHTML="";
- if(S.intraOrdner){const o=INTRA.ordner.find(x=>x[0]===S.intraOrdner);
-  main.innerHTML=`<div class="pad"><p class="hint">NOVIS Intranet › Dokumente › ${esc(o[0])}</p>${o[2].map(f=>docRow(f[1],f[0],"PDF · zuletzt geändert 10/2026","SharePoint › Intranet › "+o[0])).join("")}</div>`;return}
- const q=(S.intraQ||"").toLowerCase();
- const offen=INTRA.unterweisung.filter(u=>!(S.uw||[]).includes(u[0]));
+ pdf:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 3.5h7l4 4V20a.5.5 0 0 1-.5.5h-10A.5.5 0 0 1 7 20z"/><path d="M14 3.5V8h4"/></svg>',
+ bild:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3.5" y="5" width="17" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="m4 17 5-4.5 4 3.5 3-2.5 4 3.5"/></svg>'};
+const dokIcon=(name,typ)=>/^image\//.test(typ||"")||/\.(jpe?g|png|webp|heic)$/i.test(name||"")?"bild":"pdf";
+function dokZeile(ic,title,sub,attr){return`<button type="button" class="doc" ${attr}><span class="di ${ic}">${DOC_ICON[ic]}</span><span class="dt"><b>${esc(title)}</b><span>${esc(sub)}</span></span><span class="dg" aria-hidden="true">›</span></button>`}
+function docRow(ic,title,sub,path){return dokZeile(ic,title,sub,`data-doc="${esc(path)}"`)}
+const groesse=b=>b>1048576?(b/1048576).toFixed(1).replace(".",",")+" MB":Math.max(1,Math.round(b/1024))+" KB";
+const spZeile=d=>dokZeile(dokIcon(d.name,d.typ),d.name.replace(/\.[a-z0-9]{2,4}$/i,""),`${groesse(d.groesse)} · ${d.geaendert?fmt(new Date(d.geaendert)):""}${dokOffline("/api/info/datei/"+d.id)?" · offline verfügbar":""}`,`data-spdoc="${esc(d.id)}" data-name="${esc(d.name)}"`);
+
+/* Dokumente öffnen: einmal geladen, danach auch ohne Netz */
+const DOK_CACHE="nflow-dok";
+function dokListe(){try{return JSON.parse(localStorage.getItem("nflow:dok")||"{}")}catch(e){return{}}}
+function dokOffline(url){return !!dokListe()[url]}
+async function dokMerken(url,antwort){try{const c=await caches.open(DOK_CACHE);await c.put(url,antwort);const l=dokListe();l[url]=Date.now();
+ const alt=Object.entries(l).sort((a,b)=>b[1]-a[1]).slice(80);for(const [u] of alt){delete l[u];c.delete(u)}localStorage.setItem("nflow:dok",JSON.stringify(l))}catch(e){}}
+async function dokHolen(url){
+ try{const r=await fetch(url,{credentials:"same-origin"});if(r.ok){dokMerken(url,r.clone());return await r.blob()}const j=await r.json().catch(()=>({}));throw new Error(j.fehler||"Datei nicht verfügbar")}
+ catch(e){try{const c=await caches.open(DOK_CACHE),m=await c.match(url);if(m)return await m.blob()}catch(x){}throw new Error(navigator.onLine?e.message:"Ohne Netz gehen nur Dateien, die schon einmal geöffnet oder vorgeladen wurden.")}}
+let DOKV=null;
+async function dokOeffnen(url,name){toast("Wird geladen …");try{const b=await dokHolen(url);if(DOKV)URL.revokeObjectURL(DOKV.url);DOKV={url:URL.createObjectURL(b),name:name||"Dokument",typ:b.type,blob:b};zeigeDok()}catch(e){toast(e.message)}}
+function zeigeDok(){let L=$("#dokv");if(!L){L=document.createElement("div");L.id="dokv";document.body.appendChild(L)}
+ if(!DOKV){L.innerHTML="";return}
+ L.innerHTML=`<div class="dokv" role="dialog" aria-label="${esc(DOKV.name)}"><header><b>${esc(DOKV.name)}</b><button type="button" class="btn sec" data-dokteilen="1">Öffnen / Teilen</button><button type="button" class="ico" data-dokzu="1" aria-label="Schließen">✕</button></header>
+  <div class="dokb">${/^image\//.test(DOKV.typ)?`<img src="${DOKV.url}" alt="${esc(DOKV.name)}">`:`<iframe src="${DOKV.url}" title="${esc(DOKV.name)}"></iframe>`}</div></div>`}
+async function dokTeilen(){if(!DOKV)return;const f=new File([DOKV.blob],DOKV.name.replace(/[\\/:*?"<>|]/g,"-")+(/\.[a-z0-9]{2,4}$/i.test(DOKV.name)?"":DOKV.typ==="application/pdf"?".pdf":".jpg"),{type:DOKV.typ});
+ try{if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:DOKV.name});return}}catch(e){if(e.name==="AbortError")return}
+ window.open(DOKV.url,"_blank")}
+/* Morgens: Unterlagen der heutigen Tour vorladen, damit sie im Heizraum ohne Netz da sind */
+async function vorladen(){const heute=isoD();try{if(!navigator.onLine||localStorage.getItem("nflow:vorgeladen")===heute)return}catch(e){return}
+ for(const j of JOBS){const a=ANLAGEN[j.q];if(!a||!a.nv||a.nv==="INTERN")continue;
+  const roh=NF.get("anlagen",a.nv)||{};for(const u of roh.unterlagen||[])if(u.datei)await dokHolen("/api/dateien/"+u.datei).catch(()=>{});
+  try{const x=await NF.api("/api/anlagen/"+encodeURIComponent(a.nv)+"/unterlagen");UNTERL[a.nv]=x;for(const d of[...(x.akte||[]),...(x.hersteller||[])])await dokHolen("/api/info/datei/"+d.id).catch(()=>{})}catch(e){}}
+ try{localStorage.setItem("nflow:vorgeladen",heute)}catch(e){}}
+const UNTERL={};
+async function unterlagenLaden(nv){UNTERL[nv]={laedt:true};try{UNTERL[nv]=await NF.api("/api/anlagen/"+encodeURIComponent(nv)+"/unterlagen")}catch(e){UNTERL[nv]={fehler:e.message}}if(S.view==="anlage")render()}
+const UNTER_ARTEN=["Schaltplan","Hydraulikschema","Abnahmeprotokoll","Typenschild","Datenblatt","Foto","Sonstiges"];
+function unterlagenPanel(a){
+ const roh=NF.get("anlagen",a.nv)||{},U=roh.unterlagen||[],SP=UNTERL[a.nv];
+ if(SP===undefined&&a.nv!=="INTERN")unterlagenLaden(a.nv);
+ const namen=new Set(U.map(u=>u.name));
+ const akte=SP&&SP.akte?SP.akte.filter(d=>!namen.has(d.name)):[];
+ return`<div class="panel"><h4>Unterlagen</h4>
+  ${a.schema?dokZeile("pdf","Anlagenschema","aus der Anlagenakte",`data-ldoc="${esc(a.schema)}" data-name="Anlagenschema"`):""}
+  ${U.map(u=>dokZeile(dokIcon(u.name,u.typ),u.name.replace(/\.[a-z0-9]{2,4}$/i,""),`${u.art||"Unterlage"} · ${u.datum?fmt(new Date(u.datum+"T12:00")):""}${u.von?" · "+u.von:""}${NF.outbox.some(o=>o.id===u.datei)?" · wartet auf Netz":""}`,`data-ldoc="${esc(u.datei)}" data-name="${esc(u.name)}"`)).join("")}
+  ${akte.map(spZeile).join("")}
+  ${!U.length&&!a.schema&&!akte.length?'<p class="hint" style="margin:0">Noch keine Unterlagen. Schaltplan oder Schema einfach fotografieren.</p>':""}
+  <div class="grid2" style="align-items:end"><label class="f"><span>Art</span><select id="unterArt">${UNTER_ARTEN.map(x=>`<option>${x}</option>`).join("")}</select></label><label class="btn sec" for="unterDatei" style="margin:0">+ Hinzufügen</label></div><input id="unterDatei" type="file" accept="image/*,application/pdf" hidden>
+  ${SP&&SP.hersteller&&SP.hersteller.length?`<h4 style="margin-top:6px">Herstellerunterlagen</h4>${SP.hersteller.map(spZeile).join("")}`:""}
+  ${SP&&SP.herstellerOrdner?`<button type="button" class="btn ghost" data-iord="${esc(SP.herstellerOrdner)}">Alle Unterlagen ${esc(a.hersteller)}</button>`:""}
+  ${SP&&SP.laedt?'<p class="hint" style="margin:0">Unterlagen aus SharePoint werden geladen …</p>':""}
+  ${SP&&SP.fehler?`<p class="hint" style="margin:0">${S.online?esc(SP.fehler):"Ohne Netz: nur die hier gespeicherten Unterlagen."}</p>`:""}</div>`}
+async function unterlagenHinzu(files){const a=ANLAGEN[S.q];if(!a)return;const art=($("#unterArt")||{}).value||"Unterlage",tag=isoD(),neu=[];
+ for(const [i,f] of [...files].entries()){try{const b=await NF.bildVerkleinern(f);const ext=b.type==="application/pdf"?"pdf":"jpg";
+  const name=`${art} ${fmt(new Date(tag+"T12:00"))}${files.length>1?" ("+(i+1)+")":""}.${ext}`;
+  neu.push({datei:await NF.datei(b,name),name,art,typ:b.type,datum:tag,von:NF.ich.benutzer.name})}catch(e){toast("Datei konnte nicht gelesen werden")}}
+ if(!neu.length)return;const roh=NF.get("anlagen",a.nv)||{};NF.setze("anlagen",a.nv,{unterlagen:(roh.unterlagen||[]).concat(neu)});render();toast(neu.length+" Unterlage(n) gespeichert"+(S.online?"":" – geht bei Netz in die Kundenakte"))}
+
+function vInfo(){
+ const pfad=S.infoPfad,bid=S.infoBeitrag;
+ if(bid){const b=INFO.beitrag[bid];if(!b)beitragLaden(bid);const n=(INFO.news||[]).find(x=>x.id===bid)||{};
+  header("Info","info");foot.innerHTML="";
+  main.innerHTML=`<div class="pad"><span class="hint">${n.datum?fmt(new Date(n.datum)):""}${n.von?" · "+esc(n.von):""}</span><div class="greet"><h2>${esc((b&&b.titel)||n.titel||"")}</h2></div>
+   ${b&&b.absaetze?b.absaetze.map(x=>`<p style="margin:0;line-height:1.55">${esc(x)}</p>`).join(""):b&&b.fehler?`<p class="hint">${esc(b.fehler)}</p>`:'<p class="hint">Wird geladen …</p>'}
+   ${n.url?`<a class="btn ghost" href="${esc(n.url)}" target="_blank" rel="noopener" style="text-decoration:none">In SharePoint öffnen</a>`:""}</div>`;return}
+ if(pfad!=null){const L=INFO.ordner[pfad];if(L===undefined)ordnerLaden(pfad);
+  header(pfad.split("/").pop()||"Dokumente","info");foot.innerHTML="";
+  main.innerHTML=`<div class="pad"><p class="hint">Info › ${esc(pfad.split("/").join(" › "))}</p>
+   ${!L?'<p class="hint">Wird geladen …</p>':L.fehler?`<p class="hint">${esc(L.fehler)}</p>`:L.length?L.map(d=>d.ordner?dokZeile("ordner",d.name,"Ordner",`data-iord="${esc(pfad+"/"+d.name)}"`):spZeile(d)).join(""):'<p class="hint">Der Ordner ist leer.</p>'}</div>`;return}
+ header("");foot.innerHTML="";
+ if(INFO.news===null||!S._infoGeladen){S._infoGeladen=true;infoLaden();if(INFO.ordner[""]===undefined||S.online)ordnerLaden("")}
+ const q=(S.intraQ||"").trim(),W=INFO.ordner[""];
  main.innerHTML=`<div class="pad">
-  <div class="greet"><h2>Intranet</h2><p>NOVIS Anlagentechnik · die SharePoint-Anbindung folgt</p></div>
-  <label class="search" style="border-width:1px" for="iq"><span style="color:var(--muted);display:grid">${I.lupe.replace('<svg','<svg width="20" height="20"')}</span><input id="iq" type="text" placeholder="Dokument suchen, z. B. Störungscodes" value="${esc(S.intraQ||"")}" style="font-size:16px;font-weight:500;letter-spacing:0"></label>
-  ${q?`<div class="panel"><h4>Treffer</h4>${INTRA.ordner.flatMap(o=>o[2].map(f=>[o,f])).filter(([o,f])=>(f[0]+" "+o[0]).toLowerCase().includes(q)).map(([o,f])=>docRow(f[1],f[0],o[0],"SharePoint › Intranet › "+o[0])).join("")||'<p class="hint">Kein Dokument gefunden.</p>'}</div>`:""}
-  ${offen.length?`<div class="panel"><h4>Zu bestätigen <span class="chip or">${offen.length}</span></h4>${offen.map(u=>`<div class="check" style="flex-direction:column;align-items:stretch;gap:8px;box-shadow:none;background:var(--surface2)"><span><b>${esc(u[1])}</b><br><span class="hint">${esc(u[2])}</span></span><span class="row"><button type="button" class="btn sec" data-doc="SharePoint › Intranet › Unterweisungen" style="padding:10px">Lesen</button><button type="button" class="btn" data-uw="${u[0]}" style="padding:10px">Gelesen und verstanden</button></span></div>`).join("")}</div>`
-   :`<div class="panel"><h4>Unterweisungen</h4><p class="hint" style="margin:0">Alles bestätigt. Danke!</p></div>`}
-  <div class="panel"><h4>Neuigkeiten</h4><div class="hist">${INTRA.news.map(n=>`<div><time>${n[0]}</time><span><b>${esc(n[1])}</b><br>${esc(n[2])}</span></div>`).join("")}</div></div>
-  <div class="panel"><h4>Dokumente</h4>${INTRA.ordner.map(o=>`<button type="button" class="doc" data-iord="${esc(o[0])}"><span class="di ordner">${DOC_ICON.ordner}</span><span class="dt"><b>${esc(o[0])}</b><span>${esc(o[1])} · ${o[2].length} Dateien</span></span><span class="dg" aria-hidden="true">›</span></button>`).join("")}</div>
+  <div class="greet"><h2>Info</h2><p>Aktuelles und Unterlagen vom Büro</p></div>
+  <label class="search" style="border-width:1px" for="iq"><span style="color:var(--muted);display:grid">${I.lupe.replace('<svg','<svg width="20" height="20"')}</span><input id="iq" type="search" placeholder="Dokument suchen, z. B. Störungscodes" value="${esc(S.intraQ||"")}" style="font-size:16px;font-weight:500;letter-spacing:0"></label>
+  ${q.length>=2?`<div class="panel"><h4>Treffer</h4>${INFO.treffer===null?'<p class="hint" style="margin:0">Suche läuft …</p>':INFO.treffer.fehler?`<p class="hint" style="margin:0">${esc(INFO.treffer.fehler)}</p>`:INFO.treffer.length?INFO.treffer.map(spZeile).join(""):'<p class="hint" style="margin:0">Kein Dokument gefunden.</p>'}</div>`:""}
+  <div class="panel"><h4>Neuigkeiten</h4>${INFO.news===null?'<p class="hint" style="margin:0">Wird geladen …</p>':INFO.news.length?`<div class="news">${INFO.news.slice(0,12).map(n=>`<button type="button" class="newsitem" data-beitrag="${esc(n.id)}"><time>${n.datum?fmt(new Date(n.datum)):""}</time><b>${esc(n.titel)}</b>${n.text?`<span>${esc(n.text)}</span>`:""}</button>`).join("")}</div>`:`<p class="hint" style="margin:0">${INFO.fehler?esc(INFO.fehler):"Noch keine Neuigkeiten."}</p>`}</div>
+  <div class="panel"><h4>Dokumente</h4>${!W?'<p class="hint" style="margin:0">Wird geladen …</p>':W.fehler?`<p class="hint" style="margin:0">${esc(W.fehler)}</p>`:W.length?W.map(d=>d.ordner?dokZeile("ordner",d.name,"Ordner",`data-iord="${esc(d.name)}"`):spZeile(d)).join(""):'<p class="hint" style="margin:0">Im SharePoint-Ordner „Intranet“ liegt noch nichts.</p>'}</div>
   <div class="panel"><h4>Team</h4>${[...(NF.team||[]).filter(t=>t.aktiv).map(t=>[t.name,t.rolle==="Monteur"?"Servicetechniker":t.rolle,t.email+(t.telefon?" · "+t.telefon:"")]),["Service-Postfach","Innendienst / Berichte","service@novis-anlagentechnik.de"]].map(t=>`<div class="contact"><span>${esc(t[1])}</span><b>${esc(t[0])}</b><span class="tel" style="font-size:13px">${esc(t[2])}</span></div>`).join("")}</div>
  </div>`;
 }
@@ -1263,11 +1325,12 @@ function neuSave(){
 function detailPanels(d){return Object.entries(d).map(([h,rows])=>`<div class="panel"><h4>${esc(h)}</h4><dl class="kv">${rows.map(([k,v])=>`<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("")}</dl></div>`).join("")}
 
 function render(){
+ if(S.view==="intra"){S.view="info";S.infoPfad=null}if(S.tab==="intra")S.tab="info";
  aufbauen();if(S.view!=="scan")scanStopp();applyDesk();if(S.view==="scan"&&isDesk())S.view="suche";renderTabs();
  if(S.view==="einsatz"&&!R())S.view="heute";
  if(S.view==="anlage"&&!ANLAGEN[S.q])S.view="heute";
  if(S.view==="neu"&&!S.neu)S.view="scan";
- ({heute:vHeute,scan:vScan,anlage:vAnlage,einsatz:vEinsatz,fertig:vFertig,berichte:vBerichte,ich:vIch,suche:vSuche,neu:vNeu,pool:vPool,intra:vIntra,fehl:vFehl,folge:vFolge}[S.view]||vHeute)();
+ ({heute:vHeute,scan:vScan,anlage:vAnlage,einsatz:vEinsatz,fertig:vFertig,berichte:vBerichte,ich:vIch,suche:vSuche,neu:vNeu,pool:vPool,info:vInfo,intra:vInfo,fehl:vFehl,folge:vFolge}[S.view]||vHeute)();
  fotoVorschau();
 }
 
@@ -1277,7 +1340,7 @@ document.addEventListener("input",e=>{
  const t=e.target,b=t.dataset.bind;
  if(t.id==="msearch")matSearch(t.value);
  if(t.dataset.mv&&S.view==="einsatz"&&R()){const[sd,i,c]=t.dataset.mv.split("|");R().mess[sd].rows[+i][c]=t.value;save();mSum();refreshFoot();return}
- if(t.id==="iq"){S.intraQ=t.value;save();const pos=t.selectionStart;render();const n2=$("#iq");if(n2){n2.focus();try{n2.setSelectionRange(pos,pos)}catch(e){}}}
+ if(t.id==="iq"){S.intraQ=t.value;save();INFO.treffer=null;infoSuchen(t.value);const pos=t.selectionStart;render();const n2=$("#iq");if(n2){n2.focus();try{n2.setSelectionRange(pos,pos)}catch(e){}}}
  if(t.dataset.fat&&S.fa){S.fa[t.dataset.fat]=t.value;save()}
  if(t.dataset.fd&&S.fd){S.fd[t.dataset.fd]=t.value;save()}
  if(t.id==="fdsearch"){const q=t.value.trim().toLowerCase(),box=$("#fdres");box.innerHTML=q?KATALOG.filter(k=>(k.join(" ")).toLowerCase().includes(q)).slice(0,6).map(k=>`<button type="button" data-fdmat="${esc(k[0])}">+ ${esc(k[1])}</button>`).join(""):""}
@@ -1299,6 +1362,7 @@ document.addEventListener("change",e=>{
  if(t.id==="fdFoto"&&S.fd&&t.files[0]){hochladen(t.files,ids=>{S.fd.fotos=(S.fd.fotos||[]).concat(ids);S.fd.foto=S.fd.fotos.length;save();render();toast("Foto angehängt")})}
  if(t.dataset.nchk&&S.neu){S.neu[t.dataset.nchk]=t.checked;save()}
  if(t.id==="schemaNeu"&&S.neu&&t.files[0]){const nm=t.files[0].name;hochladen(t.files,ids=>{S.neu.schema=ids[0];S.neu.schemaName=nm;save();render();toast("Anlagenschema angehängt")})}
+ if(t.id==="unterDatei"&&t.files[0]){unterlagenHinzu(t.files);return}
  if(t.id==="schemaAnl"&&t.files[0]){const nv=ANLAGEN[S.q].nv;hochladen(t.files,ids=>{NF.setze("anlagen",nv,{schema:ids[0]});render();toast("Anlagenschema abgelegt")})}
  if(t.id==="tsFoto"&&S.neu&&t.files[0]){hochladen(t.files,ids=>{S.neu.typenschild=ids[0];save();render();toast("Typenschild angehängt")})}
  if(t.id==="bk"){S.belegKat=t.value;save();render()}
@@ -1322,7 +1386,7 @@ document.addEventListener("click",e=>{
 
 
 
- if(d.tab){S.tab=d.tab;if(d.tab==="intra")S.intraOrdner=null;go(d.tab);return}
+ if(d.tab){S.tab=d.tab;if(d.tab==="info"){S.infoPfad=null;S.infoBeitrag=null;S._infoGeladen=false}go(d.tab);return}
 
 
  if(t.id==="pushOpen"||t.closest&&t.closest("#pushOpen")){hidePush();S.tab="heute";go("heute");return}
@@ -1341,9 +1405,18 @@ document.addEventListener("click",e=>{
  if(d.fdset&&S.fd){S.fd[d.fdset]=d.val;save();render();return}
  if(d.fdmat&&S.fd){const k=KATALOG.find(x=>x[0]===d.fdmat);if(!S.fd.mat.some(m=>m.nr===k[0]))S.fd.mat.push({nr:k[0],bez:k[1]});save();render();return}
  if(d.fdmdel!=null&&S.fd){S.fd.mat.splice(+d.fdmdel,1);save();render();return}
- if(d.iord){S.intraOrdner=d.iord;go("intra");return}
+ if(d.iord!=null&&d.iord!==undefined&&t.dataset.iord!==undefined){S.infoPfad=d.iord;S.infoBeitrag=null;S.tab="info";go("info");return}
+ if(d.beitrag){S.infoBeitrag=d.beitrag;go("info");return}
+ if(d.spdoc){dokOeffnen("/api/info/datei/"+d.spdoc,d.name);return}
+ if(d.ldoc){dokOeffnen("/api/dateien/"+d.ldoc,d.name);return}
+ if(d.dokzu){if(DOKV)URL.revokeObjectURL(DOKV.url);DOKV=null;zeigeDok();return}
+ if(d.dokteilen){dokTeilen();return}
+ if(d.zt){S.zeitTab=d.zt;save();render();return}
+ if(d.schema&&t.closest(".schemawahl")){NFDESIGN.setzeSchema(d.schema);render();return}
+ if(d.themeset){NFDESIGN.setzeTheme(d.themeset);render();return}
+ if(t.id==="appNeu"){toast("Suche nach Update …");(navigator.serviceWorker?navigator.serviceWorker.getRegistration():Promise.resolve(null)).then(r=>r&&r.update()).catch(()=>{}).finally(()=>setTimeout(()=>location.reload(),900));return}
  if(d.uw){NF.setze("bestaetigungen",TECH.id+"_"+d.uw,{tech:TECH.id,uw:d.uw,datum:iso(new Date()),name:TECH.name});render();toast("Bestätigt – mit Datum und Name gespeichert");return}
- if(d.doc){if(d.doc.startsWith("/api/")){window.open(d.doc,"_blank");return}toast("Kommt mit der SharePoint-Anbindung: "+d.doc);return}
+ if(d.doc){if(d.doc.startsWith("/api/")){dokOeffnen(d.doc,t.querySelector("b")?t.querySelector("b").textContent:"Dokument");return}toast(d.doc);return}
  if(d.go){go(d.go);return}
  if(t.id==="neuScan"){const c=newCode();S.neu=neuBlank(c);toast("Aufkleber "+c+" ist noch frei");go("neu");return}
  if(d.nset&&S.neu){S.neu[d.nset]=d.val;save();render();return}
@@ -1377,7 +1450,7 @@ document.addEventListener("click",e=>{
  if(d.copy!=null){const c=S.kontakte[+d.copy];try{navigator.clipboard.writeText(c.tel).then(()=>toast("Nummer kopiert"),()=>toast(c.tel))}catch(e){toast(c.tel)}return}
  if(d.delk!=null){NF.loesche("kontakte",d.delk);render();return}
  if(t.id==="cAdd"){const r1=$("#cr").value.trim(),n1=$("#cn").value.trim(),t1=$("#ct").value.trim();if(!r1||!n1||!t1){toast("Bitte alle drei Felder ausfüllen");return}NF.setze("kontakte",neueId(),{rolle:r1,name:n1,tel:t1});render();toast("Ansprechpartner gespeichert");return}
- if(d.back==="intra"){S.intraOrdner=null;go("intra");return}
+ if(d.back==="info"){if(S.infoBeitrag)S.infoBeitrag=null;else if(S.infoPfad){const p=S.infoPfad.split("/");p.pop();S.infoPfad=p.length?p.join("/"):null}go("info");return}
  if(d.back){if(d.back==="anlage"){go("anlage");return}go(d.back);return}
  if(d.job){const j=JOBS.find(x=>x.id===d.job);go("anlage",{q:j.q,from:"heute"});return}
  if(d.q&&t.classList.contains("sticker")){toast("Aufkleber erkannt: "+ANLAGEN[d.q].nv);go("anlage",{q:d.q,from:"scan"});return}
@@ -1437,9 +1510,11 @@ let belegDatei=null;
  if(!ich)return;
  RECHTE=ich.rechte||{};uiLaden();if(!S.reports)S.reports={};
  const h=location.hash.match(/a=([A-Za-z0-9]+)/);
- render();lastDk=isDesk();
+ const sprung=()=>{if(location.hash==="#info"){history.replaceState(null,"",location.pathname);S.tab="info";S.infoPfad=null;S.infoBeitrag=null;S._infoGeladen=false;go("info")}};
+ render();lastDk=isDesk();sprung();
  if(h){history.replaceState(null,"",location.pathname);kennungOeffnen(h[1])}
- window.addEventListener("hashchange",()=>{const x=location.hash.match(/a=([A-Za-z0-9]+)/);if(x){history.replaceState(null,"",location.pathname);kennungOeffnen(x[1])}});
+ window.addEventListener("hashchange",()=>{const x=location.hash.match(/a=([A-Za-z0-9]+)/);if(x){history.replaceState(null,"",location.pathname);kennungOeffnen(x[1])}sprung()});
+ setTimeout(()=>vorladen().catch(()=>{}),6000);
  const formular=()=>["einsatz","neu","fehl","folge"].includes(S.view)||/INPUT|TEXTAREA|SELECT/.test((document.activeElement||{}).tagName||"");
  NF.bei("aenderung",()=>{if(formular()){aufbauen();renderTabs();return}render();wartPruefen()});
  NF.bei("status",()=>{if(formular())renderTabs();else render()});

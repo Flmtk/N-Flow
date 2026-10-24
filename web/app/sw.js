@@ -48,8 +48,9 @@ self.addEventListener("notificationclick", (e) => {
   e.notification.close();
   const ziel = (e.notification.data && e.notification.data.ziel) || "/app/";
   e.waitUntil(self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((liste) => {
-    const offen = liste.find((c) => new URL(c.url).pathname.startsWith(ziel));
-    if (offen) return offen.focus();
+    const pfad = new URL(ziel, self.location.origin).pathname;
+    const offen = liste.find((c) => new URL(c.url).pathname.startsWith(pfad));
+    if (offen) return offen.focus().then((c) => (ziel.includes("#") && c.navigate ? c.navigate(ziel) : c));
     return self.clients.openWindow(ziel);
   }));
 });

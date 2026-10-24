@@ -21,7 +21,7 @@ import { freischalten, hochladen, ordner, spEingerichtet, spStatus } from "./sha
  * wird es später erneut versucht; nichts geht verloren.
  */
 
-export type AblageArt = "kunde" | "bericht" | "rechnung" | "beleg";
+export type AblageArt = "kunde" | "bericht" | "rechnung" | "beleg" | "unterlage" | "mahnung" | "belegliste";
 type Daten = Record<string, unknown>;
 
 class Warten extends Error {}
@@ -59,6 +59,9 @@ export async function nachSpeichernAblage(s: string, id: string, alt: Daten | nu
     } else if (s === "kunden") {
       await vormerken("kunde", id);
     } else if (s === "anlagen") {
+      // Unterlagen zur Anlage (Schaltplan, Schema, …), in Büro oder App hochgeladen
+      const vorher = new Set(((alt?.unterlagen ?? []) as { datei?: string }[]).map((u) => u.datei));
+      for (const u of (neu.unterlagen ?? []) as { datei?: string }[]) if (u.datei && !vorher.has(u.datei)) await vormerken("unterlage", `${id}|${u.datei}`, 20);
       if (neu.knr) await vormerken("kunde", String(neu.knr));
       if (alt?.knr && alt.knr !== neu.knr) await vormerken("kunde", String(alt.knr));
     }
@@ -84,14 +87,14 @@ async function kundenOrdner(nr: string) {
 }
 
 /** Ordner der Anlage, oder „Intern“ für Einsätze ohne Kundenanlage */
-async function anlagenOrdner(nv: unknown) {
+export async function anlagenOrdner(nv: unknown) {
   const a = nv && nv !== "INTERN" ? await lade("anlagen", String(nv)) : null;
   if (!a || !a.knr) return ordner("wurzel:Intern", null, "Intern");
   const k = await kundenOrdner(String(a.knr));
   return ordner(`anlage:${nv}`, k.id, `${nv} ${geraet(a)} (${[a.str, a.ort].filter(Boolean).join(", ")})`);
 }
 
-async function dateiLaden(id: string): Promise<{ typ: string; inhalt: Buffer } | null> {
+export async function dateiLaden(id: string): Promise<{ typ: string; inhalt: Buffer } | null> {
   if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
   const [d] = await sql<{ typ: string; inhalt: Buffer }[]>`select typ, inhalt from dateien where id = ${id}`;
   return d ?? null;
@@ -129,6 +132,18 @@ async function verarbeiten(art: AblageArt, ref: string): Promise<string | null> 
     const a = await lade("anlagen", String(r.nv ?? ""));
     const o = a?.knr ? await kundenOrdner(String(a.knr)) : await ordner("wurzel:Intern", null, "Intern");
     const e = await hochladen(o.id, ["Rechnungen", `${ref} ${r.datum ?? ""}.pdf`], await pdfErzeugen("rechnung", ref), "application/pdf");
+    return e.webUrl;
+  }
+  if (art === "unterlage") {
+    const [nv, dateiId] = ref.split("|");
+    const a = await lade("anlagen", nv);
+    const u = ((a?.unterlagen ?? []) as { datei?: string; name?: string }[]).find((x) => x.datei === dateiId);
+    if (!a || !u) return null; // inzwischen entfernt
+    const d = await dateiLaden(dateiId);
+    if (!d) throw new Warten("Die Datei ist noch nicht vom Gerät hochgeladen.");
+    const o = await anlagenOrdner(nv);
+    const name = String(u.name || `Unterlage.${endung(d.typ)}`);
+    const e = await hochladen(o.id, ["Unterlagen", /\.[a-z0-9]{2,4}$/i.test(name) ? name : `${name}.${endung(d.typ)}`], d.inhalt, d.typ);
     return e.webUrl;
   }
   if (art === "beleg") {

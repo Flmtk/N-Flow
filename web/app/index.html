@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#e9660f">
+<meta name="theme-color" content="#262624">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="N-Flow">
@@ -427,6 +427,9 @@ label.f.req>span.unit::after{content:none}
 .phone.desk .tabs .navbrand .ico svg{width:20px;height:20px;padding:0}
 .top .brand+.hlupe,.top .brand+.ico{margin-left:auto}
 </style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&family=Barlow+Condensed:wght@400&display=swap">
+<link rel="stylesheet" href="/css/design.css">
+<script src="/js/design.js"></script>
 </head>
 <body>
 
@@ -546,13 +549,13 @@ function applyDesk(){const dk=isDesk();$("#phone").classList.toggle("desk",dk);
  document.querySelectorAll("[data-vt]").forEach(b=>b.setAttribute("aria-pressed",String((b.dataset.vt==="pc")===dk)))}
 function renderTabs(){
  const q=S.queue.length,dk=isDesk();
- tabs.innerHTML=`<div class="navbrand"><span><b>N</b>-FLOW</span><button type="button" class="ico" data-go="suche" aria-label="Anlage suchen">${I.lupe}</button></div>`+[["heute","Heute"],...(dk?[]:[["scan","Scannen"]]),["berichte","Berichte"],["intra","Intranet"],["ich","Ich"]].map(([k,l])=>
+ tabs.innerHTML=`<div class="navbrand">${NFDESIGN.logo()}<button type="button" class="ico" data-go="suche" aria-label="Anlage suchen">${I.lupe}</button></div>`+[["heute","Heute"],...(dk?[]:[["scan","Scannen"]]),["berichte","Berichte"],["intra","Intranet"],["ich","Ich"]].map(([k,l])=>
   `<button type="button" data-tab="${k}" ${S.tab===k?'aria-current="page"':""}>${I[k]}<span>${l}</span>${k==="berichte"&&q?`<i class="badge">${q}</i>`:""}</button>`).join("");
  tabs.hidden=S.view==="einsatz"&&!dk;
 }
 function header(title,back,extra){
  top.classList.toggle("empty",!title&&!back&&!extra&&S.online);
- top.innerHTML=(back?`<button class="back" type="button" data-back="${back}" aria-label="Zurück">‹</button>`:`<span class="brand"><b>N</b>-FLOW</span>`)+
+ top.innerHTML=(back?`<button class="back" type="button" data-back="${back}" aria-label="Zurück">‹</button>`:NFDESIGN.logo("klein"))+
  (title?`<h1>${esc(title)}</h1>`:"")+(extra||"")+
  (back?"":`<button type="button" class="ico hlupe" data-go="suche" aria-label="Anlage suchen">${I.lupe}</button>`)+
  (S.online?"":`<span class="net off" title="Kein Netz – alles wird auf dem Handy gespeichert"><i></i>Offline${NF.outbox.length?" · "+NF.outbox.length:""}</span>`);

@@ -388,6 +388,9 @@ body{padding:0}
 .qrlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
 @media (prefers-reduced-motion:no-preference){.drawer{animation:slide .18s ease-out}@keyframes slide{from{transform:translateX(30px);opacity:.6}}}
 </style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&family=Barlow+Condensed:wght@400&display=swap">
+<link rel="stylesheet" href="/css/design.css">
+<script src="/js/design.js"></script>
 </head>
 <body>
 
@@ -566,7 +569,7 @@ function nav(){
   wN=S.anl.filter(a=>a.vertrag&&due(a)<=addD(TODAY,30)&&!openFor(a.nv,"Wartung")).length;
  const reN=(S.rech||[]).filter(r=>r.status==="offen"&&addD(r.datum,14)<TODAY).length;
  const it=[["dash","Übersicht",""],["plan","Plantafel",pool],["wart","Wartungsplanung",wN],["anl","Kunden und Anlagen",""],["ber","Berichte",berN],["re","Rechnungen",reN],["team","Team",teamN],["set","Einstellungen",""],["adm","Administration",""]].filter(x=>!(ISID()&&x[0]==="re")&&!(x[0]==="adm"&&!ISADM()));
- $("#side").innerHTML=`<div class="brand"><span><b>N</b>-FLOW</span></div><div class="role">Büro · Planung</div>`+
+ $("#side").innerHTML=`<div class="brand">${NFDESIGN.logo()}<span class="bt"><b>NOVIS</b><span>Büro · Planung</span></span></div>`+
   it.map(([k,l,c])=>`<button type="button" class="nav" data-view="${k}" ${S.view===k?'aria-current="page"':""}>${I[k]}<span>${l}</span>${c?`<span class="cnt">${c}</span>`:""}</button>`).join("")+
   `<button type="button" class="nav" data-href="/app/">${I.anl}<span>Monteur-App</span></button>`+
   `<button type="button" class="foot acct" data-go="set:allg"><span class="sav" style="background:${ME().soft};color:${ME().farbe}">${esc(ME().kurz)}</span><span>Angemeldet als<br><b>${esc(ME().name)}</b><br>${esc(ME().rolle)}</span></button>`+syncHtml();
@@ -1130,7 +1133,9 @@ function setAllg(){const F=S.cfg.firma,acc=TECHS.filter(t=>t.rolle!=="Monteur"&&
  return`<div class="grid2">
   <div class="panel"><h3>Sprache</h3><div class="seg" role="group">${[["de","Deutsch"],["en","English"]].map(([k,l])=>`<button type="button" data-cfgset="lang|${k}" aria-pressed="${S.cfg.lang===k}">${l}</button>`).join("")}</div>
    <p class="hint">Gilt für die Oberfläche. Berichte, Rechnungen und Kundenmails bleiben auf Deutsch.</p>
-   <h3 style="margin-top:8px">Darstellung</h3><div class="seg" role="group">${[["system","Wie System"],["light","Hell"],["dark","Dunkel"]].map(([k,l])=>`<button type="button" data-cfgset="theme|${k}" aria-pressed="${S.cfg.theme===k}">${l}</button>`).join("")}</div></div>
+   <h3 style="margin-top:8px">Darstellung</h3><div class="seg" role="group">${[["system","Wie System"],["light","Hell"],["dark","Dunkel"]].map(([k,l])=>`<button type="button" data-cfgset="theme|${k}" aria-pressed="${S.cfg.theme===k}">${l}</button>`).join("")}</div>
+   <h3 style="margin-top:8px">Farbschema</h3><div class="schemawahl">${Object.entries(NFDESIGN.schemata).map(([k,l])=>`<button type="button" data-schema="${k}" aria-pressed="${NFDESIGN.schema()===k}"><span class="sw sw-${k}">${NFDESIGN.n()}</span>${l}</button>`).join("")}</div>
+   <p class="hint">Gilt auf diesem Gerät für Büro und Monteur-App.</p></div>
   <div class="panel"><h3>Konto</h3>
    <div class="acctcur"><span class="sav big" style="background:${ME().soft};color:${ME().farbe}">${esc(ME().kurz)}</span><span><b>${esc(ME().name)}</b><br><span class="hint">${esc(ME().rolle)} · ${esc(ME().mail||"")}</span></span></div>
    <button type="button" class="btn ghost sm" style="align-self:flex-start" id="logout">Abmelden</button>
@@ -1432,6 +1437,7 @@ document.addEventListener("click",e=>{
 
 
  if(d.stab){S.setTab=d.stab;S.emp=null;save();render();return}
+ if(d.schema&&t.closest(".schemawahl")){NFDESIGN.setzeSchema(d.schema);render();return}
  if(d.cfgset){const[k,v]=d.cfgset.split("|");S.cfg[k]=v;applyTheme();save();render();if(k==="user")toast("Angemeldet als "+ME().name);return}
  if(t.id==="logout"){fetch("/auth/logout",{method:"POST"}).finally(()=>location.href="/");return}
  if(t.id==="matAdd"){S.mat.push({_id:neueId(),nr:"",bez:"",her:"",ek:0});save();render();return}

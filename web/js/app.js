@@ -10,8 +10,8 @@ function anmeldeSeite(info) {
   const z = ziel ? "?ziel=" + encodeURIComponent(ziel) : "";
   $("#app").innerHTML = `
     <div class="anmeldung"><div class="karte">
-      <div class="logo">N-<span>FLOW</span></div>
-      <div class="leise">NOVIS Anlagentechnik</div>
+      ${window.NFDESIGN ? NFDESIGN.logo("gross") : '<div class="logo">N-FLOW</div>'}
+      <div class="leise" style="margin-top:18px">NOVIS Anlagentechnik</div>
       ${info.microsoft
         ? `<a class="knopf haupt ms-knopf" href="/auth/login${z}">
              <svg width="18" height="18" viewBox="0 0 21 21" aria-hidden="true"><rect width="10" height="10" fill="#f25022"/><rect x="11" width="10" height="10" fill="#7fba00"/><rect y="11" width="10" height="10" fill="#00a4ef"/><rect x="11" y="11" width="10" height="10" fill="#ffb900"/></svg>

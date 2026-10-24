@@ -668,11 +668,13 @@ function aside(r,a){const job=JOBS.find(j=>j.id===r.job)||{};const fo=(S.folgen|
 function isDone(id){const o=AUFTRAEGE.find(x=>x.id===id);return(o&&o.status==="erledigt")||meineBerichte().some(d=>d.job===id)}
 function arbH(r){const a=mins(r.zv),b=mins(r.zb);return a!=null&&b!=null&&b>a?(b-a)/60:0}
 function zsum(r){return`<div><b>${de(arbH(r),2)}</b><span>Arbeitszeit h</span></div><div><b>${n(r.fz)!=null?de(n(r.fz),2):"–"}</b><span>Fahrzeit h</span></div><div><b>${esc(r.km||"–")}</b><span>Fahrt km</span></div>`}
+/* Messung: Werte oder eine Begründung unten im Feld „Bemerkungen“ (z. B. Anlage außer Betrieb, kein Brennerbetrieb möglich) */
+function messWerte(m){return["ang","ver"].some(sd=>m[sd]&&m[sd].rows.some(x=>Object.entries(x).some(([k,v])=>k!=="pkt"&&k!=="azl"&&String(v==null?"":v).trim()!=="")))}
 function stepOk(i){const r=R();switch(STEPS[i][0]){
  case"auftrag":return!!r.einsatzart;
  case"zeiten":return arbH(r)>0&&n(r.fz)!=null;
  case"befund":return r.diagnose.trim().length>3&&r.arbeiten.trim().length>3;
- case"messung":{const m=mig(r);return m.ver.rows.some(x=>n(x.o2)!=null&&n(x.ta)!=null)}
+ case"messung":{const m=mig(r);return messWerte(m)||String(m.bem||"").trim().length>=10}
  case"material":return true;
  case"fest":return!!r.zustand;
  case"abschluss":return(r.nichtVorOrt||(r.papier&&r.papScan)||(r.sigK&&r.sigName.trim()));
@@ -728,7 +730,8 @@ const STEP={
    ${F("o_l","Zuleitungslänge",m.oel.laenge,{num:1,unit:"m",bind:"m.oel.laenge"})}${F("o_s","Ein- / Zweistrang",m.oel.system,{bind:"m.oel.system",ph:"Einstrang"})}${F("o_v","Saughöhe / Vakuum",m.oel.saug,{bind:"m.oel.saug",ph:"m | bar"})}</div></div>`
   :`<div class="panel"><h4>Dichtheitsprüfung Gasarmatur</h4><div class="grid3">
    ${F("d_p","Prüfdruck",m.dicht.p,{num:1,unit:"mbar",bind:"m.dicht.p"})}${F("d_a","Druckabfall",m.dicht.abfall,{num:1,unit:"mbar",bind:"m.dicht.abfall"})}${F("d_z","Prüfzeit",m.dicht.zeit,{num:1,unit:"min",bind:"m.dicht.zeit"})}</div></div>`}
-  <label class="f"><span>Bemerkungen zur Anlage und Messung</span><textarea data-bind="m.bem" style="min-height:70px">${esc(m.bem||"")}</textarea></label>`},
+  <label class="f ${messWerte(m)?"":"req"}"><span>${messWerte(m)?"Bemerkungen zur Anlage und Messung":"Begründung, warum nicht oder nur teilweise gemessen wurde"}</span><textarea data-bind="m.bem" style="min-height:70px" placeholder="${messWerte(m)?"":"z. B. Anlage außer Betrieb, kein Wärmeabnehmer, Messöffnung nicht zugänglich"}">${esc(m.bem||"")}</textarea></label>
+  ${messWerte(m)?"":'<p class="hint" style="margin:0">Messpunkte dürfen leer bleiben. Dann bitte hier kurz begründen (mindestens 10 Zeichen).</p>'}`},
  material:(r)=>`
   <label class="f"><span>Artikel suchen</span><input id="msearch" type="text" placeholder="Nummer oder Bezeichnung, z. B. Elektrode" autocomplete="off"></label>
   <div id="mres" class="tb"></div>

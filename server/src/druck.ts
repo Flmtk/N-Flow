@@ -22,7 +22,7 @@ export const DRUCK_BENUTZER = {
   rolle: "Geschäftsführung" as const,
 };
 
-export type DruckArt = "bericht" | "rechnung" | "kunde" | "mahnung";
+export type DruckArt = "bericht" | "rechnung" | "kunde" | "mahnung" | "belegliste";
 
 const PFAD = () => process.env.CHROMIUM_PFAD || ["/usr/bin/chromium", "/usr/bin/chromium-browser"].find((p) => existsSync(p)) || "chromium";
 let browser: Promise<Browser> | null = null;

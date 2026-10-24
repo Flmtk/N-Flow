@@ -129,6 +129,7 @@ label.f{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--mu
 .card .r1r{display:flex;gap:4px;align-items:center}
 .mahnvor{background:var(--surface2);border-radius:12px;padding:12px;display:flex;justify-content:center;overflow:hidden}.a4mini{width:397px;height:562px;overflow:hidden}.a4mini .pg{zoom:.5;box-shadow:0 4px 18px -8px rgba(0,0,0,.3)}
 .zvbox b{display:flex;align-items:center;gap:8px}
+.remail input{border:1px solid var(--line);border-radius:10px;padding:8px 12px;background:var(--surface);min-height:38px}
 .linkbtn{background:none;border:0;padding:0;font:inherit;color:var(--accent);text-decoration:underline;cursor:pointer}
 .tb input[type="text"]{width:100%;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
 .fzgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px}
@@ -1010,6 +1011,7 @@ async function drucken(art,id){
   if(art==="bericht"){const b=S.ber.find(x=>x.sb===id);if(!b)return fertig("Bericht "+id+" nicht gefunden");await vollLaden(b.sb);html=a4Doc(b)}
   else if(art==="rechnung"){const r=S.rech.find(x=>x.re===id);if(!r)return fertig("Rechnung "+id+" nicht gefunden");if(r.sb)await vollLaden(r.sb);html=reDoc(r)+(r.sb?`<div class="annexp">${a4Doc(berFor(r))}</div>`:"")}
   else if(art==="kunde"){if(!NF.get("kunden",id))return fertig("Kunde "+id+" nicht gefunden");html=kdDoc(id)}
+  else if(art==="belegliste"){if(!/^\d{4}-\d{2}$/.test(id))return fertig("Monat ungültig");html=belegListeDoc(id)}
   else if(art==="mahnung"){const m=NF.get("mahnungen",id);if(!m)return fertig("Mahnung "+id+" nicht gefunden");html=mahnDoc(m)}
   else return fertig("Unbekannte Druckart");
   L.innerHTML=`<div class="a4v"><div class="a4s"><div class="a4p">${html}</div></div></div>`;
@@ -1062,7 +1064,8 @@ function vTeam(){
     <div class="list">${S.abs.filter(a=>a.status!=="offen").map(a=>`<div class="li"><span class="dot ${a.status==="genehmigt"?"ok":"cr"}"></span><span><b>${a.art} · ${esc(tech(a.tech).name)}</b><small>${fmt(a.von)}${a.bis!==a.von?" – "+fmt(a.bis):""}${a.zeit?" · "+a.zeit:""}</small></span><span class="chip ${a.status==="genehmigt"?"ok":"cr"}">${a.status}</span></div>`).join("")}</div></div>
    <div class="panel"><h3>Belege</h3>
     ${S.bel.map(b=>`<div class="li"><span class="dot ${b.status==="offen"?"or":"ok"}"></span><span><b>${b.kat} · ${de(b.betrag,2)} €</b><small>${esc(tech(b.tech).name)} · ${fmt(b.datum)} · ${esc(b.info)}${b.foto?` · <a href="/api/dateien/${esc(b.foto)}" target="_blank" rel="noopener">Quittung</a>`:""}</small></span>${b.status==="offen"?`<button type="button" class="btn sm" data-belok="${b.id}">An Buchhaltung</button>`:'<span class="chip ok">übergeben</span>'}</div>`).join("")}
-    <p class="hint">Die Fotos der Quittungen werden automatisch in SharePoint › Belege › Jahr › Monat abgelegt.</p></div>
+    <p class="hint">Die Fotos der Quittungen werden automatisch in SharePoint › Belege › Jahr › Monat abgelegt, dazu je Monat eine Belegliste als PDF und Excel-Tabelle (CSV).</p>
+    ${RECHTE.rechnungen?`<div style="display:flex;gap:8px;flex-wrap:wrap">${[...new Set(S.bel.map(b=>String(b.datum||"").slice(0,7)).filter(Boolean))].sort().reverse().slice(0,4).map(m=>`<a class="btn sec sm" style="text-decoration:none" href="/api/druck/belegliste/${m}" target="_blank" rel="noopener">Belegliste ${new Date(m+"-15T12:00").toLocaleDateString("de-DE",{month:"short",year:"numeric"})}</a>`).join("")}</div>`:""}</div>
   </div>
   <div class="panel"><h3>Arbeitszeit diese Woche <span class="hint">aus „Ich → Zeit“ in der Monteur-App</span></h3><div class="tbwrap"><table class="tb"><thead><tr><th>Monteur</th>${days.map(d=>`<th>${fmtS(d)}</th>`).join("")}<th>Summe</th><th>Soll</th></tr></thead><tbody>
    ${MONT().map(t=>{const z=S.zeit[t.id]||[],s=z.reduce((a,b)=>a+(b||0),0);return`<tr><td><b>${esc(t.name)}</b></td>${z.map((h,i)=>`<td>${h!=null?de(h,2)+" h":days[i]<TODAY?'<span class="chip wa">fehlt</span>':"–"}</td>`).join("")}<td><b>${de(s,2)} h</b></td><td class="hint">40,00 h</td></tr>`}).join("")}
@@ -1188,6 +1191,17 @@ function setMahn(){const M=MW(),st=M.stufen||[];
   ${st.map((s,i)=>`<tr><td>${i+1}</td><td><input type="text" data-cfg="preise.mahnung.stufen.${i}.name" value="${esc(s.name)}"></td><td><span class="unit2"><input type="number" min="0" data-cfg="preise.mahnung.stufen.${i}.tage" value="${esc(s.tage)}"><em>Tagen ${i?"nach Stufe "+i:"nach Fälligkeit"}</em></span></td><td><span class="unit2"><input type="number" min="0" step="0.5" data-cfg="preise.mahnung.stufen.${i}.gebuehr" value="${esc(s.gebuehr)}"><em>€</em></span></td></tr>`).join("")}</tbody></table></div>
   <div class="f3">${NUM("preise.mahnung.frist","Neue Zahlungsfrist in jeder Mahnung","Tage")}</div>
   <p class="hint">Ist eine Stufe fällig, erscheint sie unter Übersicht › Braucht Aufmerksamkeit und bei der Rechnung. Zusätzlich geht jeden Morgen eine Mail an rechnung@ mit allen neu überfälligen Rechnungen und fälligen Mahnstufen.</p></div>`}
+/* ---------- Belege: Monatsliste für den Steuerberater ---------- */
+function belegListeDoc(monat){const B=S.bel.filter(b=>String(b.datum||"").startsWith(monat)).sort((a,b)=>String(a.datum).localeCompare(String(b.datum)));
+ const kat={};for(const b of B)kat[b.kat]=(kat[b.kat]||0)+Number(b.betrag||0);const summe=B.reduce((s,b)=>s+Number(b.betrag||0),0);
+ const titel=new Date(monat+"-15T12:00").toLocaleDateString("de-DE",{month:"long",year:"numeric"});
+ return`<div class="pg pt kdpg"><img class="rhimg" src="${IMG_HEAD}" alt="NOVIS Anlagentechnik · Service redefined.">
+ <h2 class="rt">Belegliste ${esc(titel)}</h2>
+ <p class="rp" style="font-size:12px;color:#5d636c">${B.length} Belege · Fotos der Quittungen im gleichen Ordner in SharePoint (Belege › ${monat.slice(0,4)} › ${monat}). Beträge brutto.</p>
+ <table class="mtb rtb"><thead><tr><th>Datum</th><th>Mitarbeiter</th><th>Art</th><th>Angaben</th><th>Betrag</th></tr></thead><tbody>
+ ${B.map(b=>`<tr><td>${fmt(b.datum)}</td><td>${esc(tech(b.tech).name)}</td><td>${esc(b.kat||"")}</td><td>${esc(b.info||"")}</td><td>${eur(Number(b.betrag||0))}</td></tr>`).join("")||'<tr><td colspan="5">Keine Belege in diesem Monat.</td></tr>'}</tbody></table>
+ <div class="rsum" style="width:320px">${Object.entries(kat).sort().map(([k,v])=>`<div><span>${esc(k)}</span><b>${eur(v)}</b></div>`).join("")}<div class="tot"><span>Summe ${esc(titel)}</span><b>${eur(summe)}</b></div></div>
+ ${SWOOSH}<div class="rf"><div><b>NOVIS Anlagentechnik GmbH i. G.</b><br>Bornweg 34a<br>63599 Biebergemünd</div><div><b>Erstellt</b><br>automatisch aus N-Flow<br>${fmt(TODAY)}</div><div></div><div></div></div></div>`}
 function konflikt(a){const os=S.orders.filter(o=>o.tech===a.tech&&o.date>=a.von&&o.date<=a.bis&&o.status!=="erledigt");
  if(!os.length)return'<span class="hint" style="color:var(--ok)">Keine geplanten Einsätze in diesem Zeitraum.</span>';
  if(a.art==="Block"){const[v,b]=a.zeit.split("–").map(hm);const hit=os.filter(o=>{const s=hm(o.time),e=s+o.dauer*60;return s<b&&e>v});
@@ -1235,7 +1249,7 @@ function a4Page1(b,mini){const d=docData(b),a=d.a,r=d.r,k=NF.get("kunden",a.knr)
  </div>${PF("Servicebericht",1)}</div>`}
 function a4Doc(b){const d=docData(b),a=d.a,r=d.r,m=d.m,sumA=d.zt.filter(z=>z.art==="Arbeitszeit").reduce((s,z)=>s+z.h,0),sumR=d.zt.filter(z=>z.art==="Reisezeit").reduce((s,z)=>s+z.h,0);
  const fotos=Array.isArray(r.fotos)&&!DRUCK_OHNE_FOTOS?r.fotos:[],mb=d.gas&&!!m&&r.merkblatt!==false;
- PGT=3+(m?2:0)+(mb?1:0)+(fotos.length?1:0);let n=1;
+ PGT=3+(m?2:0)+(mb?1:0)+Math.ceil(fotos.length/9);let n=1;
  const img=id=>id?`<img class="sigimg" src="/api/dateien/${esc(id)}" alt="">`:"";
  const p2=`<div class="pg">${PH("SERVICEBERICHT",b.sb)}<div class="pg-b"><div class="c2 w7">
   <div>${SEC("ZEITERFASSUNG")}<table class="mtb l"><thead><tr><th>Art</th><th>Datum</th><th>von</th><th>bis</th><th>Dauer [h]</th></tr></thead><tbody>${d.zt.map(z=>`<tr><td>${z.art}</td><td>${fmt(z.datum)}</td><td>${z.von}</td><td>${z.bis}</td><td>${de(z.h,2)}</td></tr>`).join("")||'<tr><td colspan="5">–</td></tr>'}</tbody></table></div>
@@ -1264,7 +1278,7 @@ function a4Doc(b){const d=docData(b),a=d.a,r=d.r,m=d.m,sumA=d.zt.filter(z=>z.art
   <div>${SEC("IHRE PFLICHTEN ALS BETREIBER")}<ul class="ol"><li>Anlage betriebssicher halten und regelmäßig warten lassen.</li><li>Sicherheitsrelevante Bauteile fristgerecht tauschen lassen.</li><li>Gasleitungsanlage nach DVGW-TRGI prüfen lassen.</li><li>Messungen des Bezirksschornsteinfegers ermöglichen.</li><li>Zuluftöffnungen nicht verschließen.</li><li>Störungen sofort melden, Anlage nicht eigenmächtig wieder in Betrieb nehmen.</li></ul></div></div>
   ${SEC("WICHTIGE NUMMERN")}<div class="c3">${FL("Gasnetzbetreiber / Entstörnummer","siehe Gaszähler")}${FL("NOVIS Service",S.cfg.firma.tel||S.cfg.firma.mail)}${FL("Feuerwehr / Notruf","112")}</div>
   <div class="c2">${FL("Anlage",a.nv)}${FL("Übergeben am",fmt(b.datum))}</div></div>${PF("Merkblatt Gasanlagen",++n)}</div>`:"";
- const p7=fotos.length?`<div class="pg">${PH("FOTOS ZU SERVICEBERICHT",b.sb,1)}<div class="pg-b"><div class="fotos">${fotos.map(id=>`<img src="/api/dateien/${esc(id)}" alt="">`).join("")}</div></div>${PF("Fotos",++n)}</div>`:"";
+ const p7=Array.from({length:Math.ceil(fotos.length/9)},(_,i)=>fotos.slice(i*9,i*9+9)).map((teil,i,alle)=>`<div class="pg">${PH("FOTOS ZU SERVICEBERICHT"+(alle.length>1?` (${i+1}/${alle.length})`:""),b.sb,1)}<div class="pg-b"><div class="fotos">${teil.map(id=>`<img src="/api/dateien/${esc(id)}" alt="">`).join("")}</div></div>${PF("Fotos",++n)}</div>`).join("");
  return a4Page1(b)+p2+p3+p4+p5+p6+p7;
 }
 function openA4(sb){S.a4=sb;save();viewer()}

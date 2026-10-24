@@ -56,6 +56,8 @@ export async function nachSpeichernAblage(s: string, id: string, alt: Daten | nu
       if (k) await vormerken("kunde", k, 120);
     } else if (s === "belege") {
       if (!alt || alt.foto !== neu.foto || alt.betrag !== neu.betrag || alt.datum !== neu.datum || alt.kat !== neu.kat) await vormerken("beleg", id, 60);
+      // Monatsliste neu erzeugen (gesammelt nach 5 Minuten Ruhe); bei geändertem Datum auch den alten Monat
+      for (const d of new Set([String(neu.datum ?? ""), String(alt?.datum ?? "")])) if (/^\d{4}-\d{2}/.test(d)) await vormerken("belegliste", d.slice(0, 7), 300);
     } else if (s === "mahnungen") {
       await vormerken("mahnung", id, 20);
     } else if (s === "kunden") {
@@ -136,6 +138,20 @@ async function verarbeiten(art: AblageArt, ref: string): Promise<string | null> 
     const e = await hochladen(o.id, ["Rechnungen", `${ref} ${r.datum ?? ""}.pdf`], await pdfErzeugen("rechnung", ref), "application/pdf");
     return e.webUrl;
   }
+  if (art === "belegliste") {
+    if (!/^\d{4}-\d{2}$/.test(ref)) return null;
+    const w = await ordner("wurzel:Belege", null, "Belege");
+    const pdf = await hochladen(w.id, [ref.slice(0, 4), ref, `Belegliste ${ref}.pdf`], await pdfErzeugen("belegliste", ref), "application/pdf");
+    // dieselbe Liste als Tabelle (Excel öffnet CSV mit Semikolon und UTF-8-BOM direkt)
+    const B = await sql<{ d: Daten; name: string | null }[]>`
+      select b.daten as d, m.name from daten b left join mitarbeiter m on m.id::text = b.daten->>'tech'
+      where b.sammlung = 'belege' and not b.geloescht and b.daten->>'datum' like ${ref + "%"} order by b.daten->>'datum'`;
+    const zelle = (x: unknown) => `"${String(x ?? "").replace(/"/g, '""')}"`;
+    const csv = "\uFEFF" + ["Datum;Mitarbeiter;Art;Angaben;Betrag brutto (EUR)", ...B.map(({ d, name }) =>
+      [d.datum, name ?? "", d.kat, d.info, Number(d.betrag ?? 0).toFixed(2).replace(".", ",")].map(zelle).join(";"))].join("\r\n");
+    await hochladen(w.id, [ref.slice(0, 4), ref, `Belegliste ${ref}.csv`], Buffer.from(csv, "utf8"), "text/csv");
+    return pdf.webUrl;
+  }
   if (art === "mahnung") {
     const m = await lade("mahnungen", ref);
     if (!m) return null;
@@ -208,7 +224,7 @@ export function ablageStarten(): void {
   setInterval(() => void abarbeiten(), 20_000);
 }
 
-const DRUCK_RECHT = { bericht: "berichte_pruefen", rechnung: "rechnungen", kunde: "planung", mahnung: "rechnungen" } as const;
+const DRUCK_RECHT = { bericht: "berichte_pruefen", rechnung: "rechnungen", kunde: "planung", mahnung: "rechnungen", belegliste: "rechnungen" } as const;
 
 export async function ablageRouten(app: FastifyInstance): Promise<void> {
   app.get("/api/ablage", { preHandler: brauche("admin") }, async () => {
@@ -223,10 +239,11 @@ export async function ablageRouten(app: FastifyInstance): Promise<void> {
   app.post("/api/ablage/nachholen", { preHandler: brauche("admin") }, async (anfrage) => {
     const n = await sql<{ n: number }[]>`
       with q as (
-        select case sammlung when 'kunden' then 'kunde' when 'berichte' then 'bericht' when 'rechnungen' then 'rechnung' else 'beleg' end as art, id
-        from daten where not geloescht and sammlung in ('kunden', 'berichte', 'rechnungen', 'belege')
+        select case sammlung when 'kunden' then 'kunde' when 'berichte' then 'bericht' when 'rechnungen' then 'rechnung' when 'mahnungen' then 'mahnung' else 'beleg' end as art, id
+        from daten where not geloescht and sammlung in ('kunden', 'berichte', 'rechnungen', 'belege', 'mahnungen')
       )
-      insert into ablage (art, ref) select art, id from q
+      , m as (select distinct 'belegliste' as art, left(daten->>'datum', 7) as id from daten where not geloescht and sammlung = 'belege' and daten->>'datum' ~ '^[0-9]{4}-[0-9]{2}')
+      insert into ablage (art, ref) select art, id from q union all select art, id from m
       on conflict (art, ref) do update set status = 'offen', versuche = 0, fehler = null, naechster = now()
       returning 1 as n`;
     await protokolliere(anfrage.benutzer!.name, "SharePoint", `Ablage nachholen: ${n.length} Dokumente`);

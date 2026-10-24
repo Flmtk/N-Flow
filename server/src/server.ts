@@ -18,6 +18,7 @@ import { mailRouten } from "./mail.js";
 import { ablageRouten, ablageStarten } from "./ablage.js";
 import { druckBeenden } from "./druck.js";
 import { infoBeobachten, infoRouten } from "./info.js";
+import { mahnwesenPlanen } from "./mahnwesen.js";
 
 const app = Fastify({
   logger: { level: config.produktion ? "info" : "debug" },
@@ -68,6 +69,7 @@ await migrieren((t) => app.log.info(t));
 vorschauPlanen();
 ablageStarten();
 infoBeobachten();
+mahnwesenPlanen();
 await app.listen({ host: "0.0.0.0", port: config.port });
 app.log.info(`N-Flow ${config.version} (${config.instanz}) läuft auf ${config.baseUrl}`);
 

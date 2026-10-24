@@ -219,8 +219,8 @@ export async function datenRouten(app: FastifyInstance): Promise<void> {
             daten = excluded.daten, version = daten.version + 1, geloescht = false,
             geaendert_am = clock_timestamp(), geaendert_von = excluded.geaendert_von
           returning id, version, daten, geloescht, geaendert_am::text as geaendert_am, geaendert_von`;
-        if (!altDaten && ["kunden", "anlagen", "rechnungen"].includes(s)) {
-          await protokolliere(b.name, { kunden: "Kunde angelegt", anlagen: "Anlage angelegt", rechnungen: "Rechnung erstellt" }[s]!,
+        if (!altDaten && ["kunden", "anlagen", "rechnungen", "mahnungen"].includes(s)) {
+          await protokolliere(b.name, { kunden: "Kunde angelegt", anlagen: "Anlage angelegt", rechnungen: "Rechnung erstellt", mahnungen: "Mahnung erstellt" }[s]!,
             `${id}${neu.name1 ? " · " + neu.name1 : ""}`);
         } else if (s === "rechnungen" && teil.status && teil.status !== altDaten?.status) {
           await protokolliere(b.name, "Rechnung " + String(teil.status), id);

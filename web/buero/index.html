@@ -127,6 +127,10 @@ label.f{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--mu
 .card b{font-size:13px;font-weight:700}
 .card .r1{display:flex;gap:6px;align-items:center;justify-content:space-between}
 .card .r1r{display:flex;gap:4px;align-items:center}
+.mahnvor{background:var(--surface2);border-radius:12px;padding:12px;display:flex;justify-content:center;overflow:hidden}.a4mini{width:397px;height:562px;overflow:hidden}.a4mini .pg{zoom:.5;box-shadow:0 4px 18px -8px rgba(0,0,0,.3)}
+.zvbox b{display:flex;align-items:center;gap:8px}
+.linkbtn{background:none;border:0;padding:0;font:inherit;color:var(--accent);text-decoration:underline;cursor:pointer}
+.tb input[type="text"]{width:100%;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
 .fzgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px}
 .fzkopf{display:flex;align-items:flex-start;gap:12px;justify-content:space-between}.fzkopf h3{margin:0;font-family:var(--f-serif,Georgia),serif;font-weight:500;font-size:22px}
 .fzkpi{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.fzkpi div{background:var(--surface2);border-radius:10px;padding:8px 10px;display:flex;flex-direction:column}.fzkpi b{font-family:var(--f-serif,Georgia),serif;font-weight:500;font-size:20px}.fzkpi span{font-size:11px;color:var(--muted)}
@@ -528,7 +532,7 @@ function defCfg(){return{lang:"de",theme:"system",user:"G-01",
  noti:{push:true,mail:true,ev:{stoer:true,ber:true,antrag:true,rech:true,absage:true,pruef:true}},
  zyk:{tag:{on:true,zeit:"17:30"},woche:{on:true,tag:"Freitag",zeit:"14:00"},monat:{on:false,tag:"1"},empf:{"G-01":true,"G-02":true},inh:{einsatz:true,umsatz:true,op:true,wartung:true,auslast:true,warn:true}},
  alert:{ueber:{on:true,tage:7},op:{on:true,betrag:2000},minus:{on:true,betrag:50},plan:{on:true,proz:20},pruef:{on:true,tage:30}},
- preise:{std:120,notdienst:50,wochenende:25,anf:[[25,55],[50,85],[999,130]],mess:20,matWart:35,sockel:0.8,proKw:0.008,neben:0.75,zuschlag:15,matAuf:25,rund:5}}}
+ preise:{std:120,notdienst:50,wochenende:25,anf:[[25,55],[50,85],[999,130]],mess:20,matWart:35,sockel:0.8,proKw:0.008,neben:0.75,zuschlag:15,matAuf:25,rund:5,mahnung:{frist:10,stufen:[{name:"Zahlungserinnerung",tage:7,gebuehr:0},{name:"1. Mahnung",tage:14,gebuehr:5},{name:"2. Mahnung",tage:14,gebuehr:10}]}}}}
 const ORIG_THEME=document.documentElement.getAttribute("data-theme");
 function applyTheme(){const r=document.documentElement,t=S.cfg&&S.cfg.theme;if(!t||t==="system"){ORIG_THEME?r.setAttribute("data-theme",ORIG_THEME):r.removeAttribute("data-theme")}else r.setAttribute("data-theme",t);r.lang=S.cfg&&S.cfg.lang==="en"?"en":"de"}
 function setCfg(path,val){const k=path.split(".");let o=S.cfg;for(let i=0;i<k.length-1;i++)o=o[k[i]];o[k[k.length-1]]=val}
@@ -782,6 +786,7 @@ function dOrder(id){
  const mail=`Betreff: Terminbestätigung – ${o.art} am ${o.date?fmt(o.date):"(Termin folgt)"}\n\n${anrede}\n\nvielen Dank für Ihr Vertrauen. Gerne bestätigen wir Ihnen den Termin für ${art}:\n\nDatum: ${o.date?D(o.date).toLocaleDateString("de-DE",{weekday:"long",day:"numeric",month:"long",year:"numeric"}):"folgt"}\nAnkunft unseres Technikers: ${o.time?`zwischen ${o.time} und ${bis} Uhr`:"folgt"}\nTechniker: ${t?t.name:"wird noch festgelegt"}\nAnlage: ${a.ger}\nAdresse: ${a.str}, ${a.plz} ${a.ort}\n\nWir bitten Sie, den Zugang zum Heizraum zu ermöglichen. Sollte der Termin für Sie nicht passen, geben Sie uns bitte kurz Bescheid. Wir finden gemeinsam gern einen neuen Termin.\n\nÜber die angehängte Kalendereinladung können Sie den Termin direkt in Ihren Kalender übernehmen.\n\nMit freundlichen Grüßen\nIhr Service-Team der NOVIS Anlagentechnik\n\n—\nNOVIS Anlagentechnik GmbH i. G.\nBornweg 34a · 63599 Biebergemünd\nTelefon: ${S.cfg.firma.tel||"Service-Hotline (Nummer folgt)"}\nE-Mail: service@novis-anlagentechnik.de\nwww.novis-anlagentechnik.de`;
  return{title:`${o.id} · ${o.art}`,sub:`${a.kunde} · ${a.nv}`,body:`
   ${o.prio==="hoch"?`<div class="alert cr">Dringend${o.melder?" · Melder: "+esc(o.melder):""}</div>`:""}
+  ${a.knr&&RECHTE.rechnungen&&zahlungsverhalten(a.knr).stufe==="schlecht"?`<div class="alert cr">Achtung Zahlungsverhalten: ${esc(a.kunde)} hat offene oder mehrfach angemahnte Rechnungen. Ggf. Vorkasse oder Barzahlung vereinbaren.</div>`:""}
   ${hinweisPanel(o.nv,o.id)}
   ${o.status==="offen"?recPanel(o,a):""}
   <div class="box">${o.leistung&&o.art!=="Intern"?`<span class="hint">Leistung (Bericht und Rechnung)</span>`:""}<b>${esc(o.grund)}</b><span class="hint">${o.abr?`Abrechnung: ${o.abr==="Aufwand"?"nach Aufwand":o.abr==="Pauschal"?"Pauschale "+(o.pausch?de(+o.pausch,2)+" € netto":""):"nicht berechnen"} · `:""}Quelle: ${esc(o.quelle)}${o.angebot?" · Angebot an Kunden nötig":""}</span></div>
@@ -872,6 +877,7 @@ function dAnl(nv){const a=anl(nv),k=NF.get("kunden",a.knr)||{},os=S.orders.filte
   <dt>Gerät</dt><dd>${esc(a.ger)}${a.sernr?" · SN "+esc(a.sernr):""}</dd><dt>Leistung</dt><dd>${a.kw} kW · ${esc(a.en)}${a.gas?" · "+esc(a.gas):""}${a.baujahr?" · Baujahr "+a.baujahr:""}</dd><dt>Vertrag</dt><dd>${esc(a.vertrag)||"Einzelauftrag"} · ${a.zyk} Monate${a.betreuer?" · Pool "+esc(tech(a.betreuer).name):""}</dd><dt>Letzte Wartung</dt><dd>${fmt(lastDone(a))}</dd><dt>Nächste Wartung</dt><dd>${fmt(due(a))}</dd>${a.bem?`<dt>Bemerkung</dt><dd>${esc(a.bem)}</dd>`:""}</dl>
   ${(a.maengel||[]).map(m=>`<div class="alert">Offener Mangel: ${esc(m)}</div>`).join("")}
   ${hinweisPanel(nv,"")}
+  ${zahlungsBox(a.knr)}
   ${det}
   <div class="box"><b>QR-Aufkleber</b>${a.qr?`<div style="display:flex;gap:14px;align-items:center"><img src="/api/qr/${esc(a.qr)}" alt="QR-Code" style="width:96px;height:96px;background:#fff;padding:6px;border-radius:8px"><span class="hint">Kennung ${esc(a.qr)}<br>Kunden-PIN für die Historie: <b>${esc(a.pin||"–")}</b></span></div><button type="button" class="btn sec sm" style="align-self:flex-start" data-go="aufk:${esc(a.nv)}">Aufkleber drucken</button>`:`<span class="hint">Noch kein Aufkleber zugeordnet. Beim Bearbeiten eine Kennung erzeugen, oder der Monteur scannt einen leeren Aufkleber bei der Inbetriebnahme.</span>`}</div>
   ${unterlagenBox(a)}
@@ -918,7 +924,7 @@ function afSave(){const F=S.af,t=x=>String(x??"").trim(),num=x=>x===""||x==null?
  S.af=null;aufbauen();S.drawer="anl:"+nv;save();render();toast(F.nv?nv+" gespeichert":nv+" angelegt")}
 function dKunde(nr){const k=NF.get("kunden",nr)||{},F=S.kf&&S.kf._for===nr?S.kf:(S.kf=Object.assign({},k,{_for:nr}));
  const I1=(f,l)=>`<label class="f">${l}<input type="text" data-kf="${f}" value="${esc(F[f]||"")}"></label>`;
- return{title:`${nr} · ${kundeName(k)}`,sub:`${k.str||""}, ${k.plz||""} ${k.ort||""}`,body:`<div class="f2">${I1("name1","Name / Firma")}${I1("name2","Vorname / Zusatz")}</div><div class="f3">${I1("str","Straße, Hausnr.")}${I1("plz","PLZ")}${I1("ort","Ort")}</div><div class="f2">${I1("tel","Telefon")}${I1("mail","E-Mail")}</div>
+ return{title:`${nr} · ${kundeName(k)}`,sub:`${k.str||""}, ${k.plz||""} ${k.ort||""}`,body:`${zahlungsBox(nr)}<div class="f2">${I1("name1","Name / Firma")}${I1("name2","Vorname / Zusatz")}</div><div class="f3">${I1("str","Straße, Hausnr.")}${I1("plz","PLZ")}${I1("ort","Ort")}</div><div class="f2">${I1("tel","Telefon")}${I1("mail","E-Mail")}</div>
   <div><b style="font-size:14px">Anlagen</b><div class="list">${S.anl.filter(a=>a.knr===nr).map(a=>`<button type="button" class="li" data-go="anl:${a.nv}"><span class="dot ok"></span><span><b>${a.nv} · ${esc(a.ger)}</b><small>${esc(a.str)}, ${esc(a.ort)}</small></span><span class="hint">›</span></button>`).join("")||'<p class="hint">Keine.</p>'}</div></div>`,
   foot:`${RECHTE.planung?`<button type="button" class="btn" id="kfSave">Speichern</button><button type="button" class="btn sec" data-afk="${esc(nr)}">+ Anlage für diesen Kunden</button>`:""}`}}
 function dAufk(x){const leer=x==="leer",a=leer?null:anl(x);
@@ -975,8 +981,8 @@ function vRe(){
    <div class="kpi ${all.some(o=>o.st[0]==="cr")?"alert":""}"><b>${eur(sum(o=>o.st[0]==="cr"))}</b><span>Davon überfällig</span></div>
    <div class="kpi"><b>${eur(sum(o=>o.r.status==="bezahlt"))}</b><span>Bezahlt</span></div></div>
   <div class="panel"><h3>${rows.length} Rechnungen <span class="hint">Nummernkreis RE-JJJJ-NNNN · zahlbar in 14 Tagen</span></h3><div class="tbwrap"><table class="tb"><thead><tr><th>Rechnung</th><th>Datum</th><th>Kunde</th><th>Bericht</th><th style="text-align:right">Netto</th><th style="text-align:right">Brutto</th><th>Status</th><th></th></tr></thead><tbody>
-  ${rows.map(({r,x,st})=>`<tr><td><b>${r.re}</b></td><td>${fmt(r.datum)}</td><td>${esc(anl(r.nv).kunde)}</td><td>${r.sb}</td><td style="text-align:right">${eur(x.netto)}</td><td style="text-align:right"><b>${eur(x.brutto)}</b></td><td><span class="chip ${st[0]}">${st[1]}</span>${r.erinnert?' <span class="chip">erinnert</span>':""}</td>
-   <td style="white-space:nowrap"><button type="button" class="btn sec sm" data-rev="${r.re}">A4 ansehen</button> ${r.status==="offen"?`<button type="button" class="btn ghost sm" data-repaid="${r.re}">Bezahlt</button>`:""} ${st[0]==="cr"&&!r.erinnert?`<button type="button" class="btn ghost sm" data-remind="${r.re}">Erinnern</button>`:""}</td></tr>`).join("")||'<tr><td colspan="8" class="empty">Keine Rechnungen in dieser Auswahl.</td></tr>'}
+  ${rows.map(({r,x,st})=>`<tr><td><b>${r.re}</b></td><td>${fmt(r.datum)}</td><td>${esc(anl(r.nv).kunde)} ${zahlungsChip(anl(r.nv).knr)}</td><td>${r.sb}</td><td style="text-align:right">${eur(x.netto)}</td><td style="text-align:right"><b>${eur(x.brutto)}</b></td><td><span class="chip ${st[0]}">${st[1]}</span>${r.erinnert?' <span class="chip">erinnert</span>':""}</td>
+   <td style="white-space:nowrap"><button type="button" class="btn sec sm" data-rev="${r.re}">A4 ansehen</button> ${r.status==="offen"?`<button type="button" class="btn ghost sm" data-repaid="${r.re}">Bezahlt</button>`:""} ${(()=>{const n=naechsteStufe(r),M=mahnungenZu(r.re);return(M.length?`<button type="button" class="btn ghost sm" data-go="mahn:${esc(M[M.length-1].id)}">${esc(M[M.length-1].name)}</button>`:"")+(n&&!n.ende&&(n.faellig||(n.stufe===1&&st[0]==="cr"))?` <button type="button" class="btn ${n.faellig?"":"ghost"} sm" data-go="mahn:neu|${r.re}" title="${n.faellig?"fällig seit "+fmt(n.ab):"regulär fällig ab "+fmt(n.ab)}">${esc(n.name)}</button>`:"")})()}</td></tr>`).join("")||'<tr><td colspan="8" class="empty">Keine Rechnungen in dieser Auswahl.</td></tr>'}
   </tbody></table></div>
   <p class="hint">Die Rechnung geht als ein PDF mit dem Servicebericht als Anlage sowie als XRechnung an den Kunden und wird im Kundenordner abgelegt. Preise aus Einstellungen → Preise (${S.cfg.preise.std} €/Std., Wartungspauschale nach K-01).</p></div>
  </div>`;
@@ -1004,6 +1010,7 @@ async function drucken(art,id){
   if(art==="bericht"){const b=S.ber.find(x=>x.sb===id);if(!b)return fertig("Bericht "+id+" nicht gefunden");await vollLaden(b.sb);html=a4Doc(b)}
   else if(art==="rechnung"){const r=S.rech.find(x=>x.re===id);if(!r)return fertig("Rechnung "+id+" nicht gefunden");if(r.sb)await vollLaden(r.sb);html=reDoc(r)+(r.sb?`<div class="annexp">${a4Doc(berFor(r))}</div>`:"")}
   else if(art==="kunde"){if(!NF.get("kunden",id))return fertig("Kunde "+id+" nicht gefunden");html=kdDoc(id)}
+  else if(art==="mahnung"){const m=NF.get("mahnungen",id);if(!m)return fertig("Mahnung "+id+" nicht gefunden");html=mahnDoc(m)}
   else return fertig("Unbekannte Druckart");
   L.innerHTML=`<div class="a4v"><div class="a4s"><div class="a4p">${html}</div></div></div>`;
   await Promise.all([...L.querySelectorAll("img")].map(im=>im.complete?0:new Promise(r=>{im.onload=im.onerror=r})));
@@ -1038,7 +1045,7 @@ function reViewer(){
   <span style="margin-left:auto;display:flex;gap:8px;align-items:center">${r.versendet?`<span class="chip ok">gesendet ${fmt(iso(r.versendet))}</span>`:""}<button type="button" class="btn sec sm" data-remail="${r.re}">${r.versendet?"Erneut senden":"Per E-Mail senden"}</button>${r.status==="offen"?`<button type="button" class="btn sm" data-repaid="${r.re}">Als bezahlt markieren</button>`:'<span class="chip ok">bezahlt</span>'}<button type="button" class="btn sec sm" data-a4print="1">Drucken / PDF</button><button type="button" class="ico" data-rvclose="1" aria-label="Schließen">${I.x}</button></span></header>
   <div class="a4s" id="res"><div class="a4p">${reDoc(r)}<div class="annex"><span>Anlage zur Rechnung ${r.re}</span><b>Servicebericht ${r.sb}</b></div><div class="annexp">${a4Doc(berFor(r))}</div></div></div>
   <div class="remail" style="display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;padding:6px"><span class="hint">An ${esc(anl(r.nv).mail||"– keine E-Mail beim Kunden –")}</span><span class="hint">·</span><input id="reTest" type="email" placeholder="Test an eigene Adresse" value="${esc(UI.testMail||"")}" style="max-width:240px"><button type="button" class="btn ghost sm" data-retest="${r.re}">Test senden</button></div>
-  <p class="hint" style="text-align:center;padding:0 6px 6px">„Drucken / PDF“ ergibt ein PDF mit Rechnung und Servicebericht als Anlage. <span id="resp"></span></p></div>`;
+  <p class="hint" style="text-align:center;padding:0 6px 6px">„Drucken / PDF“ ergibt ein PDF mit Rechnung und Servicebericht als Anlage. <span id="resp"></span>${(()=>{const M=mahnungenZu(r.re),n=naechsteStufe(r);return(M.length?" · "+M.map(m=>`<button type="button" class="linkbtn" data-go="mahn:${esc(m.id)}">${esc(m.name)} ${fmt(m.datum)}</button>`).join(", "):"")+(n&&!n.ende&&(n.faellig||(n.stufe===1&&reState(r)[0]==="cr"))?` · <button type="button" class="linkbtn" data-go="mahn:neu|${r.re}">${esc(n.name)} erstellen</button>`:"")})()}</p></div>`;
  fitRe();spLink("rechnung",r.re,"#resp");
 }
 /* ---------- Team ---------- */
@@ -1115,6 +1122,72 @@ function lagerSpeichern(id,voll){lagerFormLesen();const f=NF.get("fahrzeuge",id)
  const soll=gueltig.map(p=>({nr:p.nr,menge:p.menge,min:p.min!=null?p.min:0}));
  const bestand={};for(const p of gueltig)bestand[p.nr]=voll?p.menge:(p.bestand!=null?p.bestand:p.menge);
  NF.setze("fahrzeuge",id,{lager:Object.assign({},alt,{soll,bestand})});S.lagerForm=null;S.drawer=null;save();render();toast(voll?"Lager als aufgefüllt vermerkt":"Lager gespeichert")}
+/* ---------- Mahnwesen: Zahlungserinnerung, 1. und 2. Mahnung ---------- */
+const ZIEL=14;
+const MW=()=>Object.assign({frist:10,stufen:[]},S.cfg.preise.mahnung||{});
+const faelligAm=r=>addD(r.datum,ZIEL);
+const mahnungenZu=re=>NF.liste("mahnungen").filter(m=>m.re===re).sort((a,b)=>a.stufe-b.stufe);
+/** Nächste Mahnstufe einer offenen Rechnung: ab wann fällig (Tage nach Fälligkeit bzw. nach der letzten Mahnung) */
+function naechsteStufe(r){if(r.status!=="offen")return null;const M=mahnungenZu(r.re),st=MW().stufen||[],n=M.length;
+ if(n>=st.length)return{ende:true,stufe:n};
+ const basis=n?M[n-1].datum:faelligAm(r),ab=addD(basis,Number(st[n].tage)||0);
+ return{stufe:n+1,name:st[n].name,gebuehr:Number(st[n].gebuehr)||0,ab,faellig:ab<=TODAY}}
+function mahnAlerts(){if(!RECHTE.rechnungen)return[];return S.rech.filter(r=>r.status==="offen").map(r=>({r,n:naechsteStufe(r)})).filter(x=>x.n&&x.n.faellig)
+ .map(({r,n})=>({c:"cr",t:`${n.name} fällig: ${r.re}`,s:`${anl(r.nv).kunde} · ${eur(reLines(r).brutto)} · fällig seit ${fmt(faelligAm(r))}`,go:`mahn:neu|${r.re}`}))}
+function mahnEntwurf(re){const r=S.rech.find(x=>x.re===re),n=naechsteStufe(r);if(!n||n.ende)return null;const M=mahnungenZu(re),a=anl(r.nv),brutto=reLines(r).brutto;
+ const gesamt=M.reduce((s,m)=>s+(Number(m.gebuehr)||0),0)+n.gebuehr;
+ return{id:`${re}-M${n.stufe}`,re,stufe:n.stufe,name:n.name,datum:TODAY,frist:addD(TODAY,Number(MW().frist)||10),gebuehr:n.gebuehr,gebuehrenGesamt:gesamt,betrag:brutto,offen:Math.round((brutto+gesamt)*100)/100,nv:r.nv,knr:a.knr||"",vorher:M.map(m=>({name:m.name,datum:m.datum}))}}
+function mahnDoc(m){const r=S.rech.find(x=>x.re===m.re)||{datum:m.datum,leist:m.datum},a=anl(m.nv),[n1,n2]=a.kunde.split(", ");
+ const an=n2&&!/ und /.test(n2)?`Guten Tag ${esc(n2)} ${esc(n1)},`:n2?`Sehr geehrte Familie ${esc(n1)},`:"Sehr geehrte Damen und Herren,";
+ const vorher=(m.vorher||[]).map(v=>`${esc(v.name)} vom ${fmt(v.datum)}`).join(" und ");
+ const text=m.stufe===1?`sicher ist es Ihrer Aufmerksamkeit entgangen: Für unsere Rechnung ${m.re} vom ${fmt(r.datum)}, fällig am ${fmt(faelligAm(r))}, konnten wir bisher keinen Zahlungseingang feststellen. Wir bitten Sie, den offenen Betrag bis zum <b>${fmt(m.frist)}</b> zu überweisen.`
+  :m.stufe===2?`leider konnten wir trotz unserer ${vorher||"Zahlungserinnerung"} für die Rechnung ${m.re} vom ${fmt(r.datum)} noch keinen Zahlungseingang feststellen. Bitte überweisen Sie den unten genannten Gesamtbetrag bis spätestens <b>${fmt(m.frist)}</b>.`
+  :`trotz ${vorher||"unserer bisherigen Schreiben"} ist die Rechnung ${m.re} vom ${fmt(r.datum)} weiterhin offen. Wir bitten Sie letztmalig, den Gesamtbetrag bis zum <b>${fmt(m.frist)}</b> zu begleichen. Geht die Zahlung bis dahin nicht ein, müssen wir weitere Schritte prüfen.`;
+ return`<div class="pg pt"><img class="rhimg" src="${IMG_HEAD}" alt="NOVIS Anlagentechnik · Service redefined.">
+ <div class="rabs">NOVIS Anlagentechnik GmbH i. G. · Bornweg 34a · 63599 Biebergemünd</div>
+ <div class="radr"><div>${esc(n2?n2+" "+n1:n1)}${a.obj&&a.obj!==a.str?"<br>"+esc(a.obj):""}<br>${esc(a.str)}<br>${a.plz} ${esc(a.ort)}</div>
+  <dl class="rkv"><dt>Datum</dt><dd>${fmt(m.datum)}</dd><dt>Rechnungsnummer</dt><dd><b>${m.re}</b></dd><dt>Rechnungsdatum</dt><dd>${fmt(r.datum)}</dd><dt>Fällig seit</dt><dd>${fmt(faelligAm(r))}</dd><dt>Kundennummer</dt><dd>${esc(a.knr||"")}</dd></dl></div>
+ <h2 class="rt">${esc(m.name)}</h2>
+ <p class="rp">${an}<br>${text}</p>
+ <div class="rsum" style="width:340px"><div><span>Rechnungsbetrag ${m.re}</span><b>${eur(m.betrag)}</b></div>${m.gebuehrenGesamt?`<div><span>Mahngebühren</span><b>${eur(m.gebuehrenGesamt)}</b></div>`:""}<div class="tot"><span>Offener Betrag</span><b>${eur(m.offen)}</b></div></div>
+ <p class="rp">Sollten Sie die Zahlung bereits veranlasst haben, betrachten Sie dieses Schreiben bitte als gegenstandslos. Bei Fragen zur Rechnung sind wir gern für Sie da.<br><br>Mit freundlichen Grüßen<br>Ihr Service-Team der NOVIS Anlagentechnik</p>
+ ${m.gebuehrenGesamt?'<p class="rp" style="font-size:11px;color:#5d636c">Mahngebühren sind nicht umsatzsteuerpflichtig.</p>':""}
+ ${SWOOSH}<div class="rf"><div><b>NOVIS Anlagentechnik GmbH i. G.</b><br>Bornweg 34a<br>63599 Biebergemünd</div><div><b>Kontakt</b><br>${esc(S.cfg.firma.mail)}${S.cfg.firma.tel?"<br>Tel. "+esc(S.cfg.firma.tel):""}<br>www.novis-anlagentechnik.de</div><div><b>Geschäftsführung</b><br>Jens Röll, Florian Pötzsch<br>Amtsgericht Hanau, ${esc(S.cfg.firma.hrb?"HRB "+S.cfg.firma.hrb:"HRB folgt")}</div><div><b>Bank / Steuer</b><br>${esc(S.cfg.firma.iban||"IBAN folgt")}<br>${esc(S.cfg.firma.ust?"USt-IdNr. "+S.cfg.firma.ust:"USt-IdNr. folgt")}</div></div></div>`}
+function dMahn(id){const neu=id.startsWith("neu|"),m=neu?mahnEntwurf(id.slice(4)):NF.get("mahnungen",id);
+ if(!m)return{title:"Mahnung",sub:"",body:'<p class="hint">Für diese Rechnung ist keine weitere Mahnstufe vorgesehen (Einstellungen › Preise › Mahnwesen).</p>',foot:""};
+ const a=anl(m.nv),r=S.rech.find(x=>x.re===m.re)||{},alle=mahnungenZu(m.re);
+ return{title:`${m.name} · ${m.re}`,sub:`${a.kunde} · offen ${eur(m.offen)}`,body:`
+  ${neu?`<div class="alert">Entwurf: Datum ${fmt(m.datum)}, neue Zahlungsfrist ${fmt(m.frist)}${m.gebuehr?", Mahngebühr "+eur(m.gebuehr):""}. Erst mit „Mahnung erstellen“ wird sie gespeichert und in SharePoint abgelegt.</div>`:`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">${m.versendet?`<span class="chip ok">gesendet ${fmt(iso(m.versendet))} an ${esc(m.versendetAn||"")}</span>`:'<span class="chip wa">noch nicht gesendet</span>'}<span class="hint" id="mahnsp"></span></div>`}
+  ${zahlungsBox(a.knr)}
+  <div class="mahnvor"><div class="a4mini">${mahnDoc(m)}</div></div>
+  ${alle.length?`<div><b style="font-size:14px">Verlauf ${m.re}</b><div class="list">${alle.map(x=>`<button type="button" class="li" data-go="mahn:${esc(x.id)}"><span class="dot ${x.versendet?"ok":"wa"}"></span><span><b>${esc(x.name)}</b><small>${fmt(x.datum)} · Frist ${fmt(x.frist)}${x.versendet?" · gesendet":""}</small></span><span class="hint">›</span></button>`).join("")}</div></div>`:""}
+  ${neu?"":`<div style="display:flex;gap:8px;align-items:flex-end"><label class="f" style="flex:1">Test an eigene Adresse<input id="mhTest" type="email" placeholder="z. B. deine private Adresse" value="${esc(UI.testMail||"")}"></label><button type="button" class="btn ghost sm" data-mtest="${esc(m.id)}">Test senden</button></div>`}`,
+  foot:neu?`<button type="button" class="btn" data-mneu="${esc(m.re)}">Mahnung erstellen</button>`:`<button type="button" class="btn" data-msend="${esc(m.id)}" ${a.mail?"":"disabled"}>${m.versendet?"Erneut senden":"Per E-Mail an "+esc(a.mail||"– keine Adresse –")}</button><a class="btn sec" href="/api/druck/mahnung/${encodeURIComponent(m.id)}" target="_blank" rel="noopener" style="text-decoration:none">PDF ansehen</a>${r.status==="offen"?`<button type="button" class="btn ghost" data-repaid="${esc(m.re)}">Bezahlt</button>`:""}`}}
+function mahnungErstellen(re){const m=mahnEntwurf(re);if(!m){toast("Keine weitere Mahnstufe vorgesehen");return}
+ NF.setze("mahnungen",m.id,m);const r=S.rech.find(x=>x.re===re);r.mahnstufe=m.stufe;r.letzteMahnung=m.datum;S.drawer="mahn:"+m.id;save();render();drawer();toast(m.name+" erstellt, wird in SharePoint abgelegt")}
+
+/* ---------- Zahlungsverhalten des Kunden ---------- */
+function zahlungsverhalten(knr){const nvs=new Set(S.anl.filter(a=>a.knr===knr).map(a=>a.nv)),R=S.rech.filter(r=>nvs.has(r.nv));
+ const bez=R.filter(r=>r.status==="bezahlt"&&r.bezahlt),verz=bez.map(r=>Math.round((D(r.bezahlt)-D(faelligAm(r)))/864e5));
+ const schnitt=verz.length?verz.reduce((a,b)=>a+b,0)/verz.length:null,M=NF.liste("mahnungen").filter(m=>R.some(r=>r.re===m.re)),mahn2=M.filter(m=>m.stufe>=2).length;
+ const ueber=R.filter(r=>r.status==="offen"&&faelligAm(r)<TODAY).map(r=>Math.round((D(TODAY)-D(faelligAm(r)))/864e5)),maxU=ueber.length?Math.max(...ueber):0;
+ let stufe="gut";if((schnitt!=null&&schnitt>20)||mahn2>=2||maxU>30)stufe="schlecht";else if((schnitt!=null&&schnitt>3)||M.length||maxU>7)stufe="mittel";
+ if(!bez.length&&!M.length&&!maxU)stufe="neu";
+ return{stufe,schnitt,mahnungen:M.length,mahn2,maxU,anzahl:R.length,bezahlt:bez.length,offen:R.filter(r=>r.status==="offen").length}}
+const ZV={gut:["ok","zahlt pünktlich"],mittel:["wa","zahlt oft verspätet"],schlecht:["cr","Zahlungsprobleme"],neu:["","noch keine Erfahrung"]};
+function zahlungsChip(knr){if(!knr||!RECHTE.rechnungen)return"";const z=zahlungsverhalten(knr),L=ZV[z.stufe];return`<span class="chip ${L[0]}" title="Zahlungsverhalten">${L[1]}</span>`}
+function zahlungsBox(knr){if(!knr||!RECHTE.rechnungen)return"";const z=zahlungsverhalten(knr),L=ZV[z.stufe];
+ return`<div class="box zvbox"><b>Zahlungsverhalten <span class="chip ${L[0]}">${L[1]}</span></b><dl class="kv">
+  <dt>Rechnungen</dt><dd>${z.anzahl} gesamt · ${z.bezahlt} bezahlt · ${z.offen} offen</dd>
+  <dt>Ø Zahlung</dt><dd>${z.schnitt==null?"–":z.schnitt<=0?"pünktlich (im Schnitt "+de(Math.abs(z.schnitt),0)+" Tage vor Fälligkeit)":de(z.schnitt,0)+" Tage nach Fälligkeit"}</dd>
+  <dt>Mahnungen</dt><dd>${z.mahnungen?z.mahnungen+(z.mahn2?" (davon "+z.mahn2+" Mahnung"+(z.mahn2>1?"en":"")+")":" Zahlungserinnerung"):"keine"}</dd>
+  ${z.maxU?`<dt>Überfällig</dt><dd>seit ${z.maxU} Tagen</dd>`:""}</dl></div>`}
+function setMahn(){const M=MW(),st=M.stufen||[];
+ return`<div class="panel"><h3>Mahnwesen <span class="hint">Zahlungsziel der Rechnungen: ${ZIEL} Tage</span></h3>
+  <div class="tbwrap"><table class="tb"><thead><tr><th>Stufe</th><th>Bezeichnung</th><th>fällig nach</th><th>Mahngebühr</th></tr></thead><tbody>
+  ${st.map((s,i)=>`<tr><td>${i+1}</td><td><input type="text" data-cfg="preise.mahnung.stufen.${i}.name" value="${esc(s.name)}"></td><td><span class="unit2"><input type="number" min="0" data-cfg="preise.mahnung.stufen.${i}.tage" value="${esc(s.tage)}"><em>Tagen ${i?"nach Stufe "+i:"nach Fälligkeit"}</em></span></td><td><span class="unit2"><input type="number" min="0" step="0.5" data-cfg="preise.mahnung.stufen.${i}.gebuehr" value="${esc(s.gebuehr)}"><em>€</em></span></td></tr>`).join("")}</tbody></table></div>
+  <div class="f3">${NUM("preise.mahnung.frist","Neue Zahlungsfrist in jeder Mahnung","Tage")}</div>
+  <p class="hint">Ist eine Stufe fällig, erscheint sie unter Übersicht › Braucht Aufmerksamkeit und bei der Rechnung. Zusätzlich geht jeden Morgen eine Mail an rechnung@ mit allen neu überfälligen Rechnungen und fälligen Mahnstufen.</p></div>`}
 function konflikt(a){const os=S.orders.filter(o=>o.tech===a.tech&&o.date>=a.von&&o.date<=a.bis&&o.status!=="erledigt");
  if(!os.length)return'<span class="hint" style="color:var(--ok)">Keine geplanten Einsätze in diesem Zeitraum.</span>';
  if(a.art==="Block"){const[v,b]=a.zeit.split("–").map(hm);const hit=os.filter(o=>{const s=hm(o.time),e=s+o.dauer*60;return s<b&&e>v});
@@ -1218,7 +1291,7 @@ function vSet(){
  if(!tabs.some(x=>x[0]===S.setTab))S.setTab="allg";const T=S.setTab;
  top("Einstellungen",T==="team"?`<button type="button" class="btn" data-empnew="1">+ Neuer Mitarbeiter</button>`:T==="am"?`<button type="button" class="btn" id="amAdd">+ Arbeitsmittel</button>`:"");
  const bar=`<div class="stabs" role="tablist">${tabs.map(([k,l])=>`<button type="button" role="tab" data-stab="${k}" aria-selected="${T===k}">${l}</button>`).join("")}</div>`;
- if(T!=="team"){$("#view").innerHTML=`<div class="pad">${bar}${({allg:setAllg,noti:setNoti,alert:setAlert,preise:setPreise,am:setAm})[T]()}</div>`;return}
+ if(T!=="team"){$("#view").innerHTML=`<div class="pad">${bar}${({allg:setAllg,noti:setNoti,alert:setAlert,preise:()=>setPreise()+(RECHTE.rechnungen?setMahn():""),am:setAm})[T]()}</div>`;return}
  const E=S.emp;
  $("#view").innerHTML=`<div class="pad">${bar}
   <div class="panel"><h3>Mitarbeiter <span class="hint">${TECHS.filter(t=>t.aktiv!==false).length} aktiv</span></h3><div class="tbwrap"><table class="tb"><thead><tr><th></th><th>Name</th><th>Rolle</th><th>Standort</th><th>Qualifikationen</th><th>Std./Woche</th><th>Seit</th><th>Status</th></tr></thead><tbody>
@@ -1473,7 +1546,10 @@ document.addEventListener("click",e=>{
  if(d.rev){S.rv=d.rev;save();reViewer();return}
  if(d.rvclose){S.rv=null;save();reViewer();return}
  if(d.repaid){const r=S.rech.find(x=>x.re===d.repaid);r.status="bezahlt";r.bezahlt=TODAY;save();render();toast(r.re+" als bezahlt markiert");return}
- if(d.remind){const r=S.rech.find(x=>x.re===d.remind);r.erinnert=TODAY;save();render();toast("Erinnerung vermerkt. Bitte an "+anl(r.nv).mail+" senden, der automatische Versand folgt.");return}
+ if(d.mneu){mahnungErstellen(d.mneu);return}
+ if(d.msend||d.mtest){const id=d.msend||d.mtest,an=d.mtest?($("#mhTest").value||"").trim():"";if(d.mtest&&!an){toast("Bitte eine E-Mail-Adresse eintragen");return}
+  if(an){UI.testMail=an;save()}t.disabled=true;toast("PDF wird erstellt und gesendet …");
+  (async()=>{try{if(NF.ausstehend("mahnungen",id))await NF.senden();const x=await NF.api("/api/mail/mahnung",{method:"POST",body:{id,an:an||undefined}});toast((an?"Test":"Mahnung")+" gesendet an "+x.an);if(!an){await NF.abholen();aufbauen();drawer();render()}}catch(e){toast(e.message)}finally{t.disabled=false}})();return}
  if(d.refilter){S.refilter=d.refilter;save();render();return}
  if(d.href){location.href=d.href;return}
  if(d.close){S.drawer=null;S.af=null;S.kf=null;S.lagerForm=null;save();drawer();return}

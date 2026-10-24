@@ -56,6 +56,8 @@ export async function nachSpeichernAblage(s: string, id: string, alt: Daten | nu
       if (k) await vormerken("kunde", k, 120);
     } else if (s === "belege") {
       if (!alt || alt.foto !== neu.foto || alt.betrag !== neu.betrag || alt.datum !== neu.datum || alt.kat !== neu.kat) await vormerken("beleg", id, 60);
+    } else if (s === "mahnungen") {
+      await vormerken("mahnung", id, 20);
     } else if (s === "kunden") {
       await vormerken("kunde", id);
     } else if (s === "anlagen") {
@@ -134,6 +136,14 @@ async function verarbeiten(art: AblageArt, ref: string): Promise<string | null> 
     const e = await hochladen(o.id, ["Rechnungen", `${ref} ${r.datum ?? ""}.pdf`], await pdfErzeugen("rechnung", ref), "application/pdf");
     return e.webUrl;
   }
+  if (art === "mahnung") {
+    const m = await lade("mahnungen", ref);
+    if (!m) return null;
+    const a = await lade("anlagen", String(m.nv ?? ""));
+    const o = a?.knr ? await kundenOrdner(String(a.knr)) : await ordner("wurzel:Intern", null, "Intern");
+    const e = await hochladen(o.id, ["Rechnungen", `${m.re} ${m.name ?? "Mahnung"} ${m.datum ?? ""}.pdf`], await pdfErzeugen("mahnung", ref), "application/pdf");
+    return e.webUrl;
+  }
   if (art === "unterlage") {
     const [nv, dateiId] = ref.split("|");
     const a = await lade("anlagen", nv);
@@ -198,7 +208,7 @@ export function ablageStarten(): void {
   setInterval(() => void abarbeiten(), 20_000);
 }
 
-const DRUCK_RECHT = { bericht: "berichte_pruefen", rechnung: "rechnungen", kunde: "planung" } as const;
+const DRUCK_RECHT = { bericht: "berichte_pruefen", rechnung: "rechnungen", kunde: "planung", mahnung: "rechnungen" } as const;
 
 export async function ablageRouten(app: FastifyInstance): Promise<void> {
   app.get("/api/ablage", { preHandler: brauche("admin") }, async () => {

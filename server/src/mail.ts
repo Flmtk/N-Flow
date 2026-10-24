@@ -198,4 +198,52 @@ www.novis-anlagentechnik.de`;
       return antwort.code(502).send({ fehler: (e as Error).message });
     }
   });
+  /** Mahnung als PDF (dazu die Rechnung ohne Fotoseite) an den Kunden */
+  app.post<{ Body: { id: string; an?: string } }>("/api/mail/mahnung", { preHandler: brauche("rechnungen") }, async (anfrage, antwort) => {
+    try {
+      const id = String(anfrage.body?.id ?? "");
+      const [z] = await sql<{ d: Daten }[]>`select daten as d from daten where sammlung = 'mahnungen' and id = ${id} and not geloescht`;
+      if (!z) return antwort.code(404).send({ fehler: "Mahnung nicht gefunden." });
+      const m = z.d;
+      const [a] = await sql<{ d: Daten }[]>`select daten as d from daten where sammlung = 'anlagen' and id = ${String(m.nv ?? "")}`;
+      const [k] = await sql<{ d: Daten }[]>`select daten as d from daten where sammlung = 'kunden' and id = ${String(a?.d.knr ?? "")}`;
+      const kd = k?.d ?? {};
+      const test = Boolean(anfrage.body?.an);
+      const an = (anfrage.body?.an || String(kd.mail ?? "")).trim();
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(an)) return antwort.code(400).send({ fehler: "Beim Kunden ist keine gültige E-Mail-Adresse hinterlegt." });
+      const pdf = await pdfErzeugen("mahnung", id);
+      const re = String(m.re);
+      const rechnung = await pdfErzeugen("rechnung", re, { ohneFotos: true });
+      const fmt = (d: unknown) => new Date(String(d) + "T12:00").toLocaleDateString("de-DE");
+      const betrag = Number(m.offen ?? 0).toLocaleString("de-DE", { style: "currency", currency: "EUR" });
+      const [allg] = await sql<{ d: Daten }[]>`select daten as d from daten where sammlung = 'einstellungen' and id = 'allgemein'`;
+      const tel = ((allg?.d?.firma ?? {}) as Record<string, string>).tel || "";
+      const text = `${anredeFuer(kd)}
+
+anbei erhalten Sie unsere ${m.name} zur Rechnung ${re}. Der offene Betrag von ${betrag} ist bis zum ${fmt(m.frist)} fällig. Die Rechnung liegt zur Übersicht noch einmal bei.
+
+Sollten Sie die Zahlung bereits veranlasst haben, betrachten Sie dieses Schreiben bitte als gegenstandslos. Bei Fragen sind wir gern für Sie da.
+
+Mit freundlichen Grüßen
+Ihr Service-Team der NOVIS Anlagentechnik
+
+—
+NOVIS Anlagentechnik GmbH i. G.
+Bornweg 34a · 63599 Biebergemünd
+Telefon: ${tel || "Service-Hotline (Nummer folgt)"}
+E-Mail: ${ABSENDER()}
+www.novis-anlagentechnik.de`;
+      await mailSenden(an, `${test ? "[Test] " : ""}${m.name} zur Rechnung ${re} – NOVIS Anlagentechnik`, text,
+        [{ name: `${re} ${m.name}.pdf`, typ: "application/pdf", inhalt: pdf }, { name: `${re}.pdf`, typ: "application/pdf", inhalt: rechnung }]);
+      if (!test) {
+        await sql`update daten set daten = daten || ${sql.json({ versendet: new Date().toISOString(), versendetAn: an })},
+          version = version + 1, geaendert_am = clock_timestamp(), geaendert_von = ${anfrage.benutzer!.name}
+          where sammlung = 'mahnungen' and id = ${id}`;
+      }
+      await protokolliere(anfrage.benutzer!.name, test ? "Testmail Mahnung" : "Mahnung versendet", `${id} an ${an}`);
+      return { ok: true, an };
+    } catch (e) {
+      return antwort.code(502).send({ fehler: (e as Error).message });
+    }
+  });
 }

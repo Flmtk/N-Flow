@@ -36,34 +36,13 @@ Stand: 24.10.2026 (ergänzt 16:15). Wird beim nächsten Update abgearbeitet und 
 ### Büro: Zahlungsverhalten des Kunden
 - [ ] Einstufung in der Kundenakte (z. B. grün/gelb/rot) aus durchschnittlicher Zahlungsdauer, Anzahl der Mahnungen und offenen Beträgen. Hinweis auch bei der Planung neuer Aufträge.
 
-### Noch zu klären
-- Info-Seite: eigene Website „NOVIS Info“ in SharePoint oder eine Seite auf „NOVIS Ablage“? (Bei eigener Website muss N-Flow auch dafür freigeschaltet werden.)
-- Hinweise: Gibt es neben dauerhaften Hinweisen zur Anlage („Hund im Garten“) auch Hinweise nur für einen einzelnen Termin?
-- Nachbestellung: An wen geht die Mail (Büro oder direkt an den Großhändler)? Wer legt die Mindestmengen fest?
-- Mahnungen: Fristen und Mahngebühren je Stufe.
-
-### Unterlagen zur Anlage
-- [ ] Ordner `Unterlagen/` in der Kundenakte je Anlage (`Kunden/K-…/NV-…/Unterlagen/`) für Schaltplan, Hydraulikschema, Abnahmeprotokoll, Foto Typenschild.
-- [ ] Hochladen im Büro (Datei in die Anlage ziehen) und in der App (fotografieren oder Datei wählen).
-- [ ] Anzeige unter „Dokumente zur Anlage“ in Anlagenakte (App und Büro), öffnen mit einem Tippen. Ersetzt die Platzhalter aus dem Prototyp.
-
-### Herstellerunterlagen
-- [ ] Zentral in SharePoint `Intranet/Herstellerunterlagen/<Hersteller>/` (Manuals, Serviceanleitungen, Ersatzteillisten, Störcodes).
-- [ ] Automatische Zuordnung in der Anlagenakte über Hersteller und Typ im Dateinamen (z. B. Buderus + „KB372“).
-
-### Dokumente im Bereich „Info“
-- [ ] Ordner `Intranet/` auf der Website NOVIS Ablage (Herstellerunterlagen, Formulare, Arbeitsanweisungen, Prüfprotokolle Messgeräte, Gefährdungsbeurteilungen). In der App mit Suche, ersetzt die Beispielinhalte.
-
-### Offline im Heizungskeller
-- [ ] Unterlagen der Anlagen aus der heutigen Tour morgens vorladen.
-- [ ] Einzelne Dateien als „offline verfügbar“ markieren.
-
-### Belege
-- [ ] Monatsliste für den Steuerberater (PDF oder Excel) mit allen Belegen und Summe je Art, automatisch im Monatsordner `Belege/JJJJ/JJJJ-MM/`.
-
-### Kleinigkeiten
-- [ ] Fotoseite im Servicebericht: bei vielen Fotos auf mehrere Seiten verteilen.
-- [ ] Rechnungsfenster: Eingabefeld „Test an eigene Adresse“ im N-Flow-Stil.
+### Entschieden (24.10.2026)
+- **SharePoint getrennt nach Umgebung:** Die Testumgebung nutzt die bisherige Website (Anzeigename wird „NOVIS Test“). Für den Echtbetrieb wird eine eigene Website „NOVIS“ angelegt und in der `.env` der Live-Umgebung eingetragen. Info-Seite jeweils auf der Website der Umgebung.
+- **Hinweise:** Alle Hinweise bleiben in der Anlagenakte stehen, auch solche, die nur einen Termin betrafen. Sie lassen sich als erledigt markieren, werden aber nie gelöscht.
+- **Nachbestellung:** Mail an `einkauf@novis-anlagentechnik.de`.
+- **Mahnungen:** Fristen (Tage bis Erinnerung, 1. und 2. Mahnung) und Gebühren stellt die Geschäftsführung unter Einstellungen selbst ein.
+- **Überfällige Rechnungen:** Sobald eine Rechnung fällig und unbezahlt ist (und bei jeder neuen Mahnstufe), geht eine Mail an `rechnung@novis-anlagentechnik.de`.
+- Voraussetzung: `einkauf@` und `rechnung@` als freigegebene Postfächer oder Aliasse in Microsoft 365 anlegen (kostenlos).
 
 ## Offen bei Microsoft 365 (macht Florian, keine Programmierung)
 - [ ] Mailsperre 5.7.708: Abo prüfen (Testversion → bezahlt) bzw. Supportfall öffnen; DKIM für novis-anlagentechnik.de aktivieren (CNAMEs bei IONOS zusätzlich eintragen); SPF mit `include:spf.protection.outlook.com` prüfen.

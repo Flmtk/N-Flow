@@ -581,6 +581,7 @@ function vHeute(){
     ${s==="run"?'<span class="chip or">In Arbeit</span>':""}</div></div>
   </button>
   <a class="maplink" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(adr)}" target="_blank" rel="noopener" aria-label="Route zu ${esc(adr)} in Google Maps öffnen"><span class="mapimg" aria-hidden="true"></span><span>Route</span></a>
+  ${hinweiseOffen(a.nv).length?`<button type="button" class="ihint-app" data-hinweis="${esc(a.nv)}" aria-label="Interner Hinweis vom Büro">i</button>`:""}
   </div>`}).join("")}
   ${offen?"":`<p class="empty">Alle Einsätze für heute erledigt. Feierabend in Sicht.</p>`}
   ${poolCard()}
@@ -629,6 +630,7 @@ function vAnlage(){
  const r=job&&S.reports[job.id];const fertig=job&&isDone(job.id);
  main.innerHTML=`<div class="hero"><span class="nv">${a.nv} · ${esc(a.vertrag)}</span><h2>${esc(a.hersteller)} ${esc(a.typ)}</h2><p>${esc(a.kunde.name1)}${a.kunde.name2?" · "+esc(a.kunde.name2):""}<br>${esc(a.kunde.str)}, ${esc(a.kunde.plz)} ${esc(a.kunde.ort)}</p></div>
  <div class="pad">
+  ${hinweiseOffen(a.nv).map(h=>`<button type="button" class="hwalert" data-hinweis="${esc(a.nv)}"><span class="ihint-app" aria-hidden="true">i</span><span><b>Hinweis vom Büro</b><br>${esc(h.text)}</span></button>`).join("")}
   ${a.maengel.map(m=>`<div class="alert wa"><b>Offener Mangel:</b> ${esc(m)}</div>`).join("")}
   ${(S.folgen||[]).filter(f=>f.q===S.q).map(f=>`<div class="alert wa"><b>Folgeauftrag ${f.id}</b> · ${esc(f.dring)}<br>${esc(f.text)}</div>`).join("")}
   <div class="panel"><h4>Vor Ort</h4><dl class="kv"><dt>Ansprechpartner</dt><dd>${esc(a.ansprech)}</dd><dt>Zugang</dt><dd>${esc(a.zugang)}</dd><dt>Telefon</dt><dd class="mono">${esc(a.kunde.tel)}</dd></dl></div>
@@ -1037,6 +1039,18 @@ function ichAuto(){
     <button class="btn sec" type="button" id="cAdd">Speichern</button></div></details>
   <p class="hint">Die Kontakte pflegt die Geschäftsführung zentral. Alle Monteure mit diesem Fahrzeug sehen sie.</p></div>`;
 }
+/* ---------- Interne Hinweise vom Büro (stehen in der Anlagenakte) ---------- */
+const hinweiseAlle=nv=>((NF.get("anlagen",nv)||{}).hinweise||[]);
+const hinweiseOffen=nv=>hinweiseAlle(nv).filter(h=>!h.erledigt);
+function zeigeHinweise(nv){let L=$("#hwv");if(!L){L=document.createElement("div");L.id="hwv";document.body.appendChild(L)}
+ if(!nv){L.innerHTML="";return}const a=Object.values(ANLAGEN).find(x=>x.nv===nv)||{kunde:{name1:""}},H=hinweiseAlle(nv),offen=H.filter(h=>!h.erledigt).reverse(),alt=H.filter(h=>h.erledigt).reverse();
+ const tel=(t)=>{const m=String(t).match(/(\+?\d[\d\s\/-]{6,}\d)/);return m?`<a class="btn" href="tel:${m[1].replace(/[^\d+]/g,"")}" style="text-decoration:none">${esc(m[1])} anrufen</a>`:""};
+ L.innerHTML=`<button type="button" class="hwschirm" data-hwzu="1" aria-label="Schließen" tabindex="-1"></button><section class="hwsheet" role="dialog" aria-label="Interner Hinweis"><span class="griff"></span>
+  <div class="hwkopf"><span class="ihint-app gross" aria-hidden="true">i</span><div><h2>Hinweis vom Büro</h2><p>${esc(a.kunde.name1)} · ${esc(nv)}</p></div><button type="button" class="ico" data-hwzu="1" aria-label="Schließen">✕</button></div>
+  ${offen.length?offen.map(h=>`<article class="panel"><p style="margin:0;font-size:16px;line-height:1.55">${esc(h.text)}</p><span class="hint">${esc(h.von||"")} · ${fmt(new Date(h.datum))}</span>${tel(h.text)}</article>`).join(""):'<p class="hint">Kein offener Hinweis.</p>'}
+  ${alt.length?`<h3 class="hwalt">Frühere Hinweise in der Anlagenakte</h3>${alt.map(h=>`<div class="hwz"><time>${fmt(new Date(h.datum))}</time><span><s>${esc(h.text)}</s><br><small>${esc(h.von||"")} · erledigt</small></span></div>`).join("")}`:""}
+ </section>`}
+
 /* ---------- Info (SharePoint: Neuigkeiten und Dokumente) ---------- */
 let INFO=Object.assign({news:null,ordner:{},beitrag:{},treffer:null,fehler:null},(()=>{try{return NF.lokal.lies("info",{})}catch(e){return{}}})());
 function infoSichern(){try{NF.lokal.schreib("info",{news:INFO.news,ordner:INFO.ordner,beitrag:INFO.beitrag})}catch(e){}}
@@ -1412,6 +1426,8 @@ document.addEventListener("click",e=>{
  if(d.dokzu){if(DOKV)URL.revokeObjectURL(DOKV.url);DOKV=null;zeigeDok();return}
  if(d.dokteilen){dokTeilen();return}
  if(d.zt){S.zeitTab=d.zt;save();render();return}
+ if(d.hinweis){zeigeHinweise(d.hinweis);return}
+ if(d.hwzu){zeigeHinweise(null);return}
  if(d.schema&&t.closest(".schemawahl")){NFDESIGN.setzeSchema(d.schema);render();return}
  if(d.themeset){NFDESIGN.setzeTheme(d.themeset);render();return}
  if(t.id==="appNeu"){toast("Suche nach Update …");(navigator.serviceWorker?navigator.serviceWorker.getRegistration():Promise.resolve(null)).then(r=>r&&r.update()).catch(()=>{}).finally(()=>setTimeout(()=>location.reload(),900));return}

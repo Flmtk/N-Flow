@@ -126,6 +126,15 @@ label.f{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--mu
 .card .lt{font-size:12px;color:var(--fg);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .card b{font-size:13px;font-weight:700}
 .card .r1{display:flex;gap:6px;align-items:center;justify-content:space-between}
+.card .r1r{display:flex;gap:4px;align-items:center}
+.ihint{width:20px;height:20px;border-radius:50%;display:inline-grid;place-items:center;font:italic 600 13px/1 var(--f-serif,Georgia),serif;color:var(--muted);background:var(--surface2);border:1px solid var(--line);flex:0 0 auto;cursor:pointer}
+.ihint.an{background:var(--accent-soft);color:var(--accent);border-color:transparent}
+.card .ihint:not(.an){opacity:0;width:0;margin-left:-4px;border-width:0;overflow:hidden;transition:opacity .15s}.card:hover .ihint:not(.an),.card:focus-visible .ihint:not(.an){opacity:1;width:20px;margin-left:0;border-width:1px}
+.hwbox .hw{display:flex;flex-direction:column;gap:4px;padding:10px 0;border-top:1px solid var(--line)}
+.hwbox .hw p{margin:0;line-height:1.5}
+.hwbox .hw.erl p{color:var(--muted);text-decoration:line-through}
+.hwbox .hw .btn{align-self:flex-start}
+.hwbox>b{display:flex;align-items:center;gap:8px}
 .card .meta{color:var(--muted);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .card.sel{outline:2px solid var(--accent)}
 .card.done{opacity:.55;cursor:default}
@@ -646,7 +655,7 @@ function match(o){if(!S.q)return true;const a=anl(o.nv),q=S.q.toLowerCase();retu
 function kwOf(s){const d=D(s);const t=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));const n=t.getUTCDay()||7;t.setUTCDate(t.getUTCDate()+4-n);const y=new Date(Date.UTC(t.getUTCFullYear(),0,1));return Math.ceil(((t-y)/864e5+1)/7)}
 function cardHtml(o,inPool){const a=anl(o.nv),done=o.status==="erledigt";
  return`<button type="button" class="card ${o.art} ${inPool?"pool-card":""} ${S.sel===o.id?"sel":""} ${done?"done":""}" ${done?"":'draggable="true"'} data-order="${o.id}">
-  <span class="r1"><b>${inPool?o.art:o.time}</b>${o.prio==="hoch"?'<span class="chip cr">dringend</span>':done?'<span class="chip ok">erledigt</span>':`<span class="hint">${de(o.dauer)} h</span>`}</span>
+  <span class="r1"><b>${inPool?o.art:o.time}</b><span class="r1r">${o.prio==="hoch"?'<span class="chip cr">dringend</span>':done?'<span class="chip ok">erledigt</span>':`<span class="hint">${de(o.dauer)} h</span>`}${o.nv!=="INTERN"?`<span class="ihint ${offeneHinweise(o.nv).length?"an":""}" data-ihint="${o.id}" title="${offeneHinweise(o.nv).length?"Interner Hinweis vorhanden":"Internen Hinweis schreiben"}">i</span>`:""}</span></span>
   <span>${esc(a.kunde)}</span>${o.leistung?`<span class="lt">${esc(o.leistung)}</span>`:""}<span class="meta">${o.nv==="INTERN"?"intern":o.nv} · ${esc(a.ort)}${inPool?" · "+de(o.dauer)+" h":" · "+o.art}</span>${inPool?poolHint(o,a):""}</button>`}
 function poolHint(o,a){if(o.art==="Störung"||o.prio==="hoch"){const r=recommend(o)[0];return r&&r.d?`<span class="rec">★ Empfehlung: ${r.t.kurz} · ${r.d===TODAY?"heute":fmtS(r.d)} ${r.time} · ${r.dist} km</span>`:""}
  const b=a.betreuer&&tech(a.betreuer);return b?`<span class="rec soft">Betreuer: ${b.name}</span>`:""}
@@ -728,6 +737,16 @@ function recPanel(o,a){const rs=recommend(o),dr=o.art==="Störung"||o.prio==="ho
    :`<div class="reco off"><span class="av" style="background:var(--surface2);color:var(--muted)">${r.t.kurz}</span><span><b>${esc(r.t.name)}</b><small>${esc(r.aus)}</small></span></div>`).join("")}
   <span class="hint">Berücksichtigt: Qualifikation (${needs(a).join(", ")}), freie Zeit, Urlaub und Block, Entfernung vom Einsatz davor, Betreuer der Anlage${dr?" und die früheste Ankunft":""}.</span></div>`}
 /* ---------- Auftragsdetail ---------- */
+/* ---------- Interne Hinweise (nur für das Team, bleiben in der Anlagenakte) ---------- */
+const hinweiseVon=nv=>((NF.get("anlagen",nv)||{}).hinweise||[]);
+const offeneHinweise=nv=>hinweiseVon(nv).filter(h=>!h.erledigt);
+function hinweisPanel(nv,auftrag){if(!nv||nv==="INTERN")return"";const H=hinweiseVon(nv),offen=H.filter(h=>!h.erledigt).reverse(),alt=H.filter(h=>h.erledigt).reverse();
+ const zeile=h=>`<div class="hw ${h.erledigt?"erl":""}"><p>${esc(h.text)}</p><span class="hint">${esc(h.von||"")} · ${fmt(iso(h.datum))}${h.auftrag?" · zum Auftrag "+esc(h.auftrag):""}${h.erledigt?" · erledigt "+fmt(iso(h.erledigt.datum))+" ("+esc(h.erledigt.von)+")":""}</span>${!h.erledigt&&RECHTE.planung?`<button type="button" class="btn ghost sm" data-hdone="${esc(nv)}|${esc(h.id)}">Erledigt</button>`:""}</div>`;
+ return`<div class="box hwbox"><b><span class="ihint an" aria-hidden="true">i</span> Interne Hinweise</b>
+  ${offen.length?offen.map(zeile).join(""):'<p class="hint" style="margin:0">Kein offener Hinweis. Der Monteur sieht Hinweise in der App mit einem „i“ am Auftrag.</p>'}
+  ${RECHTE.planung?`<label class="f">Neuer Hinweis<textarea id="hwNeu" rows="2" placeholder="z. B. Schlüssel beim Hausmeister, Hund im Garten, Leiter mitbringen"></textarea></label><button type="button" class="btn sec sm" style="align-self:flex-start" data-hadd="${esc(nv)}|${esc(auftrag||"")}">Hinweis speichern</button>`:""}
+  ${alt.length?`<details><summary class="hint" style="cursor:pointer">Frühere Hinweise (${alt.length})</summary>${alt.map(zeile).join("")}</details>`:""}
+  <p class="hint" style="margin:0">Hinweise bleiben in der Anlagenakte und erscheinen bei jedem neuen Termin dieser Anlage, bis sie als erledigt markiert sind.</p></div>`}
 function dOrder(id){
  const o=order(id),a=anl(o.nv),t=o.tech&&tech(o.tech);
  const art={Wartung:"die Wartung Ihrer Heizungsanlage",Störung:"die Behebung der Störung an Ihrer Heizungsanlage",Reparatur:"die Reparatur an Ihrer Heizungsanlage",Folgeauftrag:"die vereinbarten Arbeiten an Ihrer Heizungsanlage",Inbetriebnahme:"die Inbetriebnahme Ihrer neuen Heizungsanlage"}[o.art]||"den Einsatz an Ihrer Heizungsanlage";
@@ -737,6 +756,7 @@ function dOrder(id){
  const mail=`Betreff: Terminbestätigung – ${o.art} am ${o.date?fmt(o.date):"(Termin folgt)"}\n\n${anrede}\n\nvielen Dank für Ihr Vertrauen. Gerne bestätigen wir Ihnen den Termin für ${art}:\n\nDatum: ${o.date?D(o.date).toLocaleDateString("de-DE",{weekday:"long",day:"numeric",month:"long",year:"numeric"}):"folgt"}\nAnkunft unseres Technikers: ${o.time?`zwischen ${o.time} und ${bis} Uhr`:"folgt"}\nTechniker: ${t?t.name:"wird noch festgelegt"}\nAnlage: ${a.ger}\nAdresse: ${a.str}, ${a.plz} ${a.ort}\n\nWir bitten Sie, den Zugang zum Heizraum zu ermöglichen. Sollte der Termin für Sie nicht passen, geben Sie uns bitte kurz Bescheid. Wir finden gemeinsam gern einen neuen Termin.\n\nÜber die angehängte Kalendereinladung können Sie den Termin direkt in Ihren Kalender übernehmen.\n\nMit freundlichen Grüßen\nIhr Service-Team der NOVIS Anlagentechnik\n\n—\nNOVIS Anlagentechnik GmbH i. G.\nBornweg 34a · 63599 Biebergemünd\nTelefon: ${S.cfg.firma.tel||"Service-Hotline (Nummer folgt)"}\nE-Mail: service@novis-anlagentechnik.de\nwww.novis-anlagentechnik.de`;
  return{title:`${o.id} · ${o.art}`,sub:`${a.kunde} · ${a.nv}`,body:`
   ${o.prio==="hoch"?`<div class="alert cr">Dringend${o.melder?" · Melder: "+esc(o.melder):""}</div>`:""}
+  ${hinweisPanel(o.nv,o.id)}
   ${o.status==="offen"?recPanel(o,a):""}
   <div class="box">${o.leistung&&o.art!=="Intern"?`<span class="hint">Leistung (Bericht und Rechnung)</span>`:""}<b>${esc(o.grund)}</b><span class="hint">${o.abr?`Abrechnung: ${o.abr==="Aufwand"?"nach Aufwand":o.abr==="Pauschal"?"Pauschale "+(o.pausch?de(+o.pausch,2)+" € netto":""):"nicht berechnen"} · `:""}Quelle: ${esc(o.quelle)}${o.angebot?" · Angebot an Kunden nötig":""}</span></div>
   <dl class="kv"><dt>Kunde</dt><dd>${esc(a.kunde)}${a.obj?" · "+esc(a.obj):""}</dd><dt>Anschrift</dt><dd>${esc(a.str)}, ${a.plz} ${esc(a.ort)}</dd><dt>Telefon</dt><dd>${esc(a.tel)}</dd><dt>Anlage</dt><dd>${a.nv} · ${esc(a.ger)} · ${a.kw} kW · ${a.en}</dd><dt>Vertrag</dt><dd>${a.vertrag||"Einzelauftrag"}</dd></dl>
@@ -825,6 +845,7 @@ function dAnl(nv){const a=anl(nv),k=NF.get("kunden",a.knr)||{},os=S.orders.filte
   <dl class="kv"><dt>Kunde</dt><dd>${esc(kundeName(k))} · ${esc(a.knr||"")}${k.str&&k.str!==a.str?`<br><span class="hint">${esc(k.str)}, ${esc(k.plz)} ${esc(k.ort)}</span>`:""}</dd><dt>Telefon</dt><dd>${esc(k.tel||"–")}</dd><dt>E-Mail</dt><dd>${esc(k.mail||"–")}</dd>${a.obj?`<dt>Objekt</dt><dd>${esc(a.obj)}</dd>`:""}<dt>Vor Ort</dt><dd>${esc(a.ansprech||"–")}${a.zugang?"<br><span class='hint'>"+esc(a.zugang)+"</span>":""}</dd>
   <dt>Gerät</dt><dd>${esc(a.ger)}${a.sernr?" · SN "+esc(a.sernr):""}</dd><dt>Leistung</dt><dd>${a.kw} kW · ${esc(a.en)}${a.gas?" · "+esc(a.gas):""}${a.baujahr?" · Baujahr "+a.baujahr:""}</dd><dt>Vertrag</dt><dd>${esc(a.vertrag)||"Einzelauftrag"} · ${a.zyk} Monate${a.betreuer?" · Pool "+esc(tech(a.betreuer).name):""}</dd><dt>Letzte Wartung</dt><dd>${fmt(lastDone(a))}</dd><dt>Nächste Wartung</dt><dd>${fmt(due(a))}</dd>${a.bem?`<dt>Bemerkung</dt><dd>${esc(a.bem)}</dd>`:""}</dl>
   ${(a.maengel||[]).map(m=>`<div class="alert">Offener Mangel: ${esc(m)}</div>`).join("")}
+  ${hinweisPanel(nv,"")}
   ${det}
   <div class="box"><b>QR-Aufkleber</b>${a.qr?`<div style="display:flex;gap:14px;align-items:center"><img src="/api/qr/${esc(a.qr)}" alt="QR-Code" style="width:96px;height:96px;background:#fff;padding:6px;border-radius:8px"><span class="hint">Kennung ${esc(a.qr)}<br>Kunden-PIN für die Historie: <b>${esc(a.pin||"–")}</b></span></div><button type="button" class="btn sec sm" style="align-self:flex-start" data-go="aufk:${esc(a.nv)}">Aufkleber drucken</button>`:`<span class="hint">Noch kein Aufkleber zugeordnet. Beim Bearbeiten eine Kennung erzeugen, oder der Monteur scannt einen leeren Aufkleber bei der Inbetriebnahme.</span>`}</div>
   ${a.schema?`<div class="box"><b>Anlagenschema</b><a class="btn sec sm" style="align-self:flex-start;text-decoration:none" href="/api/dateien/${esc(a.schema)}" target="_blank" rel="noopener">Öffnen</a></div>`:""}
@@ -1412,10 +1433,10 @@ document.addEventListener("click",e=>{
  if(d.week){S.week=d.week==="0"?monday(TODAY):addD(S.week,7*+d.week);save();render();return}
  if(d.unsel){S.sel=null;save();render();return}
  if(d.order){const o=order(d.order);
-  S.drawer="order:"+o.id;save();drawer();return}
+  S.drawer="order:"+o.id;save();drawer();if(e.target.closest("[data-ihint]"))setTimeout(()=>{const x=$("#hwNeu");if(x){x.scrollIntoView({block:"center"});x.focus()}},60);return}
  if(d.osave){const o=order(d.osave),tid=$("#o_t").value,date=$("#o_date").value,time=$("#o_time").value,du=parseFloat($("#o_d").value)||o.dauer;o.dauer=du;
   if(!tid||!date){o.tech=null;o.date=null;o.time=null;o.status="offen"}else{if(absOn(tid,date,true).some(a=>a.art==="Urlaub")){toast(tech(tid).name+" hat an diesem Tag Urlaub");return}o.tech=null;o.date=null;const sl=time||nextSlot(tid,date,du);o.tech=tid;o.date=date;o.time=sl;if(o.status==="offen")o.status="geplant"}
-  S.drawer=null;save();render();toast(o.tech?`${o.id} gespeichert · Terminbestätigung bitte kopieren und senden, der automatische Versand folgt`:`${o.id} gespeichert`);return}
+  S.drawer=null;save();render();toast(o.tech?`${o.id} gespeichert · Terminbestätigung jetzt im Auftrag senden`:`${o.id} gespeichert`);return}
  if(d.selmode){S.sel=d.selmode;S.drawer=null;save();render();return}
  if(d.atab){S.admTab=d.atab;S.emp=null;S.dbSel=S.dbSel||null;save();render();return}
  if(d.right){const[r,i]=d.right.split("|");if(r==="Geschäftsführung")return;const m=JSON.parse(JSON.stringify(S.matrix));m[r][PKEYS[+i]]=!m[r][PKEYS[+i]];NF.api("/api/rechte",{method:"PUT",body:m}).then(x=>{S.matrix=x.matrix;rechteAusMatrix();render();toast("Rechte gespeichert")}).catch(e=>toast(e.message));return}
@@ -1438,6 +1459,9 @@ document.addEventListener("click",e=>{
 
  if(d.stab){S.setTab=d.stab;S.emp=null;save();render();return}
  if(d.schema&&t.closest(".schemawahl")){NFDESIGN.setzeSchema(d.schema);render();return}
+ if(d.hadd){const[nv,auf]=d.hadd.split("|"),tx=($("#hwNeu").value||"").trim();if(tx.length<3){toast("Bitte Hinweis eintragen");return}
+  const neu=hinweiseVon(nv).concat([{id:neueId(),text:tx,von:ME().name,datum:new Date().toISOString(),auftrag:auf||null}]);NF.setze("anlagen",nv,{hinweise:neu});aufbauen();drawer();render();toast("Hinweis gespeichert, der Monteur sieht ihn in der App");return}
+ if(d.hdone){const[nv,hid]=d.hdone.split("|");NF.setze("anlagen",nv,{hinweise:hinweiseVon(nv).map(h=>h.id===hid?Object.assign({},h,{erledigt:{von:ME().name,datum:new Date().toISOString()}}):h)});aufbauen();drawer();render();toast("Hinweis als erledigt markiert");return}
  if(d.cfgset){const[k,v]=d.cfgset.split("|");S.cfg[k]=v;applyTheme();save();render();if(k==="user")toast("Angemeldet als "+ME().name);return}
  if(t.id==="logout"){fetch("/auth/logout",{method:"POST"}).finally(()=>location.href="/");return}
  if(t.id==="matAdd"){S.mat.push({_id:neueId(),nr:"",bez:"",her:"",ek:0});save();render();return}

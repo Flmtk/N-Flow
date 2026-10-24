@@ -13,6 +13,8 @@ Kunden/
       Berichte/SB-2027-0001 Wartung 2027-03-04.pdf
       Fotos/SB-2027-0001 Foto 1.jpg
 Belege/2027/2027-03/2027-03-04 Tanken 89,40 EUR Frank Tetzlaff (….).jpg
+Belege/2027/2027-03/Belegliste 2027-03.pdf und .csv
+Intranet/   (Dokumente für den Bereich „Info“ der Monteur-App)
 Intern/   (Einsätze ohne Kundenanlage)
 ```
 
@@ -59,6 +61,34 @@ Speichern (Ctrl+O, Enter, Ctrl+X), dann `sh ops/update.sh`.
 2. Zurück in Entra: bei `Sites.FullControl.All` auf **…** → **Berechtigung entfernen** (und Zustimmung widerrufen, falls gefragt).
 3. In N-Flow **Aktualisieren**: Es muss weiterhin **Verbunden** stehen. Jetzt hat N-Flow nur noch Zugriff auf diese eine Website.
 4. **Alles nachholen**: Vorhandene Kunden, Berichte, Rechnungen und Belege werden abgelegt.
+
+## 5. Info-Bereich der Monteur-App
+
+Die App zeigt unter **Info** zwei Dinge aus derselben Website:
+
+- **Neuigkeiten:** In SharePoint auf der Website **+ Neu › Neuigkeitenbeitrag**, Titel und Text schreiben, **Veröffentlichen**. Die App zeigt die letzten Beiträge; wer Mitteilungen erlaubt hat, bekommt bei einem neuen Beitrag eine Push-Nachricht (bis zu 10 Minuten Verzögerung).
+- **Dokumente:** Alles im Ordner **Intranet** der Dokumentbibliothek. Vorschlag für den Aufbau:
+
+```
+Intranet/
+  Herstellerunterlagen/Buderus/  Logano plus KB372 Serviceanleitung.pdf
+  Herstellerunterlagen/Viessmann/ Vitodens 200-W Störungscodes.pdf
+  Formulare und Vorlagen/
+  Arbeitsanweisungen/
+  Prüfprotokolle Messgeräte/
+  Gefährdungsbeurteilungen/
+```
+
+**Herstellerunterlagen** erscheinen automatisch in der Anlagenakte, wenn der Ordner wie der Hersteller in N-Flow heißt (z. B. „Buderus“) und der Dateiname die Typbezeichnung mit Ziffern enthält (z. B. „KB372“ oder „200-W“).
+
+**Unterlagen einer Anlage** (Schaltplan, Hydraulikschema, Abnahmeprotokoll) werden in Büro oder App hochgeladen und landen in `Kunden/…/NV-…/Unterlagen/`. Was ihr dort direkt in SharePoint ablegt, erscheint ebenfalls in der Anlagenakte.
+
+Die App lädt morgens die Unterlagen der Tagestour vor. Jedes einmal geöffnete Dokument bleibt auf dem Handy und geht auch ohne Netz.
+
+## 6. Weitere Ablagen
+
+- **Mahnungen** liegen beim Kunden unter `Rechnungen/`.
+- **Belegliste** je Monat als PDF und als Tabelle (CSV, öffnet in Excel) unter `Belege/JJJJ/JJJJ-MM/`.
 
 ## Wenn etwas nicht klappt
 

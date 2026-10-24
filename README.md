@@ -11,11 +11,15 @@ Service-Software der NOVIS Anlagentechnik GmbH: Monteur-App (PWA), Planung im B�
 | Monteur-App (`/app/`) | Tour, QR-Scan, Anlagenakte, Einsatz mit Messblatt, Inbetriebnahme, Folgeauftrag, Fehlanfahrt, Wartungspool, Zeit, Belege, Urlaub/Block, Kalenderabo, offline-fähig | läuft |
 | QR-Aufkleber (`/a/<Kennung>`) | öffentlich: Störung melden; Kunde mit PIN: Historie; Mitarbeiter: Anlagenakte | läuft |
 | Microsoft 365 | Mail (Terminbestätigung, Rechnung mit PDF), Push | läuft |
-| SharePoint | automatische Ablage nach Kunde: Kundenstammblatt, Berichte, Fotos, Rechnungen, Belege (`docs/sharepoint.md`) | läuft |
+| SharePoint | automatische Ablage nach Kunde: Kundenstammblatt, Berichte, Fotos, Rechnungen, Mahnungen, Unterlagen, Belege mit Monatsliste (`docs/sharepoint.md`) | läuft |
+| Info (App) | Neuigkeiten und Dokumente aus SharePoint, Herstellerunterlagen in der Anlagenakte, offline vorgeladen | läuft |
+| Fahrzeuge | Zuordnung, Verbrauch aus Tankbelegen, Reifen, Fälligkeiten, Fahrzeuglager mit Nachbestellung an einkauf@ | läuft |
+| Mahnwesen | Zahlungserinnerung, 1. und 2. Mahnung (Fristen und Gebühren einstellbar), Meldung an rechnung@, Zahlungsverhalten je Kunde | läuft |
+| Design | Logo im Kasten, Farbschema Orange/Grau/Weiß, Hell/Dunkel (`web/css/design.css`, `web/js/design.js`) | läuft |
 
 ## Datenmodell
 
-Büro und App teilen einen Speicher je Sammlung (`daten`: kunden, anlagen, auftraege, berichte, rechnungen, abwesenheiten, belege, zeiten, artikel, arbeitsmittel, kontakte, bestaetigungen, einstellungen). Rechte je Sammlung in `server/src/routes/daten.ts`. Die Oberflächen arbeiten über `web/js/nf.js`: sofort lokal speichern, Postausgang, Abgleich alle 20 s. Fotos und Unterschriften liegen in `dateien`. Rechnungsnummern vergibt nur der Server (lückenlos).
+Büro und App teilen einen Speicher je Sammlung (`daten`: kunden, anlagen, auftraege, berichte, rechnungen, mahnungen, abwesenheiten, belege, zeiten, artikel, arbeitsmittel, fahrzeuge, kontakte, bestaetigungen, einstellungen). Rechte je Sammlung in `server/src/routes/daten.ts`. Die Oberflächen arbeiten über `web/js/nf.js`: sofort lokal speichern, Postausgang, Abgleich alle 20 s. Fotos und Unterschriften liegen in `dateien`. Rechnungsnummern vergibt nur der Server (lückenlos).
 
 ## Aufbau
 

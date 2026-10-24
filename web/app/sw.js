@@ -3,8 +3,8 @@
  * Erst Netz, dann Zwischenspeicher: Updates kommen beim nächsten Öffnen mit Netz automatisch an.
  * Daten (/api/…) laufen nicht hierüber, die speichert die App selbst (Postausgang).
  */
-const CACHE = "nflow-app-v5";
-const DATEIEN = ["/app/", "/js/nf.js", "/js/design.js", "/css/design.css", "/vendor/jsQR.js", "/app/manifest.webmanifest", "/icons/icon-192.png", "/icons/icon-512.png"];
+const CACHE = "nflow-app-v6";
+const DATEIEN = ["/app/", "/js/nf.js", "/js/design.js", "/js/fahrzeug.js", "/css/design.css", "/vendor/jsQR.js", "/app/manifest.webmanifest", "/icons/icon-192.png", "/icons/icon-512.png"];
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(DATEIEN)).then(() => self.skipWaiting()));

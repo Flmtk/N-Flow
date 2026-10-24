@@ -430,6 +430,7 @@ label.f.req>span.unit::after{content:none}
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&family=Barlow+Condensed:wght@400&display=swap">
 <link rel="stylesheet" href="/css/design.css">
 <script src="/js/design.js"></script>
+<script src="/js/fahrzeug.js"></script>
 </head>
 <body>
 
@@ -930,7 +931,22 @@ function ichEinst(){const th=NFDESIGN.theme();
  <div class="panel"><h4>Software</h4><dl class="kv"><dt>Version</dt><dd>N-Flow ${esc(NF.ich.version||"")}</dd><dt>Umgebung</dt><dd>${NF.ich.instanz==="live"?"Echtbetrieb":"Testumgebung"}</dd><dt>Übertragung</dt><dd>${NF.outbox.length?NF.outbox.length+" Änderung(en) im Postausgang":"alles übertragen"}</dd><dt>Offline gespeichert</dt><dd>${Object.keys(dokListe()).length} Dokument(e)</dd></dl>
   <button type="button" class="btn sec" id="appNeu">Nach Update suchen</button></div>
  <div class="row" style="gap:8px">${RECHTE.planung?'<a class="btn sec" href="/buero/" style="text-decoration:none">Zum Büro</a>':""}<button type="button" class="btn ghost" id="abmelden">Abmelden</button></div>`}
-function ichFahrzeug(){return ichAuto()}
+const meinFahrzeug=()=>NF.liste("fahrzeuge").find(f=>f.fahrer===TECH.id)||null;
+function ichFahrzeug(){const fz=meinFahrzeug();
+ if(!fz)return`<div class="panel"><h4>Fahrzeug</h4><p class="hint" style="margin:0">Dir ist noch kein Fahrzeug zugeordnet. Das macht das Büro unter Fahrzeuge.</p></div>`+kontaktePanel();
+ const v=NFFZ.verbrauch(NF.liste("belege"),fz),F=NFFZ.faellig(fz,isoD()),l=fz.lager||{},fehl=NFFZ.fehlt(l),art=Object.fromEntries(NF.liste("artikel").map(a=>[a.nr,a.bez]));
+ const zahl1=x=>x==null?"–":x.toLocaleString("de-DE",{minimumFractionDigits:1,maximumFractionDigits:1});
+ return`<div class="panel"><h4>${esc(fz.kennzeichen||"")} · ${esc(fz.modell||"")}</h4>
+  <div class="kpi3"><div><b>${zahl1(v.aktuell)}</b><span>l/100 km<br>letzte Tankungen</span></div><div><b>${zahl1(v.schnitt)}</b><span>l/100 km<br>Durchschnitt</span></div><div><b>${(fz.km||v.kmStand)?(fz.km||v.kmStand).toLocaleString("de-DE"):"–"}</b><span>km-Stand<br>zuletzt</span></div></div>
+  ${v.tankungen<2?'<p class="hint" style="margin:0">Der Verbrauch erscheint ab der zweiten Tankquittung mit km-Stand.</p>':""}
+  <dl class="kv">${F.map(f=>`<dt>${esc(f.art)}</dt><dd>${fmt(new Date(f.datum+"T12:00"))}${f.stufe!=="ok"?` <span class="chip ${f.stufe==="ueber"?"cr":"wa"}">${f.stufe==="ueber"?"überfällig":"in "+f.tage+" Tagen"}</span>`:""}</dd>`).join("")}
+   ${fz.reifen?`<dt>Reifen</dt><dd>${esc(fz.reifen.montiert||"")} montiert${fz.reifen.lager?" · eingelagert: "+esc(fz.reifen.lager):""}</dd>`:""}
+   ${fz.tankkarte?`<dt>Tankkarte</dt><dd>${esc(fz.tankkarte)}</dd>`:""}</dl></div>
+ <div class="panel"><h4>Lager im Fahrzeug ${fehl.length?`<span class="chip wa">${fehl.length} fehlt</span>`:'<span class="chip ok">vollständig</span>'}</h4>
+  ${(l.soll||[]).length?`<table class="t lagert"><thead><tr><th>Artikel</th><th class="r">Bestand</th><th class="r">Soll</th><th></th></tr></thead><tbody>${(l.soll||[]).map(p=>{const b=NFFZ.bestand(l,p),f=b<=Number(p.min||0);return`<tr class="${f?"fehlt":""}"><td><b>${esc(art[p.nr]||p.nr)}</b><br><small class="mono">${esc(p.nr)}</small></td><td class="r mono">${b}</td><td class="r mono">${p.menge}</td><td class="r">${b<p.menge?`<button type="button" class="chip" data-auff="${esc(p.nr)}">Aufgefüllt</button>`:""}</td></tr>`}).join("")}</tbody></table>
+   <p class="hint" style="margin:0">Material aus deinen Berichten wird automatisch abgezogen. Fällt etwas unter die Mindestmenge, bekommt der Einkauf eine Mail.</p>`:'<p class="hint" style="margin:0">Für dieses Fahrzeug ist noch kein Lager-Sortiment hinterlegt.</p>'}</div>
+ ${kontaktePanel()}`}
+function kontaktePanel(){return ichAuto()}
 function kalAboPanel(){return`<div class="panel"><h4>Im iPhone-Kalender anzeigen</h4>
   <p class="hint">Einsätze, Urlaub und Blocks erscheinen automatisch im Apple Kalender und aktualisieren sich selbst. Einmal einrichten genügt.</p>
   ${S.calAbo?`<ol class="hint" style="padding-left:18px;margin:0;display:flex;flex-direction:column;gap:4px"><li>iPhone: Einstellungen › Apps › Kalender › Kalenderaccounts › Account hinzufügen › Andere › Kalenderabo hinzufügen</li><li>Diese Adresse einfügen:</li></ol>
@@ -1028,8 +1044,7 @@ function ichAbw(){
    ...S.blocks.map(b=>`<div class="check" style="justify-content:space-between;align-items:flex-start"><span style="min-width:0"><b>Block</b> <span class="mono" style="font-size:13px">${b.datum} · ${b.von}–${b.bis}</span><br><span class="hint">${esc(b.grund)}</span></span><span class="chip ${b.status==="genehmigt"?"ok":b.status==="abgelehnt"?"cr":"wa"}">${b.status==="genehmigt"?"bestätigt":b.status||"offen"}</span></div>`)].join(""):'<p class="hint">Noch keine Anträge.</p>'}</div>`;
 }
 function ichAuto(){
- return`<div class="panel"><h4>Fahrzeug</h4><dl class="kv"><dt>Fahrzeug</dt><dd>VW Transporter T6.1 Kasten</dd><dt>Nächster Service</dt><dd>03/2028 oder 30.000 km</dd><dt>HU</dt><dd>03/2029</dd></dl></div>
- <div class="panel"><h4>Ansprechpartner Fahrzeug</h4>
+ return`<div class="panel"><h4>Ansprechpartner Fahrzeug</h4>
   ${S.kontakte.map((c,i)=>`<div class="contact"><span>${esc(c.rolle)}</span><b>${esc(c.name)}</b><span class="tel">${c.tel?esc(c.tel):"Keine Nummer"}</span><div class="acts">${c.tel?`<button type="button" class="chip" data-copy="${i}">Kopieren</button>`:""}<button type="button" class="chip" data-delk="${esc(c._id)}" aria-label="Kontakt entfernen">✕</button></div></div>`).join("")}
   <details><summary class="hint" style="cursor:pointer;padding:6px 0">+ Ansprechpartner hinzufügen</summary>
    <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px">
@@ -1459,10 +1474,11 @@ document.addEventListener("click",e=>{
   save();render();return}
  if(t.id==="bSend"){const k=$("#bk").value,b=$("#bb").value.trim(),dt=$("#bd").value,km=$("#bkm")?.value.trim(),l=$("#bl")?.value.trim(),z=$("#bz")?.value.trim();
   if(!n(b)){toast("Bitte Betrag eintragen");return}if(!dt){toast("Bitte Datum wählen");return}if(k==="Tanken"&&!km){toast("Beim Tanken bitte km-Stand eintragen");return}if(!S.belegFoto){toast("Bitte Quittung fotografieren");return}
-  (async()=>{const fid=belegDatei?await NF.datei(belegDatei,"beleg-"+dt+".jpg"):null,bid=neueId();NF.setze("belege",bid,{id:bid,tech:TECH.id,kat:k,betrag:n(b),datum:dt,info:k==="Tanken"?(l?l+" l · ":"")+km+" km":z||"",foto:fid,status:"offen"});S.belegFoto=null;belegDatei=null;save();render();toast(S.online?"Beleg übermittelt":"Beleg im Postausgang, wird bei Netz gesendet")})();return}
+  (async()=>{const fid=belegDatei?await NF.datei(belegDatei,"beleg-"+dt+".jpg"):null,bid=neueId();const fz=meinFahrzeug();NF.setze("belege",bid,{id:bid,tech:TECH.id,kat:k,betrag:n(b),datum:dt,info:k==="Tanken"?(l?l+" l · ":"")+km+" km":z||"",foto:fid,status:"offen",...(k==="Tanken"?{liter:n(l)||null,km:NFFZ.zahl(km),fahrzeug:fz?fz.id:null}:{})});if(k==="Tanken"&&fz&&NFFZ.zahl(km)>(fz.km||0))NF.setze("fahrzeuge",fz.id,{km:NFFZ.zahl(km)});S.belegFoto=null;belegDatei=null;save();render();toast(S.online?"Beleg übermittelt":"Beleg im Postausgang, wird bei Netz gesendet")})();return}
  if(t.id==="kSend"){const dt=$("#kd").value,v=$("#kv").value,b=$("#kb").value,g=$("#kg").value.trim();
   if(!dt||!v||!b||b<=v){toast("Bitte Datum und gültige Uhrzeit wählen");return}if(g.length<5){toast("Begründung ist Pflicht");$("#kg").focus();return}
   const bid=neueId();NF.setze("abwesenheiten",bid,{id:bid,tech:TECH.id,art:"Block",von:dt,bis:dt,zeit:v+"–"+b,grund:g,status:"offen"});render();toast("Block eingetragen, das Büro ist informiert");return}
+ if(d.auff){const fz=meinFahrzeug();if(!fz)return;const l=fz.lager||{},p=(l.soll||[]).find(x=>x.nr===d.auff);if(!p)return;NF.setze("fahrzeuge",fz.id,{lager:Object.assign({},l,{bestand:Object.assign({},l.bestand||{},{[p.nr]:p.menge})})});render();toast("Als aufgefüllt vermerkt");return}
  if(d.copy!=null){const c=S.kontakte[+d.copy];try{navigator.clipboard.writeText(c.tel).then(()=>toast("Nummer kopiert"),()=>toast(c.tel))}catch(e){toast(c.tel)}return}
  if(d.delk!=null){NF.loesche("kontakte",d.delk);render();return}
  if(t.id==="cAdd"){const r1=$("#cr").value.trim(),n1=$("#cn").value.trim(),t1=$("#ct").value.trim();if(!r1||!n1||!t1){toast("Bitte alle drei Felder ausfüllen");return}NF.setze("kontakte",neueId(),{rolle:r1,name:n1,tel:t1});render();toast("Ansprechpartner gespeichert");return}
@@ -1521,7 +1537,7 @@ let belegDatei=null;
 (async()=>{
  main.innerHTML='<div class="lade">N-Flow lädt …</div>';
  let ich=null;
- try{ich=await NF.start({sammlungen:["kunden","anlagen","auftraege","berichte","abwesenheiten","belege","zeiten","artikel","kontakte","bestaetigungen","einstellungen"],kurz:true,nummern:["A","SB","NV","K"]})}
+ try{ich=await NF.start({sammlungen:["kunden","anlagen","auftraege","berichte","abwesenheiten","belege","zeiten","artikel","kontakte","bestaetigungen","einstellungen","fahrzeuge"],kurz:true,nummern:["A","SB","NV","K"]})}
  catch(e){main.innerHTML=`<div class="lade">${esc(e.message)}</div>`;return}
  if(!ich)return;
  RECHTE=ich.rechte||{};uiLaden();if(!S.reports)S.reports={};

@@ -146,3 +146,11 @@ h3.sub{font-family:var(--f-serif);font-weight:500;letter-spacing:0}
 .hwalt{margin:4px 0 0;font-size:13px;font-weight:600;color:var(--muted)}
 .hwz{display:flex;gap:12px;padding:10px 0;border-top:1px solid var(--line)}.hwz time{font-size:13px;color:var(--muted);width:72px;flex:0 0 auto}
 .hwz s{color:var(--muted)}.hwz small{color:var(--muted)}
+
+/* App: Fahrzeug */
+.kpi3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.kpi3>div{background:var(--surface2);border:1px solid var(--line2);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:2px}
+.kpi3 b{font:500 22px/1.1 var(--f-serif)}.kpi3 span{font-size:11px;color:var(--muted);line-height:1.3}
+.lagert{width:100%;border-collapse:collapse;font-size:14px}.lagert th{font-size:12px;color:var(--muted);font-weight:600;text-align:left;padding:4px 0}
+.lagert td{padding:8px 0;border-top:1px solid var(--line2);vertical-align:middle}.lagert .r{text-align:right;padding-left:8px}
+.lagert tr.fehlt td{color:var(--warn)}.lagert small{color:var(--muted)}

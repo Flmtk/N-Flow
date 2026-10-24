@@ -6,6 +6,7 @@ import { rechteLaden, type Recht } from "../rechte.js";
 import { brauche, type Benutzer } from "../sitzung.js";
 import { nachSpeichern } from "../push.js";
 import { nachSpeichernAblage } from "../ablage.js";
+import { nachSpeichernLager } from "../lager.js";
 
 /**
  * Gemeinsamer Datenspeicher für Büro und Monteur-App.
@@ -37,6 +38,8 @@ export const SAMMLUNGEN: Record<string, Regel> = {
   bestaetigungen: { lesen: "eigene", schreiben: "eigene", loeschen: "admin", eigen: true },
   artikel: { lesen: "eigene", schreiben: "preise", loeschen: "preise" },
   arbeitsmittel: { lesen: "eigene", schreiben: "planung", loeschen: "planung" },
+  fahrzeuge: { lesen: "eigene", schreiben: "eigene", loeschen: "admin", schluessel: "id" },
+  mahnungen: { lesen: "rechnungen", schreiben: "rechnungen", loeschen: "admin", schluessel: "id" },
   kontakte: { lesen: "eigene", schreiben: "eigene", loeschen: "eigene" },
   einstellungen: { lesen: "eigene", schreiben: "admin", loeschen: "admin" },
 };
@@ -91,6 +94,14 @@ function pruefe(s: string, b: Benutzer, r: Rechte, alt: Daten | null, neu: Daten
     if (alt && (tech(alt) !== ich || alt.status !== "neu")) return "Der Bericht ist schon im Büro in Bearbeitung.";
     if (neu.status !== "neu") return "Berichte prüfen kann nur das Büro.";
     if (tech(neu) !== ich) return "Berichte nur für dich selbst.";
+  }
+  if (s === "fahrzeuge" && !r.planung) {
+    // Monteure dürfen an ihrem Fahrzeug nur den Lagerbestand (Auffüllen, Inventur) und den km-Stand ändern
+    if (!alt || alt.fahrer !== ich) return "Fahrzeugdaten pflegt das Büro.";
+    const lagerAlt = (alt.lager ?? {}) as Daten, lagerNeu = (neu.lager ?? {}) as Daten;
+    const km = neu.km;
+    for (const k of Object.keys(neu)) delete neu[k];
+    Object.assign(neu, alt, { lager: { ...lagerAlt, bestand: lagerNeu.bestand ?? lagerAlt.bestand }, km: km ?? alt.km });
   }
   if (s === "anlagen" && !r.planung && alt) {
     // Vertragsdaten und Pool-Zuordnung bestimmt das Büro
@@ -226,6 +237,7 @@ export async function datenRouten(app: FastifyInstance): Promise<void> {
     if ("zeile" in erg && erg.zeile) {
       void nachSpeichern(s, id, erg.alt ?? null, erg.zeile.daten, b);
       void nachSpeichernAblage(s, id, erg.alt ?? null, erg.zeile.daten);
+      void nachSpeichernLager(s, id, erg.zeile.daten);
     }
     return erg;
   }

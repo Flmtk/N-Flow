@@ -127,6 +127,10 @@ label.f{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--mu
 .card b{font-size:13px;font-weight:700}
 .card .r1{display:flex;gap:6px;align-items:center;justify-content:space-between}
 .card .r1r{display:flex;gap:4px;align-items:center}
+.fzgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px}
+.fzkopf{display:flex;align-items:flex-start;gap:12px;justify-content:space-between}.fzkopf h3{margin:0;font-family:var(--f-serif,Georgia),serif;font-weight:500;font-size:22px}
+.fzkpi{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.fzkpi div{background:var(--surface2);border-radius:10px;padding:8px 10px;display:flex;flex-direction:column}.fzkpi b{font-family:var(--f-serif,Georgia),serif;font-weight:500;font-size:20px}.fzkpi span{font-size:11px;color:var(--muted)}
+.lagertb td:first-child{min-width:240px}.lagertb input{width:76px}.lagertb select{width:100%;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface)}.lagertb td{vertical-align:middle}
 .ihint{width:20px;height:20px;border-radius:50%;display:inline-grid;place-items:center;font:italic 600 13px/1 var(--f-serif,Georgia),serif;color:var(--muted);background:var(--surface2);border:1px solid var(--line);flex:0 0 auto;cursor:pointer}
 .ihint.an{background:var(--accent-soft);color:var(--accent);border-color:transparent}
 .card .ihint:not(.an){opacity:0;width:0;margin-left:-4px;border-width:0;overflow:hidden;transition:opacity .15s}.card:hover .ihint:not(.an),.card:focus-visible .ihint:not(.an){opacity:1;width:20px;margin-left:0;border-width:1px}
@@ -400,6 +404,7 @@ body{padding:0}
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&family=Barlow+Condensed:wght@400&display=swap">
 <link rel="stylesheet" href="/css/design.css">
 <script src="/js/design.js"></script>
+<script src="/js/fahrzeug.js"></script>
 </head>
 <body>
 
@@ -441,6 +446,7 @@ const I={
  set:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.5 5.5l1.7 1.7M16.8 16.8l1.7 1.7M5.5 18.5l1.7-1.7M16.8 7.2l1.7-1.7"/></svg>',
  re:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 3.5h12v17l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 11.5h6M9 15h3.5"/></svg>',
  ber:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 3.5h7l4 4V20a.5.5 0 0 1-.5.5h-10A.5.5 0 0 1 7 20z"/><path d="M14 3.5V8h4M9.5 12h6M9.5 15.5h6"/></svg>',
+ fz:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3.5 15.5V8.5a1 1 0 0 1 1-1h9.5l3.5 4h2a1 1 0 0 1 1 1v3"/><circle cx="7.5" cy="16.5" r="2"/><circle cx="16.5" cy="16.5" r="2"/><path d="M9.5 16.5h5M14 7.5v4h4"/></svg>',
  team:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8.5" r="3"/><circle cx="17" cy="9.5" r="2.5"/><path d="M3.5 19c.9-3 3-4.5 5.5-4.5s4.6 1.5 5.5 4.5M15 14.6c2.6-.3 4.5 1.1 5.5 4"/></svg>',
  lupe:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 5 5"/></svg>',
  x:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg>'
@@ -577,7 +583,7 @@ function nav(){
   teamN=S.abs.filter(a=>a.status==="offen").length+S.bel.filter(b=>b.status==="offen").length,
   wN=S.anl.filter(a=>a.vertrag&&due(a)<=addD(TODAY,30)&&!openFor(a.nv,"Wartung")).length;
  const reN=(S.rech||[]).filter(r=>r.status==="offen"&&addD(r.datum,14)<TODAY).length;
- const it=[["dash","Übersicht",""],["plan","Plantafel",pool],["wart","Wartungsplanung",wN],["anl","Kunden und Anlagen",""],["ber","Berichte",berN],["re","Rechnungen",reN],["team","Team",teamN],["set","Einstellungen",""],["adm","Administration",""]].filter(x=>!(ISID()&&x[0]==="re")&&!(x[0]==="adm"&&!ISADM()));
+ const it=[["dash","Übersicht",""],["plan","Plantafel",pool],["wart","Wartungsplanung",wN],["anl","Kunden und Anlagen",""],["ber","Berichte",berN],["re","Rechnungen",reN],["team","Team",teamN],["fz","Fahrzeuge",fzN()],["set","Einstellungen",""],["adm","Administration",""]].filter(x=>!(ISID()&&x[0]==="re")&&!(x[0]==="adm"&&!ISADM()));
  $("#side").innerHTML=`<div class="brand">${NFDESIGN.logo()}<span class="bt"><b>NOVIS</b><span>Büro · Planung</span></span></div>`+
   it.map(([k,l,c])=>`<button type="button" class="nav" data-view="${k}" ${S.view===k?'aria-current="page"':""}>${I[k]}<span>${l}</span>${c?`<span class="cnt">${c}</span>`:""}</button>`).join("")+
   `<button type="button" class="nav" data-href="/app/">${I.anl}<span>Monteur-App</span></button>`+
@@ -604,7 +610,7 @@ function vDash(){
   ...pool.filter(o=>o.art==="Folgeauftrag").map(o=>({c:"wa",t:`Folgeauftrag aus Wartung: ${anl(o.nv).kunde}`,s:o.grund,go:`order:${o.id}`})),
   ...S.anl.filter(a=>a.vertrag&&due(a)<TODAY&&!openFor(a.nv,"Wartung")).map(a=>({c:"wa",t:`Wartung überfällig: ${a.kunde}`,s:`${a.nv} · fällig seit ${fmt(due(a))}`,go:"view:wart"})),
   ...ant.map(a=>({c:"bl",t:`${a.art} beantragt: ${tech(a.tech).name}`,s:`${fmt(a.von)}${a.bis!==a.von?" – "+fmt(a.bis):""}${a.zeit?" · "+a.zeit:""}${a.grund?" · "+a.grund:""}`,go:"view:team"})),
-  ...ber.map(b=>({c:"or",t:`Bericht zu prüfen: ${b.sb}`,s:`${anl(b.nv).kunde} · ${tech(b.tech).name}`,go:`ber:${b.sb}`})),...alerts()];
+  ...ber.map(b=>({c:"or",t:`Bericht zu prüfen: ${b.sb}`,s:`${anl(b.nv).kunde} · ${tech(b.tech).name}`,go:`ber:${b.sb}`})),...fzAlerts(),...(typeof mahnAlerts==="function"?mahnAlerts():[]),...alerts()];
  $("#view").innerHTML=`<div class="pad">
   <div class="greet"><h2>${gr}, ${esc(ME().name.split(" ")[0])}</h2><p>${D(TODAY).toLocaleDateString(en?"en-GB":"de-DE",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}</p></div>
   <div class="kpis">
@@ -740,6 +746,26 @@ function recPanel(o,a){const rs=recommend(o),dr=o.art==="Störung"||o.prio==="ho
 /* ---------- Interne Hinweise (nur für das Team, bleiben in der Anlagenakte) ---------- */
 const hinweiseVon=nv=>((NF.get("anlagen",nv)||{}).hinweise||[]);
 const offeneHinweise=nv=>hinweiseVon(nv).filter(h=>!h.erledigt);
+/* ---------- Unterlagen zur Anlage (Schaltplan, Schema, …) und Herstellerunterlagen ---------- */
+const UNTER_ARTEN=["Schaltplan","Hydraulikschema","Abnahmeprotokoll","Typenschild","Datenblatt","Foto","Angebot","Sonstiges"];
+async function unterlagenLaden(nv){S.unterl=S.unterl||{};S.unterl[nv]={laedt:true};try{S.unterl[nv]=await NF.api("/api/anlagen/"+encodeURIComponent(nv)+"/unterlagen")}catch(e){S.unterl[nv]={fehler:e.message}}if(S.drawer==="anl:"+nv)drawer()}
+function unterlagenBox(a){const roh=NF.get("anlagen",a.nv)||{},U=roh.unterlagen||[];S.unterl=S.unterl||{};const SP=S.unterl[a.nv];if(SP===undefined)unterlagenLaden(a.nv);
+ const namen=new Set(U.map(u=>u.name)),akte=SP&&SP.akte?SP.akte.filter(d=>!namen.has(d.name)):[];
+ const li=(href,titel,sub)=>`<a class="li" href="${href}" target="_blank" rel="noopener" style="text-decoration:none;color:inherit"><span class="dot bl"></span><span><b>${esc(titel)}</b><small>${esc(sub)}</small></span><span class="hint">↗</span></a>`;
+ const kb=b=>b>1048576?de(b/1048576,1)+" MB":Math.max(1,Math.round(b/1024))+" KB";
+ return`<div class="box"><b>Unterlagen</b><div class="list">
+  ${a.schema?li("/api/dateien/"+esc(a.schema),"Anlagenschema","aus der Anlagenakte"):""}
+  ${U.map(u=>li("/api/dateien/"+esc(u.datei),u.name,`${u.art||"Unterlage"} · ${u.datum?fmt(u.datum):""}${u.von?" · "+u.von:""}`)).join("")}
+  ${akte.map(d=>li("/api/info/datei/"+esc(d.id),d.name,"SharePoint · "+kb(d.groesse))).join("")}
+  ${!a.schema&&!U.length&&!akte.length?'<p class="hint" style="margin:0">Noch keine Unterlagen.</p>':""}</div>
+  <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap"><label class="f" style="min-width:160px">Art<select id="unterArt">${UNTER_ARTEN.map(x=>`<option>${x}</option>`).join("")}</select></label><label class="btn sec sm" for="unterDatei" style="margin:0">+ Datei hinzufügen</label><input id="unterDatei" type="file" accept="image/*,application/pdf" multiple hidden data-unv="${esc(a.nv)}"></div>
+  ${SP&&SP.hersteller&&SP.hersteller.length?`<b style="font-size:13px;margin-top:4px">Passende Herstellerunterlagen</b><div class="list">${SP.hersteller.map(d=>li("/api/info/datei/"+esc(d.id),d.name,d.pfad||"Herstellerunterlagen")).join("")}</div>`:""}
+  <p class="hint" style="margin:0">${SP&&SP.fehler?esc(SP.fehler):SP&&SP.eingerichtet===false?"SharePoint ist noch nicht eingerichtet. Unterlagen werden trotzdem gespeichert und später abgelegt.":"Abgelegt in SharePoint › Kundenakte › Anlage › Unterlagen. Herstellerunterlagen werden über Hersteller und Typ gefunden (Intranet › Herstellerunterlagen › "+esc(a.hersteller||"Hersteller")+")."}</p></div>`}
+async function unterlagenHinzu(nv,files){const art=($("#unterArt")||{}).value||"Unterlage",neu=[];
+ for(const [i,f] of [...files].entries()){try{const b=await NF.bildVerkleinern(f);const ext=b.type==="application/pdf"?"pdf":"jpg",basis=f.name.replace(/\.[a-z0-9]{2,4}$/i,"");
+  const name=`${art} ${basis&&!/^(image|IMG|photo|bild)/i.test(basis)?basis:fmt(TODAY)+(files.length>1?" ("+(i+1)+")":"")}.${ext}`;
+  neu.push({datei:await NF.datei(b,name),name,art,typ:b.type,datum:TODAY,von:ME().name})}catch(e){toast("Datei konnte nicht gelesen werden: "+f.name)}}
+ if(!neu.length)return;const roh=NF.get("anlagen",nv)||{};NF.setze("anlagen",nv,{unterlagen:(roh.unterlagen||[]).concat(neu)});aufbauen();drawer();toast(neu.length+" Unterlage(n) gespeichert, Ablage in SharePoint folgt automatisch")}
 function hinweisPanel(nv,auftrag){if(!nv||nv==="INTERN")return"";const H=hinweiseVon(nv),offen=H.filter(h=>!h.erledigt).reverse(),alt=H.filter(h=>h.erledigt).reverse();
  const zeile=h=>`<div class="hw ${h.erledigt?"erl":""}"><p>${esc(h.text)}</p><span class="hint">${esc(h.von||"")} · ${fmt(iso(h.datum))}${h.auftrag?" · zum Auftrag "+esc(h.auftrag):""}${h.erledigt?" · erledigt "+fmt(iso(h.erledigt.datum))+" ("+esc(h.erledigt.von)+")":""}</span>${!h.erledigt&&RECHTE.planung?`<button type="button" class="btn ghost sm" data-hdone="${esc(nv)}|${esc(h.id)}">Erledigt</button>`:""}</div>`;
  return`<div class="box hwbox"><b><span class="ihint an" aria-hidden="true">i</span> Interne Hinweise</b>
@@ -848,7 +874,7 @@ function dAnl(nv){const a=anl(nv),k=NF.get("kunden",a.knr)||{},os=S.orders.filte
   ${hinweisPanel(nv,"")}
   ${det}
   <div class="box"><b>QR-Aufkleber</b>${a.qr?`<div style="display:flex;gap:14px;align-items:center"><img src="/api/qr/${esc(a.qr)}" alt="QR-Code" style="width:96px;height:96px;background:#fff;padding:6px;border-radius:8px"><span class="hint">Kennung ${esc(a.qr)}<br>Kunden-PIN für die Historie: <b>${esc(a.pin||"–")}</b></span></div><button type="button" class="btn sec sm" style="align-self:flex-start" data-go="aufk:${esc(a.nv)}">Aufkleber drucken</button>`:`<span class="hint">Noch kein Aufkleber zugeordnet. Beim Bearbeiten eine Kennung erzeugen, oder der Monteur scannt einen leeren Aufkleber bei der Inbetriebnahme.</span>`}</div>
-  ${a.schema?`<div class="box"><b>Anlagenschema</b><a class="btn sec sm" style="align-self:flex-start;text-decoration:none" href="/api/dateien/${esc(a.schema)}" target="_blank" rel="noopener">Öffnen</a></div>`:""}
+  ${unterlagenBox(a)}
   <div><b style="font-size:14px">Aufträge</b><div class="list">${os.map(o=>`<button type="button" class="li" data-go="order:${o.id}"><span class="dot ${o.status==="erledigt"?"ok":o.status==="offen"?"wa":"bl"}"></span><span><b>${o.id} · ${o.art}</b><small>${o.date?fmt(o.date)+" · "+esc(tech(o.tech).name):"noch nicht eingeplant"}</small></span><span class="hint">›</span></button>`).join("")||'<p class="hint">Keine.</p>'}</div></div>
   <div><b style="font-size:14px">Berichte</b><div class="list">${bs.map(b=>`<button type="button" class="li" data-go="ber:${b.sb}"><span class="dot ${b.status==="neu"?"or":"ok"}"></span><span><b>${b.sb}</b><small>${fmt(b.datum)} · ${b.art} · ${b.status}</small></span><span class="hint">›</span></button>`).join("")||'<p class="hint">Keine.</p>'}</div></div>`,
   foot:`${RECHTE.planung?`<button type="button" class="btn sec" data-go="anlform:${esc(nv)}">Bearbeiten</button>`:""}<button type="button" class="btn" data-newo="${nv}">Auftrag anlegen</button>`}}
@@ -1029,13 +1055,66 @@ function vTeam(){
     <div class="list">${S.abs.filter(a=>a.status!=="offen").map(a=>`<div class="li"><span class="dot ${a.status==="genehmigt"?"ok":"cr"}"></span><span><b>${a.art} · ${esc(tech(a.tech).name)}</b><small>${fmt(a.von)}${a.bis!==a.von?" – "+fmt(a.bis):""}${a.zeit?" · "+a.zeit:""}</small></span><span class="chip ${a.status==="genehmigt"?"ok":"cr"}">${a.status}</span></div>`).join("")}</div></div>
    <div class="panel"><h3>Belege</h3>
     ${S.bel.map(b=>`<div class="li"><span class="dot ${b.status==="offen"?"or":"ok"}"></span><span><b>${b.kat} · ${de(b.betrag,2)} €</b><small>${esc(tech(b.tech).name)} · ${fmt(b.datum)} · ${esc(b.info)}${b.foto?` · <a href="/api/dateien/${esc(b.foto)}" target="_blank" rel="noopener">Quittung</a>`:""}</small></span>${b.status==="offen"?`<button type="button" class="btn sm" data-belok="${b.id}">An Buchhaltung</button>`:'<span class="chip ok">übergeben</span>'}</div>`).join("")}
-    <p class="hint">Die Fotos der Quittungen liegen in N-Flow. Die Ablage in SharePoint › Belege folgt.</p></div>
+    <p class="hint">Die Fotos der Quittungen werden automatisch in SharePoint › Belege › Jahr › Monat abgelegt.</p></div>
   </div>
   <div class="panel"><h3>Arbeitszeit diese Woche <span class="hint">aus „Ich → Zeit“ in der Monteur-App</span></h3><div class="tbwrap"><table class="tb"><thead><tr><th>Monteur</th>${days.map(d=>`<th>${fmtS(d)}</th>`).join("")}<th>Summe</th><th>Soll</th></tr></thead><tbody>
    ${MONT().map(t=>{const z=S.zeit[t.id]||[],s=z.reduce((a,b)=>a+(b||0),0);return`<tr><td><b>${esc(t.name)}</b></td>${z.map((h,i)=>`<td>${h!=null?de(h,2)+" h":days[i]<TODAY?'<span class="chip wa">fehlt</span>':"–"}</td>`).join("")}<td><b>${de(s,2)} h</b></td><td class="hint">40,00 h</td></tr>`}).join("")}
   </tbody></table></div></div>
  </div>`;
 }
+/* ---------- Fahrzeuge: Zuordnung, Verbrauch, Reifen, Fälligkeiten, Lager ---------- */
+const FZ=()=>NF.liste("fahrzeuge").sort((a,b)=>String(a.kennzeichen||"").localeCompare(String(b.kennzeichen||"")));
+function fzN(){let n=0;for(const f of FZ()){n+=NFFZ.faellig(f,TODAY).filter(x=>x.stufe!=="ok").length+(NFFZ.fehlt(f.lager||{}).length?1:0)}return n||""}
+function fzAlerts(){const L=[];for(const f of FZ()){for(const x of NFFZ.faellig(f,TODAY).filter(x=>x.stufe!=="ok"))L.push({c:x.stufe==="ueber"?"cr":"wa",t:`${x.art} ${f.kennzeichen}: ${x.stufe==="ueber"?"überfällig":"in "+x.tage+" Tagen"}`,s:`${fmt(x.datum)} · ${x.text}`,go:`fz:${f.id}`});
+ const fe=NFFZ.fehlt(f.lager||{});if(fe.length)L.push({c:"wa",t:`Fahrzeuglager ${f.kennzeichen}: ${fe.length} Artikel unter Mindestmenge`,s:(f.lager.bestellt&&fe.every(p=>f.lager.bestellt[p.nr])?"Einkauf ist informiert":"Mail an den Einkauf folgt"),go:`fzlager:${f.id}`})}return L}
+const l1=x=>x==null?"–":de(x,1);
+function vFz(){
+ top("Fahrzeuge",RECHTE.planung?`<button type="button" class="btn" data-go="fz:neu">+ Fahrzeug</button>`:"");
+ const B=NF.liste("belege"),art=Object.fromEntries(S.mat.map(a=>[a.nr,a.bez]));
+ $("#view").innerHTML=`<div class="pad">${FZ().length?`<div class="fzgrid">${FZ().map(f=>{const v=NFFZ.verbrauch(B,f),F=NFFZ.faellig(f,TODAY),fe=NFFZ.fehlt(f.lager||{}),t=f.fahrer?tech(f.fahrer):null;
+  return`<div class="panel fzkarte"><div class="fzkopf"><div><h3>${esc(f.kennzeichen||"ohne Kennzeichen")}</h3><span class="hint">${esc(f.modell||"")}${t?" · "+esc(t.name):" · keinem Monteur zugeordnet"}</span></div>${RECHTE.planung?`<button type="button" class="btn sec sm" data-go="fz:${esc(f.id)}">Bearbeiten</button>`:""}</div>
+   <div class="fzkpi"><div><b>${l1(v.aktuell)}</b><span>l/100 km aktuell</span></div><div><b>${l1(v.schnitt)}</b><span>l/100 km Schnitt</span></div><div><b>${(f.km||v.kmStand)?(f.km||v.kmStand).toLocaleString("de-DE"):"–"}</b><span>km-Stand</span></div><div><b>${v.euroProKm!=null?de(v.euroProKm*100,1):"–"}</b><span>€ Sprit / 100 km</span></div></div>
+   <dl class="kv">${F.map(x=>`<dt>${esc(x.art)}</dt><dd>${fmt(x.datum)} ${x.stufe!=="ok"?`<span class="chip ${x.stufe==="ueber"?"cr":"wa"}">${x.stufe==="ueber"?"überfällig":"in "+x.tage+" Tagen"}</span>`:""}</dd>`).join("")}
+    <dt>Reifen</dt><dd>${f.reifen&&f.reifen.montiert?esc(f.reifen.montiert)+" montiert":"–"}${f.reifen&&f.reifen.lager?`<br><span class="hint">Eingelagert: ${esc(f.reifen.lager)}</span>`:""}</dd>
+    ${f.tankkarte?`<dt>Tankkarte</dt><dd>${esc(f.tankkarte)}</dd>`:""}</dl>
+   <button type="button" class="li" data-go="fzlager:${esc(f.id)}"><span class="dot ${fe.length?"wa":"ok"}"></span><span><b>Lager im Fahrzeug</b><small>${(f.lager&&f.lager.soll||[]).length?(fe.length?fe.length+" Artikel fehlen: "+fe.slice(0,3).map(p=>art[p.nr]||p.nr).join(", ")+(fe.length>3?" …":""):"vollständig"):"noch kein Sortiment hinterlegt"}</small></span><span class="hint">›</span></button>
+  </div>`}).join("")}</div>`:`<div class="panel"><h3>Noch keine Fahrzeuge</h3><p class="hint">Fahrzeug anlegen, einem Monteur zuordnen und das Lager-Sortiment hinterlegen. Der Verbrauch berechnet sich aus den Tankquittungen der Monteur-App (Liter und km-Stand).</p></div>`}
+ </div>`}
+function dFz(id){const f=id==="neu"?{id:"neu",reifen:{}}:Object.assign({reifen:{}},NF.get("fahrzeuge",id)||{});const r=f.reifen||{};
+ const I1=(k,l,typ,v)=>`<label class="f">${l}<input type="${typ||"text"}" data-fzf="${k}" value="${esc(v!=null?v:(f[k]!=null?f[k]:""))}"></label>`;
+ const v=id==="neu"?null:NFFZ.verbrauch(NF.liste("belege"),f);
+ return{title:id==="neu"?"Neues Fahrzeug":`${f.kennzeichen} · ${f.modell||""}`,sub:"Zuordnung, Termine, Reifen",body:`
+  <div class="f2">${I1("kennzeichen","Kennzeichen")}${I1("modell","Modell")}</div>
+  <div class="f2"><label class="f">Fahrer<select data-fzf="fahrer"><option value="">– niemand –</option>${TECHS.filter(t=>t.aktiv!==false).map(t=>`<option value="${t.id}" ${f.fahrer===t.id?"selected":""}>${esc(t.name)}</option>`).join("")}</select></label>${I1("km","km-Stand","number")}</div>
+  <div class="f3">${I1("tuev","HU / TÜV (Monat)","month")}${I1("inspektion","Inspektion fällig","date")}${I1("uvv","UVV-Prüfung fällig","date")}</div>
+  <div class="f2">${I1("leasing","Leasing / Finanzierung")}${I1("leasingEnde","Leasingende","date")}</div>
+  <div class="f2">${I1("versicherung","Versicherung, Schadennummer")}${I1("tankkarte","Tankkarte")}</div>
+  <div class="box"><b>Reifen</b><div class="f3"><label class="f">Montiert<select data-fzr="montiert">${["","Sommer","Winter","Ganzjahr"].map(x=>`<option ${r.montiert===x?"selected":""}>${x}</option>`).join("")}</select></label>
+   <label class="f">Nächster Wechsel<input type="date" data-fzr="wechsel" value="${esc(r.wechsel||"")}"></label><label class="f">Größe<input type="text" data-fzr="groesse" value="${esc(r.groesse||"")}" placeholder="z. B. 215/65 R16 C"></label></div>
+   <label class="f">Eingelagerter Satz liegt bei<input type="text" data-fzr="lager" value="${esc(r.lager||"")}" placeholder="z. B. Autohaus Main-Kinzig, Einlagerungsnr. 4711"></label></div>
+  <label class="f">Notizen<textarea data-fzf="notizen" rows="2">${esc(f.notizen||"")}</textarea></label>
+  ${v&&v.fahrten.length?`<div class="box"><b>Verbrauch je Tankfüllung</b><div class="tbwrap"><table class="tb"><thead><tr><th>Datum</th><th>km-Stand</th><th>Strecke</th><th>Liter</th><th>l/100 km</th></tr></thead><tbody>${v.fahrten.slice().reverse().map(x=>`<tr><td>${fmt(x.datum)}</td><td>${x.km.toLocaleString("de-DE")}</td><td>${x.strecke.toLocaleString("de-DE")} km</td><td>${de(x.liter,1)}</td><td>${de(x.l100,1)} ${x.auffaellig?'<span class="chip wa">auffällig</span>':""}</td></tr>`).join("")}</tbody></table></div><p class="hint" style="margin:0">Aus den Tankquittungen (vollgetankt, mit km-Stand). „Auffällig“ = mehr als 25 % über dem Schnitt.</p></div>`:""}`,
+  foot:`<button type="button" class="btn" data-fzsave="${esc(f.id)}">Speichern</button>${id!=="neu"?`<button type="button" class="btn sec" data-go="fzlager:${esc(f.id)}">Lager</button>`:""}`}}
+function fzSpeichern(id){const neu=id==="neu",nid=neu?neueId():id,f=Object.assign({},NF.get("fahrzeuge",id)||{}),r=Object.assign({},f.reifen||{});
+ document.querySelectorAll("[data-fzf]").forEach(x=>{const k=x.dataset.fzf;f[k]=x.type==="number"?(x.value===""?null:Number(x.value)):x.value.trim()||null});
+ document.querySelectorAll("[data-fzr]").forEach(x=>{r[x.dataset.fzr]=x.value.trim()||null});
+ if(!f.kennzeichen){toast("Bitte Kennzeichen eintragen");return}
+ const dopp=FZ().find(x=>x.fahrer&&x.fahrer===f.fahrer&&x.id!==nid);if(dopp){toast(`${tech(f.fahrer).name} fährt schon ${dopp.kennzeichen}. Dort zuerst den Fahrer ändern.`);return}
+ NF.setze("fahrzeuge",nid,Object.assign(f,{id:nid,reifen:r,lager:f.lager||{soll:[],bestand:{}}}));S.drawer=null;save();render();toast(f.kennzeichen+" gespeichert")}
+function dFzLager(id){const f=NF.get("fahrzeuge",id)||{},l=f.lager||{},art=S.mat;
+ const soll=(S.lagerForm&&S.lagerForm.id===id?S.lagerForm.soll:(S.lagerForm={id,soll:(l.soll||[]).map(p=>Object.assign({},p,{bestand:NFFZ.bestand(l,p)}))}).soll);
+ const zeile=(p,i)=>`<tr data-lz="${i}"><td><select data-lf="nr"><option value="">– Artikel –</option>${art.map(a=>`<option value="${esc(a.nr)}" ${a.nr===p.nr?"selected":""}>${esc(a.nr)} · ${esc(a.bez)}</option>`).join("")}</select></td><td><input type="number" min="0" step="1" data-lf="menge" value="${p.menge!=null?p.menge:""}" aria-label="Soll"></td><td><input type="number" min="0" step="1" data-lf="min" value="${p.min!=null?p.min:""}" aria-label="Mindestmenge"></td><td><input type="number" min="0" step="1" data-lf="bestand" value="${p.bestand!=null?p.bestand:""}" aria-label="Bestand"></td><td>${p.nr&&l.bestellt&&l.bestellt[p.nr]?`<span class="chip wa" title="Mail an den Einkauf am ${fmt(iso(l.bestellt[p.nr]))}">bestellt</span>`:p.nr&&p.bestand!=null&&p.bestand<=Number(p.min||0)?'<span class="chip wa">fehlt</span>':""}</td><td><button type="button" class="ico" data-lagerweg="${i}" aria-label="Zeile entfernen">${I.x}</button></td></tr>`;
+ return{title:`Lager ${f.kennzeichen||""}`,sub:`${f.modell||""}${f.fahrer?" · "+tech(f.fahrer).name:""}`,body:`
+  <p class="hint" style="margin:0">Soll = Menge, die im Fahrzeug liegen soll. Mindestmenge = ab hier wird nachbestellt. Material aus den Berichten wird automatisch vom Bestand abgezogen. Bei Unterschreiten geht eine Mail an den Einkauf.</p>
+  <div class="tbwrap"><table class="tb lagertb"><thead><tr><th>Artikel</th><th>Soll</th><th>Mindestmenge</th><th>Bestand</th><th></th><th></th></tr></thead><tbody>${soll.map(zeile).join("")||'<tr><td colspan="6" class="empty">Noch kein Artikel. Mit „+ Artikel“ das Sortiment anlegen.</td></tr>'}</tbody></table></div>
+  <button type="button" class="btn ghost sm" style="align-self:flex-start" data-lagerneu="1">+ Artikel</button>`,
+  foot:`<button type="button" class="btn" data-lagersave="${esc(id)}">Speichern</button><button type="button" class="btn sec" data-lagervoll="${esc(id)}">Alles aufgefüllt</button>`}}
+function lagerFormLesen(){if(!S.lagerForm)return;document.querySelectorAll("[data-lz]").forEach(tr=>{const p=S.lagerForm.soll[+tr.dataset.lz];if(!p)return;tr.querySelectorAll("[data-lf]").forEach(x=>{const k=x.dataset.lf;p[k]=k==="nr"?x.value:(x.value===""?null:Number(x.value))})})}
+function lagerSpeichern(id,voll){lagerFormLesen();const f=NF.get("fahrzeuge",id)||{},alt=f.lager||{};
+ const gueltig=S.lagerForm.soll.filter(p=>p.nr&&p.menge>0);
+ const soll=gueltig.map(p=>({nr:p.nr,menge:p.menge,min:p.min!=null?p.min:0}));
+ const bestand={};for(const p of gueltig)bestand[p.nr]=voll?p.menge:(p.bestand!=null?p.bestand:p.menge);
+ NF.setze("fahrzeuge",id,{lager:Object.assign({},alt,{soll,bestand})});S.lagerForm=null;S.drawer=null;save();render();toast(voll?"Lager als aufgefüllt vermerkt":"Lager gespeichert")}
 function konflikt(a){const os=S.orders.filter(o=>o.tech===a.tech&&o.date>=a.von&&o.date<=a.bis&&o.status!=="erledigt");
  if(!os.length)return'<span class="hint" style="color:var(--ok)">Keine geplanten Einsätze in diesem Zeitraum.</span>';
  if(a.art==="Block"){const[v,b]=a.zeit.split("–").map(hm);const hit=os.filter(o=>{const s=hm(o.time),e=s+o.dauer*60;return s<b&&e>v});
@@ -1249,7 +1328,7 @@ function slug(n){return n.trim().toLowerCase().replace(/ä/g,"ae").replace(/ö/g
 /* ---------- Drawer ---------- */
 function drawer(){setTimeout(()=>translate($("#layer")),0);
  const L=$("#layer");if(!S.drawer){L.innerHTML="";return}
- const [k,id]=S.drawer.split(/:(.*)/);const d=k==="anlform"?dAnlForm(id):k==="kunde"?dKunde(id):k==="aufk"?dAufk(id):k==="order"?dOrder(id):k==="anl"?dAnl(id):k==="neu"?dNeu(id):k==="stat"?dStat():k==="rec"?dRec(id):k==="csv"?dCsv(id):dBer(id);
+ const [k,id]=S.drawer.split(/:(.*)/);const d=k==="anlform"?dAnlForm(id):k==="kunde"?dKunde(id):k==="aufk"?dAufk(id):k==="order"?dOrder(id):k==="anl"?dAnl(id):k==="neu"?dNeu(id):k==="stat"?dStat():k==="rec"?dRec(id):k==="csv"?dCsv(id):k==="fz"?dFz(id):k==="fzlager"?dFzLager(id):k==="mahn"?dMahn(id):dBer(id);
  L.innerHTML=`<div class="scrim" data-close="1"></div><div class="drawer" role="dialog" aria-label="${esc(d.title)}"><header><div><h2>${esc(d.title)}</h2><p>${esc(d.sub)}</p></div><button type="button" class="ico" data-close="1" aria-label="Schließen" style="margin-left:auto">${I.x}</button></header><div class="body">${d.body}</div><footer>${d.foot}</footer></div>`;
 }
 
@@ -1384,7 +1463,7 @@ const EN={"Auftrag":"Job","Arbeitszeit":"Working time","Fahrzeit":"Travel time",
 function translate(root){if(S.cfg.lang!=="en"||!root)return;const w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);let n;const L=[];while(n=w.nextNode())L.push(n);
  L.forEach(n=>{const t=n.nodeValue,k=t.trim();if(k&&EN[k]!==undefined)n.nodeValue=t.replace(k,EN[k])})}
 /* ---------- Render ---------- */
-function render(){if(!S.anl)return;viewer();reViewer();nav();try{({dash:vDash,plan:vPlan,wart:vWart,anl:vAnl,ber:vBer,re:vRe,team:vTeam,set:vSet,adm:vAdm}[S.view]||vDash)()}finally{}drawer();["#side","#top","#view","#layer"].forEach(x=>translate($(x)))}
+function render(){if(!S.anl)return;viewer();reViewer();nav();try{({dash:vDash,plan:vPlan,wart:vWart,anl:vAnl,ber:vBer,re:vRe,team:vTeam,fz:vFz,set:vSet,adm:vAdm}[S.view]||vDash)()}finally{}drawer();["#side","#top","#view","#layer"].forEach(x=>translate($(x)))}
 
 /* ---------- Ereignisse ---------- */
 document.addEventListener("click",e=>{
@@ -1397,7 +1476,7 @@ document.addEventListener("click",e=>{
  if(d.remind){const r=S.rech.find(x=>x.re===d.remind);r.erinnert=TODAY;save();render();toast("Erinnerung vermerkt. Bitte an "+anl(r.nv).mail+" senden, der automatische Versand folgt.");return}
  if(d.refilter){S.refilter=d.refilter;save();render();return}
  if(d.href){location.href=d.href;return}
- if(d.close){S.drawer=null;S.af=null;S.kf=null;save();drawer();return}
+ if(d.close){S.drawer=null;S.af=null;S.kf=null;S.lagerForm=null;save();drawer();return}
  if(d.kunde&&!t.matches("button")){S.drawer="kunde:"+d.kunde;S.kf=null;save();drawer();return}
  if(d.anltab){S.anlTab=d.anltab;save();render();return}
  if(d.afk){const k=NF.get("kunden",d.afk)||{};S.af=Object.assign(afNeu("neu"),{_for:"neu",kunde:d.afk,k_name1:k.name1||"",k_name2:k.name2||"",k_str:k.str||"",k_plz:k.plz||"",k_ort:k.ort||"",k_tel:k.tel||"",k_mail:k.mail||""});S.drawer="anlform:neu";save();drawer();return}
@@ -1459,6 +1538,11 @@ document.addEventListener("click",e=>{
 
  if(d.stab){S.setTab=d.stab;S.emp=null;save();render();return}
  if(d.schema&&t.closest(".schemawahl")){NFDESIGN.setzeSchema(d.schema);render();return}
+ if(d.fzsave){fzSpeichern(d.fzsave);return}
+ if(d.lagerneu){lagerFormLesen();S.lagerForm.soll.push({nr:"",menge:1,min:0});drawer();return}
+ if(d.lagerweg!=null){lagerFormLesen();S.lagerForm.soll.splice(+d.lagerweg,1);drawer();return}
+ if(d.lagersave){lagerSpeichern(d.lagersave,false);return}
+ if(d.lagervoll){lagerSpeichern(d.lagervoll,true);return}
  if(d.hadd){const[nv,auf]=d.hadd.split("|"),tx=($("#hwNeu").value||"").trim();if(tx.length<3){toast("Bitte Hinweis eintragen");return}
   const neu=hinweiseVon(nv).concat([{id:neueId(),text:tx,von:ME().name,datum:new Date().toISOString(),auftrag:auf||null}]);NF.setze("anlagen",nv,{hinweise:neu});aufbauen();drawer();render();toast("Hinweis gespeichert, der Monteur sieht ihn in der App");return}
  if(d.hdone){const[nv,hid]=d.hdone.split("|");NF.setze("anlagen",nv,{hinweise:hinweiseVon(nv).map(h=>h.id===hid?Object.assign({},h,{erledigt:{von:ME().name,datum:new Date().toISOString()}}):h)});aufbauen();drawer();render();toast("Hinweis als erledigt markiert");return}
@@ -1504,6 +1588,7 @@ document.addEventListener("click",e=>{
 });
 document.addEventListener("click",e=>{const c=e.target.closest("[data-cell]");if(!c||!S.sel||e.target.closest("[data-order]"))return;const[t,d]=c.dataset.cell.split("|");const id=S.sel;S.sel=null;assign(id,t,d)});
 document.addEventListener("change",e=>{const t=e.target;
+ if(t.id==="unterDatei"&&t.files&&t.files.length){unterlagenHinzu(t.dataset.unv,t.files);return}
 
  if(t.id==="dbImp"&&t.files[0]){const rd=new FileReader();rd.onload=()=>csvImport(S.dbSel,String(rd.result));rd.readAsText(t.files[0],"utf-8");return}
  if(t.dataset.af&&S.af){S.af[t.dataset.af]=t.value;if(t.dataset.af==="kunde"){const k=t.value==="neu"?{}:NF.get("kunden",t.value)||{};Object.assign(S.af,{k_name1:k.name1||"",k_name2:k.name2||"",k_str:k.str||"",k_plz:k.plz||"",k_ort:k.ort||"",k_tel:k.tel||"",k_mail:k.mail||""})}if(t.tagName==="SELECT")setTimeout(drawer,0);return}
@@ -1517,7 +1602,7 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape"&&(S.drawer||S.sel||S
 (async()=>{
  $("#view").innerHTML='<div class="lade">N-Flow lädt …</div>';
  let ich=null;
- try{ich=await NF.start({sammlungen:["kunden","anlagen","auftraege","berichte","rechnungen","abwesenheiten","belege","zeiten","artikel","arbeitsmittel","einstellungen"],kurz:true,nummern:DRUCK?[]:["A","NV","K"]})}
+ try{ich=await NF.start({sammlungen:["kunden","anlagen","auftraege","berichte","rechnungen","abwesenheiten","belege","zeiten","artikel","arbeitsmittel","einstellungen","fahrzeuge","mahnungen"],kurz:true,nummern:DRUCK?[]:["A","NV","K"]})}
  catch(e){if(DRUCK){window.NF_DRUCK={fertig:true,fehler:e.message};return}$("#view").innerHTML=`<div class="lade">${esc(e.message)}</div>`;return}
  if(!ich){if(DRUCK)window.NF_DRUCK={fertig:true,fehler:"Druckmodus nicht angemeldet"};return}
  if(DRUCK){RECHTE=ich.rechte||{};S.voll={};aufbauen();drucken(DRUCK,DRUCK_Q.get("id")||"");return}

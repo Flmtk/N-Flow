@@ -33,13 +33,22 @@ Unter **API-Berechtigungen** steht bereits `Microsoft Graph → User.Read`. Das 
 
 SharePoint-Rechte (Berichte und Rechnungen ablegen) kommen erst in Etappe 3 dazu.
 
-## 4. E-Mails aus N-Flow senden (Terminbestätigungen)
+## 4. E-Mails aus N-Flow senden
 
-1. **Postfach anlegen:** admin.microsoft.com → Teams & Gruppen → **Freigegebene Postfächer** → Postfach hinzufügen, Name `NOVIS Service`, Adresse `service@novis-anlagentechnik.de`. Kostet keine Lizenz. Dich und Jens als Mitglieder eintragen, dann seht ihr Antworten von Kunden in Outlook.
-2. **Berechtigung:** Entra → App-Registrierungen → N-Flow → **API-Berechtigungen → Berechtigung hinzufügen → Microsoft Graph → Anwendungsberechtigungen → `Mail.Send`** → Hinzufügen → **Administratorzustimmung erteilen**.
-3. In der `.env` steht `MAIL_ABSENDER=service@novis-anlagentechnik.de`. Danach `docker compose up -d`.
+N-Flow verschickt aus zwei Postfächern, jeweils mit Logo und Impressum:
 
-> Vor dem Echtbetrieb einschränken, dass N-Flow nur aus diesem Postfach senden darf (Exchange-Zugriffsrichtlinie für Anwendungen). Ohne Einschränkung könnte die App technisch aus jedem Postfach der Firma senden.
+| Postfach | Wofür |
+|---|---|
+| `info@novis-anlagentechnik.de` | Terminbestätigungen an Kunden, interne Hinweise (Nachbestellung an einkauf@, überfällige Rechnungen an rechnung@) |
+| `rechnung@novis-anlagentechnik.de` | Rechnungen und Mahnungen an Kunden |
+
+1. **Postfächer anlegen:** admin.microsoft.com → Teams & Gruppen → **Freigegebene Postfächer** → `info@` und `rechnung@` (dazu `einkauf@`). Kostet keine Lizenz. Dich und Jens als Mitglieder eintragen, dann seht ihr Antworten der Kunden in Outlook.
+2. **Berechtigung:** Entra → App-Registrierungen → N-Flow → **API-Berechtigungen → Microsoft Graph → Anwendungsberechtigungen → `Mail.Send`** → **Administratorzustimmung erteilen**.
+3. Andere Adressen? In der `.env` `MAIL_VON_INFO` bzw. `MAIL_VON_RECHNUNG` setzen, danach `sh ops/update.sh`.
+
+Telefonnummer, IBAN, HRB und USt-IdNr. im Impressum der Mails kommen aus N-Flow › Einstellungen › Allgemein.
+
+> Vor dem Echtbetrieb einschränken, dass N-Flow nur aus diesen Postfächern senden darf (Exchange-Zugriffsrichtlinie für Anwendungen).
 
 ## 5. Live-Adresse später ergänzen
 

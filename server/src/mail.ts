@@ -4,15 +4,15 @@ import { sql } from "./db.js";
 import { protokolliere } from "./protokoll.js";
 import { brauche } from "./sitzung.js";
 import { pdfErzeugen } from "./druck.js";
+import { VON_INFO, VON_RECHNUNG, esc, firmaLaden, logoPng, mailHtml } from "./mailvorlage.js";
 
 /**
- * E-Mail-Versand über Microsoft Graph aus dem Service-Postfach.
+ * E-Mail-Versand über Microsoft Graph: Terminbestätigungen von info@, Rechnungen und Mahnungen von rechnung@.
  * Voraussetzung in Entra: App „N-Flow“ → API-Berechtigungen → Microsoft Graph →
  * Anwendungsberechtigung „Mail.Send“ mit Administratorzustimmung (siehe docs/entra-app.md).
  */
 
 type Daten = Record<string, unknown>;
-const ABSENDER = () => (process.env.MAIL_ABSENDER || "service@novis-anlagentechnik.de").trim();
 
 let token: { wert: string; bis: number } | null = null;
 export async function graphToken(): Promise<string> {
@@ -32,31 +32,37 @@ export async function graphToken(): Promise<string> {
 }
 
 interface Anhang { name: string; typ: string; inhalt: string | Buffer }
-export async function mailSenden(an: string, betreff: string, text: string, anhaenge: Anhang[] = []): Promise<void> {
+interface Mail { von: string; an: string; betreff: string; html: string; anhaenge?: Anhang[] }
+
+/** Sendet eine HTML-Mail aus dem angegebenen Postfach (info@ oder rechnung@), mit Logo als eingebettetem Bild. */
+export async function mailSenden(m: Mail): Promise<void> {
   if (!microsoftAktiv) throw new Error("Microsoft ist nicht eingerichtet.");
-  const r = await fetch(`https://graph.microsoft.com/v1.0/users/${encodeURIComponent(ABSENDER())}/sendMail`, {
+  const bild = logoPng();
+  const anlagen = (m.anhaenge ?? []).map((a) => ({
+    "@odata.type": "#microsoft.graph.fileAttachment", name: a.name, contentType: a.typ,
+    contentBytes: (typeof a.inhalt === "string" ? Buffer.from(a.inhalt, "utf8") : a.inhalt).toString("base64"),
+  }));
+  if (bild && m.html.includes("cid:novislogo")) {
+    anlagen.push({ "@odata.type": "#microsoft.graph.fileAttachment", name: "novis-logo.png", contentType: "image/png", contentBytes: bild.toString("base64"), isInline: true, contentId: "novislogo" } as never);
+  }
+  const r = await fetch(`https://graph.microsoft.com/v1.0/users/${encodeURIComponent(m.von)}/sendMail`, {
     method: "POST",
     headers: { authorization: `Bearer ${await graphToken()}`, "content-type": "application/json" },
     body: JSON.stringify({
-      message: {
-        subject: betreff,
-        body: { contentType: "Text", content: text },
-        toRecipients: [{ emailAddress: { address: an } }],
-        attachments: anhaenge.map((a) => ({
-          "@odata.type": "#microsoft.graph.fileAttachment", name: a.name, contentType: a.typ,
-          contentBytes: (typeof a.inhalt === "string" ? Buffer.from(a.inhalt, "utf8") : a.inhalt).toString("base64"),
-        })),
-      },
+      message: { subject: m.betreff, body: { contentType: "HTML", content: m.html }, toRecipients: [{ emailAddress: { address: m.an } }], attachments: anlagen },
       saveToSentItems: true,
     }),
   });
   if (!r.ok) {
     const t = await r.text();
     if (r.status === 403) throw new Error("Microsoft erlaubt den Versand noch nicht. In Entra fehlt die Anwendungsberechtigung „Mail.Send“ mit Administratorzustimmung.");
-    if (r.status === 404) throw new Error(`Das Postfach ${ABSENDER()} gibt es in Microsoft 365 nicht.`);
+    if (r.status === 404) throw new Error(`Das Postfach ${m.von} gibt es in Microsoft 365 nicht. Bitte als freigegebenes Postfach anlegen.`);
     throw new Error(`Versand fehlgeschlagen (${r.status}): ${t.slice(0, 200)}`);
   }
 }
+
+const fmt = (d: unknown) => new Date(String(d) + "T12:00").toLocaleDateString("de-DE");
+const euro = (n: unknown) => Number(n ?? 0).toLocaleString("de-DE", { style: "currency", currency: "EUR" });
 
 const ARTTEXT: Record<string, string> = {
   Wartung: "die Wartung Ihrer Heizungsanlage", Störung: "die Behebung der Störung an Ihrer Heizungsanlage",
@@ -93,40 +99,26 @@ export async function terminbestaetigung(auftragId: string) {
   const geraet = [a.d.hersteller, a.d.typ].filter(Boolean).join(" ") || String(a.d.ger ?? "");
   const adresse = `${a.d.str}, ${a.d.plz} ${a.d.ort}`;
   const betreff = `Terminbestätigung – ${d.art} am ${new Date(String(d.date) + "T12:00").toLocaleDateString("de-DE")}`;
-  const text = `${anrede}
-
-vielen Dank für Ihr Vertrauen. Gerne bestätigen wir Ihnen den Termin für ${ARTTEXT[String(d.art)] ?? "den Einsatz an Ihrer Heizungsanlage"}:
-
-Datum: ${datum}
-Ankunft unseres Technikers: zwischen ${d.time} und ${bis} Uhr
-Techniker: ${t?.name ?? "wird noch festgelegt"}
-Anlage: ${geraet}
-Adresse: ${adresse}
-
-Wir bitten Sie, den Zugang zum Heizraum zu ermöglichen. Sollte der Termin für Sie nicht passen, geben Sie uns bitte kurz Bescheid. Wir finden gemeinsam gern einen neuen Termin.
-
-Über die angehängte Kalendereinladung können Sie den Termin direkt in Ihren Kalender übernehmen.
-
-Mit freundlichen Grüßen
-Ihr Service-Team der NOVIS Anlagentechnik
-
-—
-NOVIS Anlagentechnik GmbH i. G.
-Bornweg 34a · 63599 Biebergemünd
-Telefon: ${tel || "Service-Hotline (Nummer folgt)"}
-E-Mail: ${ABSENDER()}
-www.novis-anlagentechnik.de`;
+  const firmaD = await firmaLaden();
+  const html = mailHtml({
+    titel: `Terminbestätigung · ${d.art}`, anrede,
+    absaetze: [`vielen Dank für Ihr Vertrauen. Gerne bestätigen wir Ihnen den Termin für ${esc(ARTTEXT[String(d.art)] ?? "den Einsatz an Ihrer Heizungsanlage")}:`],
+    fakten: [["Datum", esc(datum)], ["Ankunft", `zwischen ${esc(d.time)} und ${esc(bis)} Uhr`], ["Techniker", esc(t?.name ?? "wird noch festgelegt")], ["Anlage", esc(geraet)], ["Adresse", esc(adresse)]],
+    nachher: ["Wir bitten Sie, den Zugang zum Heizraum zu ermöglichen. Sollte der Termin für Sie nicht passen, antworten Sie einfach auf diese E-Mail oder rufen Sie uns an. Wir finden gemeinsam gern einen neuen Termin.",
+      "Über die angehängte Kalendereinladung können Sie den Termin direkt in Ihren Kalender übernehmen."],
+    absender: VON_INFO(), firma: firmaD,
+  });
   const dt = String(d.date).replace(/-/g, ""), st = String(d.time).replace(":", "") + "00", en = bis.replace(":", "") + "00";
   const stempel = new Date().toISOString().replace(/[-:]/g, "").slice(0, 15) + "Z";
   const ics = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//NOVIS Anlagentechnik//N-Flow//DE", "METHOD:PUBLISH", "BEGIN:VEVENT",
     `UID:${d.id}@novis-anlagentechnik.de`, `DTSTAMP:${stempel}`, `SEQUENCE:${Math.floor(Date.now() / 1000)}`,
     `DTSTART;TZID=Europe/Berlin:${dt}T${st}`, `DTEND;TZID=Europe/Berlin:${dt}T${en}`,
     `SUMMARY:${icsText(`NOVIS Techniker-Besuch: ${d.art}`)}`, `LOCATION:${icsText(adresse)}`,
-    `DESCRIPTION:${icsText(`Ankunft unseres Technikers zwischen ${d.time} und ${bis} Uhr. Techniker: ${t?.name ?? "folgt"}. Anlage: ${geraet}. Fragen: ${ABSENDER()}${tel ? ", " + tel : ""}`)}`,
-    `ORGANIZER;CN=NOVIS Service:mailto:${ABSENDER()}`,
+    `DESCRIPTION:${icsText(`Ankunft unseres Technikers zwischen ${d.time} und ${bis} Uhr. Techniker: ${t?.name ?? "folgt"}. Anlage: ${geraet}. Fragen: ${VON_INFO()}${tel ? ", " + tel : ""}`)}`,
+    `ORGANIZER;CN=NOVIS Anlagentechnik:mailto:${VON_INFO()}`,
     "BEGIN:VALARM", "TRIGGER:-P1D", "ACTION:DISPLAY", `DESCRIPTION:${icsText("Morgen: NOVIS " + d.art)}`, "END:VALARM",
     "END:VEVENT", "END:VCALENDAR"].join("\r\n") + "\r\n";
-  return { betreff, text, ics, an: String(kd.mail ?? ""), auftrag: d };
+  return { betreff, html, ics, an: String(kd.mail ?? ""), auftrag: d };
 }
 
 export async function mailRouten(app: FastifyInstance): Promise<void> {
@@ -136,7 +128,7 @@ export async function mailRouten(app: FastifyInstance): Promise<void> {
       const test = Boolean(anfrage.body?.an);
       const an = (anfrage.body?.an || m.an).trim();
       if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(an)) return antwort.code(400).send({ fehler: "Beim Kunden ist keine gültige E-Mail-Adresse hinterlegt." });
-      await mailSenden(an, (test ? "[Test] " : "") + m.betreff, m.text, [{ name: "Termin.ics", typ: "text/calendar", inhalt: m.ics }]);
+      await mailSenden({ von: VON_INFO(), an, betreff: (test ? "[Test] " : "") + m.betreff, html: m.html, anhaenge: [{ name: "Termin.ics", typ: "text/calendar", inhalt: m.ics }] });
       if (!test) {
         await sql`update daten set daten = daten || ${sql.json({ bestaetigt: new Date().toISOString(), bestaetigtAn: an })},
           version = version + 1, geaendert_am = clock_timestamp(), geaendert_von = ${anfrage.benutzer!.name}
@@ -164,29 +156,17 @@ export async function mailRouten(app: FastifyInstance): Promise<void> {
       // Microsoft nimmt Mails bis etwa 3 MB an; bei vielen Fotos ohne Fotoseite senden
       let pdf = await pdfErzeugen("rechnung", re);
       if (pdf.length > 2.8 * 1024 * 1024) pdf = await pdfErzeugen("rechnung", re, { ohneFotos: true });
-      const fmt = (d: unknown) => new Date(String(d) + "T12:00").toLocaleDateString("de-DE");
       const faellig = new Date(String(r.datum) + "T12:00"); faellig.setDate(faellig.getDate() + 14);
-      const betrag = Number(r.brutto ?? 0).toLocaleString("de-DE", { style: "currency", currency: "EUR" });
-      const [allg] = await sql<{ d: Daten }[]>`select daten as d from daten where sammlung = 'einstellungen' and id = 'allgemein'`;
-      const tel = ((allg?.d?.firma ?? {}) as Record<string, string>).tel || "";
-      const text = `${anredeFuer(kd)}
-
-vielen Dank für Ihren Auftrag. Anbei erhalten Sie unsere Rechnung ${re} vom ${fmt(r.datum)} über ${betrag} für die Arbeiten an Ihrer Heizungsanlage am ${fmt(r.leist)}. Der Servicebericht ${r.sb ?? ""} mit Messblatt ist der Rechnung als Anlage beigefügt.
-
-Bitte überweisen Sie den Betrag bis zum ${faellig.toLocaleDateString("de-DE")} unter Angabe der Rechnungsnummer.
-
-Bei Fragen sind wir gern für Sie da.
-
-Mit freundlichen Grüßen
-Ihr Service-Team der NOVIS Anlagentechnik
-
-—
-NOVIS Anlagentechnik GmbH i. G.
-Bornweg 34a · 63599 Biebergemünd
-Telefon: ${tel || "Service-Hotline (Nummer folgt)"}
-E-Mail: ${ABSENDER()}
-www.novis-anlagentechnik.de`;
-      await mailSenden(an, `${test ? "[Test] " : ""}Rechnung ${re} – NOVIS Anlagentechnik`, text, [{ name: `${re}.pdf`, typ: "application/pdf", inhalt: pdf }]);
+      const firmaD = await firmaLaden();
+      const html = mailHtml({
+        titel: `Ihre Rechnung ${re}`, anrede: anredeFuer(kd),
+        absaetze: [`vielen Dank für Ihren Auftrag. Anbei erhalten Sie unsere Rechnung für die Arbeiten an Ihrer Heizungsanlage. Der Servicebericht ${esc(r.sb ?? "")} mit Messblatt ist als Anlage beigefügt.`],
+        fakten: [["Rechnungsnummer", esc(re)], ["Rechnungsdatum", fmt(r.datum)], ["Leistungsdatum", fmt(r.leist)], ["Betrag", euro(r.brutto)], ["Zahlbar bis", faellig.toLocaleDateString("de-DE")],
+          ...(firmaD.iban ? [["IBAN", esc(firmaD.iban)] as [string, string]] : [])],
+        nachher: ["Bitte geben Sie bei der Überweisung die Rechnungsnummer an. Bei Fragen zur Rechnung antworten Sie einfach auf diese E-Mail."],
+        absender: VON_RECHNUNG(), firma: firmaD,
+      });
+      await mailSenden({ von: VON_RECHNUNG(), an, betreff: `${test ? "[Test] " : ""}Rechnung ${re} – NOVIS Anlagentechnik`, html, anhaenge: [{ name: `${re}.pdf`, typ: "application/pdf", inhalt: pdf }] });
       if (!test) {
         await sql`update daten set daten = daten || ${sql.json({ versendet: new Date().toISOString(), versendetAn: an })},
           version = version + 1, geaendert_am = clock_timestamp(), geaendert_von = ${anfrage.benutzer!.name}
@@ -214,27 +194,18 @@ www.novis-anlagentechnik.de`;
       const pdf = await pdfErzeugen("mahnung", id);
       const re = String(m.re);
       const rechnung = await pdfErzeugen("rechnung", re, { ohneFotos: true });
-      const fmt = (d: unknown) => new Date(String(d) + "T12:00").toLocaleDateString("de-DE");
-      const betrag = Number(m.offen ?? 0).toLocaleString("de-DE", { style: "currency", currency: "EUR" });
-      const [allg] = await sql<{ d: Daten }[]>`select daten as d from daten where sammlung = 'einstellungen' and id = 'allgemein'`;
-      const tel = ((allg?.d?.firma ?? {}) as Record<string, string>).tel || "";
-      const text = `${anredeFuer(kd)}
-
-anbei erhalten Sie unsere ${m.name} zur Rechnung ${re}. Der offene Betrag von ${betrag} ist bis zum ${fmt(m.frist)} fällig. Die Rechnung liegt zur Übersicht noch einmal bei.
-
-Sollten Sie die Zahlung bereits veranlasst haben, betrachten Sie dieses Schreiben bitte als gegenstandslos. Bei Fragen sind wir gern für Sie da.
-
-Mit freundlichen Grüßen
-Ihr Service-Team der NOVIS Anlagentechnik
-
-—
-NOVIS Anlagentechnik GmbH i. G.
-Bornweg 34a · 63599 Biebergemünd
-Telefon: ${tel || "Service-Hotline (Nummer folgt)"}
-E-Mail: ${ABSENDER()}
-www.novis-anlagentechnik.de`;
-      await mailSenden(an, `${test ? "[Test] " : ""}${m.name} zur Rechnung ${re} – NOVIS Anlagentechnik`, text,
-        [{ name: `${re} ${m.name}.pdf`, typ: "application/pdf", inhalt: pdf }, { name: `${re}.pdf`, typ: "application/pdf", inhalt: rechnung }]);
+      const firmaD = await firmaLaden();
+      const html = mailHtml({
+        titel: `${String(m.name)} zur Rechnung ${re}`, anrede: anredeFuer(kd),
+        absaetze: [Number(m.stufe) === 1
+          ? `sicher ist es Ihrer Aufmerksamkeit entgangen: Für unsere Rechnung ${esc(re)} konnten wir bisher keinen Zahlungseingang feststellen. Anbei erhalten Sie unsere Zahlungserinnerung, die Rechnung liegt zur Übersicht noch einmal bei.`
+          : `leider konnten wir für unsere Rechnung ${esc(re)} trotz unserer bisherigen Schreiben noch keinen Zahlungseingang feststellen. Anbei erhalten Sie unsere ${esc(m.name)}, die Rechnung liegt zur Übersicht noch einmal bei.`],
+        fakten: [["Rechnung", esc(re)], ["Offener Betrag", euro(m.offen)], ["Zahlbar bis", fmt(m.frist)], ...(firmaD.iban ? [["IBAN", esc(firmaD.iban)] as [string, string]] : [])],
+        nachher: ["Sollten Sie die Zahlung bereits veranlasst haben, betrachten Sie dieses Schreiben bitte als gegenstandslos. Bei Fragen antworten Sie einfach auf diese E-Mail."],
+        absender: VON_RECHNUNG(), firma: firmaD,
+      });
+      await mailSenden({ von: VON_RECHNUNG(), an, betreff: `${test ? "[Test] " : ""}${m.name} zur Rechnung ${re} – NOVIS Anlagentechnik`, html,
+        anhaenge: [{ name: `${re} ${m.name}.pdf`, typ: "application/pdf", inhalt: pdf }, { name: `${re}.pdf`, typ: "application/pdf", inhalt: rechnung }] });
       if (!test) {
         await sql`update daten set daten = daten || ${sql.json({ versendet: new Date().toISOString(), versendetAn: an })},
           version = version + 1, geaendert_am = clock_timestamp(), geaendert_von = ${anfrage.benutzer!.name}

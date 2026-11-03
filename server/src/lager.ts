@@ -1,5 +1,6 @@
 import { sql } from "./db.js";
 import { mailSenden } from "./mail.js";
+import { VON_INFO, esc, firmaLaden, mailHtml } from "./mailvorlage.js";
 
 /**
  * Fahrzeuglager: Jedes Fahrzeug hat einen Soll-Bestand (Artikel, Soll-Menge, Mindestmenge).
@@ -86,20 +87,17 @@ export async function nachbestellungPruefen(fahrzeugId: string, nachHandaenderun
     const [m] = await sql<{ name: string }[]>`select name from mitarbeiter where id::text = ${String(fz.fahrer ?? "")}`;
     const zeilen = alle.map((p) => {
       const b = bestandVon(lager, p), nach = Math.max(0, Number(p.menge) - b);
-      return `${neu.includes(p) ? "NEU  " : "     "}${p.nr.padEnd(14)} ${bez(p.nr).slice(0, 38).padEnd(38)} Bestand ${String(b).padStart(4)}  Soll ${String(p.menge).padStart(4)}  → bestellen ${nach}`;
+      return [neu.includes(p) ? `<b style="color:#E9660F">neu</b>` : "", esc(p.nr), esc(bez(p.nr)), String(b), String(p.menge), `<b>${nach}</b>`];
     });
-    const text = `Hallo Einkauf,
-
-im Fahrzeug ${fz.kennzeichen ?? ""} (${fz.modell ?? ""}${m ? ", " + m.name : ""}) wird Material knapp. Bitte nachbestellen:
-
-${zeilen.join("\n")}
-
-„NEU“ = seit der letzten Meldung unter die Mindestmenge gefallen.
-Nach dem Auffüllen bitte in N-Flow unter Fahrzeuge › ${fz.kennzeichen ?? ""} › Lager „Aufgefüllt“ tippen.
-
-N-Flow`;
+    const html = mailHtml({
+      titel: `Nachbestellen für ${String(fz.kennzeichen ?? "Fahrzeug")}`, anrede: "Hallo Einkauf,",
+      absaetze: [`im Fahrzeug <b>${esc(fz.kennzeichen ?? "")}</b> (${esc(fz.modell ?? "")}${m ? ", " + esc(m.name) : ""}) wird Material knapp. Bitte nachbestellen:`],
+      tabelle: { kopf: ["", "Artikel", "Bezeichnung", "Bestand", "Soll", "Bestellen"], zeilen, rechts: [3, 4, 5] },
+      nachher: ["„neu“ = seit der letzten Meldung unter die Mindestmenge gefallen. Nach dem Auffüllen bitte in N-Flow unter Fahrzeuge › Lager „Aufgefüllt“ tippen."],
+      gruss: "N-Flow", absender: VON_INFO(), firma: await firmaLaden(), intern: true,
+    });
     try {
-      await mailSenden(EINKAUF(), `Nachbestellen: ${neu.length} Artikel für ${fz.kennzeichen ?? "Fahrzeug"}`, text);
+      await mailSenden({ von: VON_INFO(), an: EINKAUF(), betreff: `Nachbestellen: ${neu.length} Artikel für ${fz.kennzeichen ?? "Fahrzeug"}`, html });
       for (const p of neu) bestellt[p.nr] = new Date().toISOString();
       geaendert = true;
     } catch (e) {

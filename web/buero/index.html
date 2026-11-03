@@ -529,7 +529,7 @@ const order=id=>S.orders.find(o=>o.id===id);
 
 /* ---------- Einstellungen: Standardwerte (Preise aus Stundensatz-Kalkulation und Formular K-01) ---------- */
 function defCfg(){return{lang:"de",theme:"system",user:"G-01",
- firma:{tel:"",mail:"service@novis-anlagentechnik.de",iban:"",ust:"",hrb:""},
+ firma:{tel:"",mail:"info@novis-anlagentechnik.de",iban:"",ust:"",hrb:""},
  noti:{push:true,mail:true,ev:{stoer:true,ber:true,antrag:true,rech:true,absage:true,pruef:true}},
  zyk:{tag:{on:true,zeit:"17:30"},woche:{on:true,tag:"Freitag",zeit:"14:00"},monat:{on:false,tag:"1"},empf:{"G-01":true,"G-02":true},inh:{einsatz:true,umsatz:true,op:true,wartung:true,auslast:true,warn:true}},
  alert:{ueber:{on:true,tage:7},op:{on:true,betrag:2000},minus:{on:true,betrag:50},plan:{on:true,proz:20},pruef:{on:true,tage:30}},
@@ -797,7 +797,7 @@ function dOrder(id){
    <label class="f">Datum<input type="date" id="o_date" value="${o.date||""}"></label>
    <label class="f">Uhrzeit<input type="time" id="o_time" value="${o.time||""}"></label></div>
   <a class="btn sec sm" style="align-self:flex-start;text-decoration:none" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(a.str+", "+a.plz+" "+a.ort)}" target="_blank" rel="noopener">Adresse in Google Maps</a>
-  ${a.intern?'<p class="hint">Interne Tätigkeit: keine Terminbestätigung, keine Rechnung.</p>':`<div><b style="font-size:14px">Terminbestätigung an ${esc(a.mail)}</b><p class="hint">Wird vom Service-Postfach gesendet, mit Kalendereinladung im Anhang.</p>
+  ${a.intern?'<p class="hint">Interne Tätigkeit: keine Terminbestätigung, keine Rechnung.</p>':`<div><b style="font-size:14px">Terminbestätigung an ${esc(a.mail)}</b><p class="hint">Wird von info@novis-anlagentechnik.de gesendet, mit Kalendereinladung im Anhang. Antworten des Kunden landen dort.</p>
   ${o.bestaetigt?`<span class="chip ok" style="align-self:flex-start">gesendet am ${fmt(iso(o.bestaetigt))} an ${esc(o.bestaetigtAn||"")}</span>`:""}
   <div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-tbsend="${o.id}" ${o.date&&o.time&&a.mail?"":"disabled"}>${o.bestaetigt?"Erneut senden":"Terminbestätigung senden"}</button><button type="button" class="btn sec sm" data-copymail="1">Text kopieren</button></div>
   ${o.date&&o.time?"":'<p class="hint">Erst Termin eintragen und speichern, dann senden.</p>'}

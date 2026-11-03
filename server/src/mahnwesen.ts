@@ -1,5 +1,6 @@
 import { sql } from "./db.js";
 import { mailSenden } from "./mail.js";
+import { VON_INFO, esc, firmaLaden, mailHtml } from "./mailvorlage.js";
 
 /**
  * Jeden Morgen um 7:30 Uhr: Mail an rechnung@ mit allen Rechnungen, die neu überfällig sind
@@ -23,7 +24,7 @@ export async function mahnPruefung(heute = new Date().toLocaleDateString("sv-SE"
   const mahn = await sql<{ d: Daten }[]>`select daten as d from daten where sammlung = 'mahnungen' and not geloescht`;
   const [g] = await sql<{ wert: Record<string, number> }[]>`select wert from einstellungen where schluessel = 'mahn_gemeldet'`;
   const gemeldet: Record<string, number> = { ...(g?.wert ?? {}) };
-  const zeilen: string[] = [];
+  const zeilen: string[][] = [];
   for (const r of rech) {
     const faellig = plusTage(String(r.d.datum), ZIEL);
     if (faellig >= heute) continue;
@@ -41,7 +42,8 @@ export async function mahnPruefung(heute = new Date().toLocaleDateString("sv-SE"
       from daten a left join daten k on k.sammlung = 'kunden' and k.id = a.daten->>'knr'
       where a.sammlung = 'anlagen' and a.id = ${String(r.d.nv ?? "")}`;
     const tage = Math.round((Date.parse(heute) - Date.parse(faellig)) / 864e5);
-    zeilen.push(`${r.id}  ${(a?.kunde ?? "").slice(0, 34).padEnd(34)}  ${euro(Number(r.d.brutto ?? 0)).padStart(12)}  seit ${deDatum(faellig)} überfällig (${tage} T)${naechste ? "  →  " + naechste + " fällig" : M.length ? "  · " + M[M.length - 1].name + " vom " + deDatum(String(M[M.length - 1].datum)) : ""}`);
+    zeilen.push([`<b>${esc(r.id)}</b>`, esc(a?.kunde ?? ""), euro(Number(r.d.brutto ?? 0)), `${deDatum(faellig)}<br><span style="color:#6A6A67">${tage} Tage</span>`,
+      naechste ? `<b style="color:#B3261E">${esc(naechste)} fällig</b>` : M.length ? `${esc(M[M.length - 1].name)} vom ${deDatum(String(M[M.length - 1].datum))}` : "überfällig"]);
   }
   // bezahlte oder gelöschte Rechnungen aus der Merkliste nehmen
   const offen = new Set(rech.map((r) => r.id));
@@ -49,16 +51,14 @@ export async function mahnPruefung(heute = new Date().toLocaleDateString("sv-SE"
   const merken = () => sql`insert into einstellungen (schluessel, wert) values ('mahn_gemeldet', ${sql.json(gemeldet)})
     on conflict (schluessel) do update set wert = excluded.wert, geaendert_am = now()`;
   if (!zeilen.length) { await merken(); return 0; }
-  await mailSenden(RECHNUNG_MAIL(), `Überfällige Rechnungen: ${zeilen.length} neu`, `Guten Morgen,
-
-diese Rechnungen sind überfällig oder eine Mahnstufe ist fällig:
-
-${zeilen.join("\n")}
-
-Mahnung erstellen: N-Flow › Rechnungen › Rechnung › Mahnstufe (oder Übersicht › Braucht Aufmerksamkeit).
-Zahlungseingang erfasst? Dann in N-Flow „Bezahlt“ markieren, danach kommt keine Meldung mehr.
-
-N-Flow`);
+  const html = mailHtml({
+    titel: `Überfällige Rechnungen: ${zeilen.length} neu`, anrede: "Guten Morgen,",
+    absaetze: ["diese Rechnungen sind überfällig oder eine Mahnstufe ist fällig:"],
+    tabelle: { kopf: ["Rechnung", "Kunde", "Betrag", "fällig seit", "Stand"], zeilen, rechts: [2] },
+    nachher: ["Mahnung erstellen: N-Flow › Rechnungen › Rechnung › Mahnstufe (oder Übersicht › Braucht Aufmerksamkeit). Ist das Geld eingegangen, die Rechnung als „Bezahlt“ markieren, dann kommt keine Meldung mehr."],
+    gruss: "N-Flow", absender: VON_INFO(), firma: await firmaLaden(), intern: true,
+  });
+  await mailSenden({ von: VON_INFO(), an: RECHNUNG_MAIL(), betreff: `Überfällige Rechnungen: ${zeilen.length} neu`, html });
   await merken(); // erst nach erfolgreichem Versand, sonst morgen erneut
   return zeilen.length;
 }

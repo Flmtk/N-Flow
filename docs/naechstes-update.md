@@ -2,7 +2,7 @@
 
 ## Update vom 07.11.2026 (großes Update)
 
-Einspielen auf dem Server wie immer: `cd /docker/nflow && sh ops/update.sh`
+Einspielen auf dem Server wie immer: `cd /docker/n-flow-test && sh ops/update.sh`
 Die Datenbank-Änderung (Migration 008) läuft beim Start automatisch.
 
 **Neue Einträge in der `.env` (alle optional, sonst gilt der Standard):**

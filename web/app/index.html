@@ -433,6 +433,37 @@ label.f.req>span.unit::after{content:none}
 <script src="/js/fahrzeug.js"></script>
 </head>
 <body>
+<div class="intro" id="intro" hidden aria-hidden="true"></div>
+<script>
+/* Startbild: nur wenn die App geschlossen war (frischer Seitenaufbau) und nur beim ersten Öffnen am Tag.
+ * Nicht beim Sprung über einen QR-Code. Antippen überspringt. Blockiert nie länger als nötig. */
+(function(){
+ var el=document.getElementById("intro"),heute=new Date().toLocaleDateString("sv");
+ try{if(localStorage.getItem("nflow:intro")===heute||/a=/.test(location.hash)||!window.NFDESIGN)return}catch(e){return}
+ var ruhig=matchMedia("(prefers-reduced-motion: reduce)").matches,t0=performance.now(),fertig=false;
+ el.innerHTML='<div class="grund"></div>'+NFDESIGN.logo("gross");el.hidden=false;
+ var box=el.querySelector(".nlogo"),grund=el.querySelector(".grund");
+ function ziel(){var k=document.querySelectorAll("#top .nlogo,#tabs .nlogo");for(var i=0;i<k.length;i++){var r=k[i].getBoundingClientRect();if(r.width>0)return k[i]}return null}
+ function weg(schnell){
+  if(fertig)return;fertig=true;try{localStorage.setItem("nflow:intro",heute)}catch(e){}
+  var z=ziel();
+  if(z&&!schnell&&!ruhig&&box.animate){
+   // Das Logo fliegt an seinen Platz oben links: so bleibt klar, wo es herkommt
+   var a=box.getBoundingClientRect(),b=z.getBoundingClientRect(),s=b.width/a.width;
+   z.style.visibility="hidden";box.style.transformOrigin="0 0";
+   box.animate([{transform:"none",borderRadius:"14px"},{transform:"translate("+(b.left-a.left)+"px,"+(b.top-a.top)+"px) scale("+s+")",borderRadius:"0 0 "+(8/s)+"px "+(8/s)+"px",boxShadow:"none"}],{duration:480,easing:"cubic-bezier(0.32,0.72,0,1)",fill:"forwards"});
+   grund.animate([{opacity:1},{opacity:0}],{duration:320,delay:60,easing:"cubic-bezier(0.23,1,0.32,1)",fill:"forwards"});
+   setTimeout(function(){z.style.visibility="";el.remove()},500);
+  }else{
+   var x=el.animate?el.animate([{opacity:1},{opacity:0}],{duration:schnell?150:220,easing:"ease-out",fill:"forwards"}):null;
+   setTimeout(function(){el.remove()},schnell?160:230);
+  }
+ }
+ el.addEventListener("pointerdown",function(){weg(true)});
+ // Nach dem Aufbau (ca. 1 s) abgeben, sobald die App steht; spätestens nach 2,5 s ausblenden
+ (function warte(){var t=performance.now()-t0;if(fertig)return;if(t>=(ruhig?500:1050)&&(ziel()||t>2500))return weg(false);setTimeout(warte,60)})();
+})();
+</script>
 
 <div class="wrap">
   <div class="phone" id="phone">

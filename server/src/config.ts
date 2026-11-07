@@ -45,6 +45,8 @@ export const config = {
   devLogin: !produktion && optional("AUTH_DEV") === "1",
 
   sitzungTage: Number(optional("SESSION_DAYS", "30")),
+  /** Jeden Montag 0:00 Uhr (deutsche Zeit) laufen alle Anmeldungen ab. Mit 0 abschalten. */
+  anmeldungWoechentlich: optional("ANMELDUNG_WOECHENTLICH", "1") !== "0",
   instanz: optional("INSTANZ", "test"),
   version: optional("APP_VERSION", "0.1.0"),
 };

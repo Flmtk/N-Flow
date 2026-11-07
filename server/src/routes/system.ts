@@ -23,7 +23,7 @@ export async function systemRouten(app: FastifyInstance): Promise<void> {
   /** Wer bin ich, was darf ich? Grundlage für die Oberfläche. */
   app.get("/api/ich", async (anfrage) => {
     if (!anfrage.benutzer) {
-      return { angemeldet: false, microsoft: microsoftAktiv, dev: config.devLogin, instanz: config.instanz, version: config.version };
+      return { angemeldet: false, abgelaufen: Boolean(anfrage.sitzungAbgelaufen), microsoft: microsoftAktiv, dev: config.devLogin, instanz: config.instanz, version: config.version };
     }
     const rechte = (await rechteLaden())[anfrage.benutzer.rolle];
     return { angemeldet: true, benutzer: anfrage.benutzer, rechte, instanz: config.instanz, version: config.version };

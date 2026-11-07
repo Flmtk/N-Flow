@@ -18,6 +18,8 @@ export interface Benutzer {
 declare module "fastify" {
   interface FastifyRequest {
     benutzer?: Benutzer;
+    /** Es gab ein Sitzungs-Cookie, die Anmeldung ist aber abgelaufen (z. B. Montag) */
+    sitzungAbgelaufen?: boolean;
   }
 }
 
@@ -30,9 +32,16 @@ export async function sitzungAnlegen(
 ): Promise<void> {
   const token = randomBytes(32).toString("base64url");
   const tage = config.sitzungTage;
+  // Spätestens am nächsten Montag 0:00 Uhr deutscher Zeit ist Schluss, dann meldet sich jeder neu an.
   await sql`
     insert into sitzungen (token_hash, mitarbeiter_id, laeuft_ab, geraet)
-    values (${hash(token)}, ${mitarbeiterId}, now() + ${tage + " days"}::interval, ${geraet.slice(0, 200)})`;
+    values (${hash(token)}, ${mitarbeiterId},
+      case when ${config.anmeldungWoechentlich}::boolean
+        then least(now() + ${tage + " days"}::interval,
+                   (date_trunc('week', now() at time zone 'Europe/Berlin') + interval '7 days') at time zone 'Europe/Berlin')
+        else now() + ${tage + " days"}::interval end,
+      ${geraet.slice(0, 200)})`;
+  await sql`delete from sitzungen where laeuft_ab < now() - interval '30 days'`;
   await sql`update mitarbeiter set letzte_anmeldung = now() where id = ${mitarbeiterId}`;
   antwort.setCookie(SITZUNGS_COOKIE, token, {
     path: "/",
@@ -69,6 +78,7 @@ export async function benutzerLaden(anfrage: FastifyRequest, antwort: FastifyRep
     where s.token_hash = ${hash(token)} and s.laeuft_ab > now()
       and m.aktiv and not m.gesperrt`;
   if (z) anfrage.benutzer = z;
+  else anfrage.sitzungAbgelaufen = true;
 }
 
 /** Vorab-Prüfung für Routen: angemeldet und – optional – mit einem bestimmten Recht. */

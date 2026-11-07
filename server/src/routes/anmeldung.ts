@@ -50,7 +50,7 @@ async function anmelden(
 }
 
 export async function anmeldungRouten(app: FastifyInstance): Promise<void> {
-  app.get<{ Querystring: { ziel?: string } }>("/auth/login", async (anfrage, antwort) => {
+  app.get<{ Querystring: { ziel?: string; neu?: string } }>("/auth/login", async (anfrage, antwort) => {
     if (!microsoftAktiv) {
       return antwort.code(503).type("text/plain; charset=utf-8")
         .send("Die Microsoft-Anmeldung ist noch nicht eingerichtet (MS_TENANT_ID, MS_CLIENT_ID, MS_CLIENT_SECRET).");
@@ -75,7 +75,8 @@ export async function anmeldungRouten(app: FastifyInstance): Promise<void> {
       nonce,
       code_challenge: challenge,
       code_challenge_method: "S256",
-      prompt: "select_account",
+      // Wöchentliche Neuanmeldung: Microsoft fragt dann wirklich nach Kennwort bzw. Bestätigung
+      prompt: anfrage.query.neu === "1" ? "login" : "select_account",
     }).toString();
     return antwort.redirect(url.toString());
   });

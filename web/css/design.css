@@ -15,6 +15,8 @@
   /* Schema Orange */
   --accent:#C2510B; --accent-ink:#FFFFFF; --accent-soft:#FCEBDD; --t1:#E9660F;
   --logo-box:#262624; --logo-ink:#FFFFFF; --logo-strich:#E9660F; --logo-rand:#262624;
+  /* Bewegung: gemeinsame Kurven für alle Animationen */
+  --ease-out:cubic-bezier(0.23,1,0.32,1); --ease-in-out:cubic-bezier(0.77,0,0.175,1); --ease-drawer:cubic-bezier(0.32,0.72,0,1);
 }
 :root[data-schema="grau"]{ --accent:#5A5A57; --accent-soft:#ECECEA; --t1:#5A5A57;
   --logo-box:#5A5A57; --logo-ink:#FFFFFF; --logo-strich:#C9C9C5; --logo-rand:#5A5A57; }
@@ -154,3 +156,31 @@ h3.sub{font-family:var(--f-serif);font-weight:500;letter-spacing:0}
 .lagert{width:100%;border-collapse:collapse;font-size:14px}.lagert th{font-size:12px;color:var(--muted);font-weight:600;text-align:left;padding:4px 0}
 .lagert td{padding:8px 0;border-top:1px solid var(--line2);vertical-align:middle}.lagert .r{text-align:right;padding-left:8px}
 .lagert tr.fehlt td{color:var(--warn)}.lagert small{color:var(--muted)}
+
+/* ---------- Bewegung ----------
+ * Zurückhaltend: Rückmeldung beim Drücken (dutzende Male am Tag, daher klein und schnell).
+ * Leiste unten und Tastaturaktionen bekommen bewusst keine Animation. */
+.btn,.job,.poolcard,.knopf,.newsitem,button.chip,.ico,.ihint-app{transition:transform 160ms var(--ease-out)}
+.btn:active,.job:active,.poolcard:active,.knopf:active,.newsitem:active{transform:scale(.97)}
+button.chip:active,.ico:active,.ihint-app:active{transform:scale(.92)}
+@media (prefers-reduced-motion:reduce){.btn,.job,.poolcard,.knopf,.newsitem,button.chip,.ico,.ihint-app{transition:none}
+  .btn:active,.job:active,.poolcard:active,.knopf:active,.newsitem:active,button.chip:active,.ico:active,.ihint-app:active{transform:none;opacity:.75}}
+
+/* Startbild der App: nur beim ersten Öffnen am Tag aus geschlossenem Zustand */
+.intro{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;-webkit-tap-highlight-color:transparent}
+.intro[hidden]{display:none}
+.intro .grund{position:absolute;inset:0;background:var(--bg)}
+.intro .nlogo{position:relative;border-radius:14px;box-shadow:0 18px 40px -18px rgba(0,0,0,.35);animation:iBox 420ms var(--ease-out) both}
+.intro .nlogo .s{transform-box:fill-box;transform-origin:50% 100%;animation:iStrich 340ms 120ms var(--ease-out) both}
+.intro .nlogo .n{animation:iN 380ms 300ms var(--ease-out) both}
+.intro .nlogo i{animation:iLinie 300ms 560ms var(--ease-out) both}
+.intro .nlogo b{animation:iFlow 380ms 620ms var(--ease-out) both}
+@keyframes iBox{from{opacity:0;transform:translateY(-16px) scale(.96)}}
+@keyframes iStrich{from{transform:scaleY(0)}}
+@keyframes iN{from{opacity:0;transform:translateX(-5px)}}
+@keyframes iLinie{from{transform:scaleX(0)}}
+@keyframes iFlow{from{opacity:0;letter-spacing:.7em}}
+@media (prefers-reduced-motion:reduce){
+  .intro .nlogo,.intro .nlogo .s,.intro .nlogo .n,.intro .nlogo i,.intro .nlogo b{animation:iRuhig 200ms var(--ease-out) both}
+  @keyframes iRuhig{from{opacity:0}}
+}

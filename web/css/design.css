@@ -72,7 +72,7 @@ input,select,textarea{border-color:var(--line)}
 .side .brand .bt span{font-size:12px;color:var(--muted);font-weight:400;letter-spacing:0}
 .side .role{display:none}
 .nav{color:var(--fg);border-radius:9px}
-.nav:hover{background:var(--hover)}
+@media (hover:hover) and (pointer:fine){.nav:hover{background:var(--hover)}}
 .nav[aria-current="page"]{background:var(--current);color:var(--fg);font-weight:600}
 .nav[aria-current="page"] svg{color:var(--accent)}
 .nav .cnt{background:var(--accent-soft);color:var(--accent)}
@@ -133,7 +133,7 @@ h3.sub{font-family:var(--f-serif);font-weight:500;letter-spacing:0}
 .jobrow{position:relative}
 .ihint-app{width:32px;height:32px;border-radius:50%;border:0;display:inline-grid;place-items:center;flex:0 0 auto;
   background:var(--accent-soft);color:var(--accent);font:italic 600 17px/1 var(--f-serif)}
-.jobrow>.ihint-app{position:absolute;top:10px;right:80px}
+
 .ihint-app.gross{width:40px;height:40px;font-size:21px}
 .hwalert{display:flex;gap:12px;align-items:flex-start;text-align:left;background:var(--accent-soft);color:var(--fg);border:0;border-radius:14px;padding:12px 14px;font-size:15px;line-height:1.45}
 .hwalert .ihint-app{background:var(--surface);width:28px;height:28px;font-size:15px}
@@ -184,3 +184,66 @@ button.chip:active,.ico:active,.ihint-app:active{transform:scale(.92)}
   .intro .nlogo,.intro .nlogo .s,.intro .nlogo .n,.intro .nlogo i,.intro .nlogo b{animation:iRuhig 200ms var(--ease-out) both}
   @keyframes iRuhig{from{opacity:0}}
 }
+
+/* ---------- Wie eine echte App auf dem Handy ----------
+ * Kein grauer Blitz beim Tippen (jedes Bedienelement hat dafür :active), keine Schriftvergrößerung im Querformat,
+ * kein Ziehen-zum-Aktualisieren der ganzen Seite (eigene Scrollbereiche halten ihren Schwung mit contain). */
+html{-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%;text-size-adjust:100%;overscroll-behavior:none}
+body{overscroll-behavior:none}
+.main,.hwsheet,.dokb,.drawer,.seite,.inhalt{overscroll-behavior:contain}
+/* Sofort auslösen (keine 300 ms Wartezeit auf Doppeltippen) */
+button,a,[role="button"],label,summary,select{touch-action:manipulation}
+/* Bedienelemente lassen sich nicht markieren, Inhalte schon (Adressen, Nummern) */
+button,[role="button"],.tabs,.chip,.badge,.griff,.wischkarte,.maplink,.navbrand{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+/* iOS zoomt bei Eingaben unter 16 px hinein und nicht wieder heraus */
+@media (pointer:coarse){input:not([type=checkbox]):not([type=radio]):not([type=range]),select,textarea{font-size:16px}
+  .search input{font-size:22px}}
+
+/* ---------- Leiste unten: durchscheinend, der Inhalt läuft darunter durch ---------- */
+.phone:not(.desk) #tabs{position:absolute;left:0;right:0;bottom:0;z-index:4;
+  background:color-mix(in srgb,var(--surface) 72%,transparent);-webkit-backdrop-filter:blur(20px) saturate(180%);backdrop-filter:blur(20px) saturate(180%);
+  border-top:1px solid color-mix(in srgb,var(--line) 60%,transparent)}
+.phone:not(.desk) #tabs[hidden]{display:none}
+.phone:not(.desk):has(#foot:empty) .main{padding-bottom:var(--tabh,0px)}
+.phone:not(.desk) #foot:not(:empty){margin-bottom:var(--tabh,0px);position:relative;z-index:3}
+.phone:not(.desk) .toast{bottom:calc(var(--tabh,0px) + 14px)}
+/* Kopf: statt Trennlinie ein weicher Schatten, nur wenn Inhalt darunter liegt */
+.top{position:relative;z-index:3;transition:box-shadow 200ms var(--ease-out);padding-top:max(14px,env(safe-area-inset-top,0px))}
+.top.unterlegt{box-shadow:0 8px 16px -14px rgba(31,30,29,.45)}
+@media (prefers-reduced-transparency:reduce){.phone:not(.desk) #tabs{background:var(--surface);-webkit-backdrop-filter:none;backdrop-filter:none}}
+@media (prefers-contrast:more){.phone:not(.desk) #tabs{background:var(--surface);border-top-color:var(--fg)}}
+
+/* ---------- Kurze Meldung: kommt von unten und geht dorthin zurück ---------- */
+.toast{opacity:0;transform:translateY(16px);transition:opacity 300ms ease,transform 300ms ease;pointer-events:none}
+.toast.da{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){.toast{transform:none}}
+
+/* ---------- Aufträge: nach links wischen zeigt „Anrufen“ ---------- */
+.wisch{position:relative;min-width:0}
+.wischkarte{position:relative;z-index:1;will-change:transform}
+.wischkarte>.job{width:100%}
+.wischkarte>.ihint-app{position:absolute;top:10px;right:10px}
+.wischakt{position:absolute;inset:0;display:flex;justify-content:flex-end;align-items:stretch;gap:6px;padding:6px;border-radius:18px;background:var(--surface2);visibility:hidden}
+.wischakt .wa{width:84px;border-radius:13px;background:var(--primary);color:var(--primary-ink);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  font-size:13px;font-weight:600;text-decoration:none;transition:transform 160ms var(--ease-out)}
+.wischakt .wa:active{transform:scale(.95)}
+.wischakt .wa svg{width:22px;height:22px}
+
+/* ---------- Blatt und Mitteilung werden per Feder bewegt ---------- */
+.hwsheet{will-change:transform;overflow-y:auto;max-height:86dvh}
+.hwschirm{opacity:0}
+.push{will-change:transform}
+
+/* ---------- Vor und zurück zwischen Seiten ---------- */
+#main{view-transition-name:nf-inhalt}
+::view-transition-old(root),::view-transition-new(root){animation:none}
+::view-transition-old(nf-inhalt),::view-transition-new(nf-inhalt){animation-duration:240ms;animation-timing-function:var(--ease-out);animation-fill-mode:both}
+html[data-richtung="vor"]::view-transition-old(nf-inhalt){animation-name:nfRausLinks}
+html[data-richtung="vor"]::view-transition-new(nf-inhalt){animation-name:nfReinRechts}
+html[data-richtung="zurueck"]::view-transition-old(nf-inhalt){animation-name:nfRausRechts}
+html[data-richtung="zurueck"]::view-transition-new(nf-inhalt){animation-name:nfReinLinks}
+@keyframes nfReinRechts{from{opacity:0;transform:translateX(36px)}}
+@keyframes nfRausLinks{to{opacity:0;transform:translateX(-18px)}}
+@keyframes nfReinLinks{from{opacity:0;transform:translateX(-18px)}}
+@keyframes nfRausRechts{to{opacity:0;transform:translateX(36px)}}
+@media (prefers-reduced-motion:reduce){::view-transition-old(nf-inhalt),::view-transition-new(nf-inhalt){animation:none}}

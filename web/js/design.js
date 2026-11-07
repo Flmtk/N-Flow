@@ -9,8 +9,7 @@
     if (!SCHEMATA[s]) s = "orange";
     document.documentElement.setAttribute("data-schema", s);
     try { localStorage.setItem("nflow:schema", s); } catch (e) { /* privat */ }
-    var m = document.querySelector('meta[name="theme-color"]');
-    if (m) m.setAttribute("content", s === "orange" ? "#262624" : s === "grau" ? "#5A5A57" : "#FFFFFF");
+    kopfFarbe();
   }
   document.documentElement.setAttribute("data-schema", lies());
 
@@ -19,7 +18,21 @@
   function setzeTheme(t) {
     try { if (t === "light" || t === "dark") localStorage.setItem("nflow:theme", t); else localStorage.removeItem("nflow:theme"); } catch (e) { /* privat */ }
     if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t); else document.documentElement.removeAttribute("data-theme");
+    kopfFarbe();
   }
+  /* Statusleiste = Farbe ganz oben auf der Seite (Kopf), je Hell/Dunkel. Bei fester Wahl gilt sie für beide Tags. */
+  function kopfFarbe() {
+    if (!document.body) return;
+    var el = document.querySelector(".top, .side, body"), f = el ? getComputedStyle(el).backgroundColor : "";
+    if (!f || f === "rgba(0, 0, 0, 0)") f = getComputedStyle(document.body).backgroundColor;
+    var fest = document.documentElement.getAttribute("data-theme");
+    Array.prototype.forEach.call(document.querySelectorAll('meta[name="theme-color"]'), function (m) {
+      var dunkel = /dark/.test(m.getAttribute("media") || "");
+      if (!m.dataset.std) m.dataset.std = m.getAttribute("content");
+      if (fest) m.setAttribute("content", f); else if ((dunkel && matchMedia("(prefers-color-scheme: dark)").matches) || (!dunkel && !matchMedia("(prefers-color-scheme: dark)").matches)) m.setAttribute("content", f); else m.setAttribute("content", m.dataset.std);
+    });
+  }
+  document.addEventListener("DOMContentLoaded", kopfFarbe);
   if (theme() !== "auto" && location.pathname.indexOf("/app") === 0) document.documentElement.setAttribute("data-theme", theme());
 
   /* Das N aus dem NOVIS-Logo (vektorisiert): linker Strich (s) und Rest (n) */
@@ -31,5 +44,5 @@
   function n(klasse) {
     return '<svg class="nmini ' + (klasse || "") + '" viewBox="0 0 386 504" aria-hidden="true"><path class="s" d="' + STRICH + '"/><path class="n" d="' + REST + '"/></svg>';
   }
-  window.NFDESIGN = { schemata: SCHEMATA, schema: lies, setzeSchema: setze, theme: theme, setzeTheme: setzeTheme, logo: logo, n: n };
+  window.NFDESIGN = { schemata: SCHEMATA, schema: lies, setzeSchema: setze, theme: theme, setzeTheme: setzeTheme, logo: logo, n: n, kopfFarbe: kopfFarbe };
 })();

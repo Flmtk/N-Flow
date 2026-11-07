@@ -39,7 +39,7 @@ h2 { font-size: 16px; margin: 0 0 12px; font-weight: 600; }
 .seite { background: var(--fl); border-right: 1px solid var(--rand); padding: 20px 12px; display: flex; flex-direction: column; gap: 2px; }
 .seite .logo { font-size: 20px; padding: 0 10px 18px; }
 .seite a { display: block; padding: 9px 10px; border-radius: 8px; color: var(--tx); text-decoration: none; font-weight: 500; }
-.seite a:hover { background: var(--fl2); }
+@media (hover: hover) and (pointer: fine) { .seite a:hover { background: var(--fl2); } }
 .seite a.an { background: var(--ak2); color: var(--ak); }
 .seite .fuss { margin-top: auto; padding: 12px 10px 0; border-top: 1px solid var(--rand); font-size: 13px; }
 .inhalt { padding: 28px 32px; max-width: 1100px; width: 100%; }
@@ -59,9 +59,9 @@ h2 { font-size: 16px; margin: 0 0 12px; font-weight: 600; }
 .raster { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
 .kennzahl b { display: block; font-size: 26px; font-weight: 700; }
 .knopf { border: 1px solid var(--rand); background: var(--fl); padding: 9px 14px; border-radius: 9px; cursor: pointer; font-weight: 600; }
-.knopf:hover { background: var(--fl2); }
+@media (hover: hover) and (pointer: fine) { .knopf:hover { background: var(--fl2); } }
 .knopf.haupt { background: var(--ak); border-color: var(--ak); color: #fff; }
-.knopf.haupt:hover { filter: brightness(.95); }
+@media (hover: hover) and (pointer: fine) { .knopf.haupt:hover { filter: brightness(.95); } }
 .knopf.gefahr { color: var(--schlecht); }
 .knopf.klein { padding: 5px 10px; font-size: 13px; }
 .knopf:disabled { opacity: .5; cursor: default; }
@@ -71,7 +71,7 @@ table { width: 100%; border-collapse: collapse; }
 th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--rand); vertical-align: middle; }
 th { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--tx2); }
 tbody tr[data-id] { cursor: pointer; }
-tbody tr[data-id]:hover { background: var(--fl2); }
+@media (hover: hover) and (pointer: fine) { tbody tr[data-id]:hover { background: var(--fl2); } }
 td.mitte, th.mitte { text-align: center; }
 
 .marke { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 12px; font-weight: 600; background: var(--fl2); color: var(--tx2); }

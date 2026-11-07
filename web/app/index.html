@@ -2,8 +2,10 @@
 <html lang="de">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#262624">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#FFFFFF">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#222220">
+<meta name="color-scheme" content="light dark">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="N-Flow">
@@ -41,10 +43,10 @@ button{cursor:pointer}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .wrap{display:flex;flex-direction:column;align-items:center;gap:12px}
 .note{max-width:420px;align-items:center;width:100%;font-size:13px;color:var(--muted);display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
-.phone{width:100%;max-width:420px;height:min(860px,calc(100vh - 64px));min-height:600px;background:var(--surface2);
+.phone{width:100%;max-width:420px;height:min(860px,calc(100dvh - 64px));min-height:600px;background:var(--surface2);
   border:1px solid var(--line);border-radius:28px;overflow:hidden;display:flex;flex-direction:column;position:relative;
   box-shadow:0 20px 60px -30px rgba(0,0,0,.45)}
-@media (max-width:460px){body{padding:0}.note{padding:8px 16px 0}.phone{border-radius:0;border:0;height:calc(100vh - 40px);max-width:none}}
+@media (max-width:460px){body{padding:0}.note{padding:8px 16px 0}.phone{border-radius:0;border:0;height:calc(100dvh - 40px);max-width:none}}
 /* Kopf */
 .top{background:var(--frame);color:#f3f1ec;padding:14px 16px 12px;display:flex;align-items:center;gap:12px}
 .top .back{background:none;border:0;color:#f3f1ec;font-size:22px;line-height:1;padding:4px 6px;margin-left:-6px}
@@ -255,7 +257,7 @@ body{padding:0}
 .note.desk{max-width:1320px}
 .seg.vt{padding:2px;border-radius:99px}
 .seg.vt button{padding:3px 10px;font-size:12px;border-radius:99px}
-.phone.desk{max-width:1320px;height:calc(100vh - 64px);min-height:620px;border-radius:20px;display:grid;grid-template-columns:232px minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto;grid-template-areas:"nav top" "nav main" "nav foot"}
+.phone.desk{max-width:1320px;height:calc(100dvh - 64px);min-height:620px;border-radius:20px;display:grid;grid-template-columns:232px minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto;grid-template-areas:"nav top" "nav main" "nav foot"}
 .phone.desk #top{grid-area:top;padding:16px 28px}
 .phone.desk #main{grid-area:main}
 .phone.desk #foot{grid-area:foot}
@@ -343,12 +345,11 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);
 .cal button.sel{background:var(--accent);color:var(--accent-ink)}
 .cal button.sel .dots i{background:var(--accent-ink)}
 .zrow{cursor:pointer}
-.zrow:hover td{background:var(--surface2)}
+@media (hover:hover) and (pointer:fine){.zrow:hover td{background:var(--surface2)}}
 .calhead button:disabled{opacity:.3}
 .toast{border-radius:14px;box-shadow:var(--shadow)}
-.push{position:absolute;left:10px;right:10px;top:calc(10px + env(safe-area-inset-top,0px));z-index:9;display:flex;background:color-mix(in srgb,var(--surface) 92%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-radius:18px;box-shadow:0 12px 34px -10px rgba(0,0,0,.35);animation:pin .35s ease-out}
+.push{position:absolute;left:10px;right:10px;top:calc(10px + env(safe-area-inset-top,0px));z-index:9;display:flex;background:color-mix(in srgb,var(--surface) 92%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-radius:18px;box-shadow:0 12px 34px -10px rgba(0,0,0,.35);will-change:transform}
 @keyframes pin{from{transform:translateY(-120%);opacity:0}}
-@media (prefers-reduced-motion:reduce){.push{animation:none}}
 .push-b{flex:1;border:0;background:none;text-align:left;padding:12px 6px 12px 14px;display:flex;flex-direction:column;gap:2px;color:var(--fg)}
 .push-b b{font-size:15px}.push-b .pt{font-size:13px;line-height:1.35;color:var(--fg)}
 .pp-h{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
@@ -380,7 +381,7 @@ input.mi[type=text]{width:72px;padding:9px 6px;text-align:right;font-size:15px;b
 .mcalc{display:block;width:72px;padding:9px 6px;text-align:right;font-weight:700;color:var(--accent);background:var(--accent-soft);border-radius:9px;min-height:39px}
 .mx{border:0;background:none;color:var(--muted);font-size:15px;line-height:1;padding:2px 4px;border-radius:6px;cursor:pointer}
 table.mt th .mx{position:absolute;top:-4px;right:0;opacity:.55}
-.mx:hover{background:var(--crit-soft);color:var(--crit);opacity:1}
+@media (hover:hover) and (pointer:fine){.mx:hover{background:var(--crit-soft);color:var(--crit);opacity:1}}
 table.mt td.mrow .mx{opacity:.5}
 .mtools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .mpts{display:flex;gap:6px;overflow-x:auto;padding:2px 0 4px;-webkit-overflow-scrolling:touch}
@@ -423,7 +424,7 @@ label.f.req>span.unit::after{content:none}
 .phone.desk #top.empty{display:none}
 .phone.desk .top .hlupe{display:none}
 .phone.desk .tabs .navbrand .ico{margin:0;width:38px;min-width:38px;height:38px;padding:0;display:flex;align-items:center;justify-content:center;flex:0 0 38px;border-radius:10px;background:var(--surface2);color:var(--fg);gap:0}
-.phone.desk .tabs .navbrand .ico:hover{background:var(--accent-soft);color:var(--accent)}
+@media (hover:hover) and (pointer:fine){.phone.desk .tabs .navbrand .ico:hover{background:var(--accent-soft);color:var(--accent)}}
 .phone.desk .tabs .navbrand .ico svg{width:20px;height:20px;padding:0}
 .top .brand+.hlupe,.top .brand+.ico{margin-left:auto}
 </style>
@@ -431,6 +432,7 @@ label.f.req>span.unit::after{content:none}
 <link rel="stylesheet" href="/css/design.css">
 <script src="/js/design.js"></script>
 <script src="/js/fahrzeug.js"></script>
+<script src="/js/bewegung.js"></script>
 </head>
 <body>
 <div class="intro" id="intro" hidden aria-hidden="true"></div>
@@ -559,10 +561,11 @@ const isoD=()=>new Date().toISOString().slice(0,10);
 const n=v=>{const x=parseFloat(String(v).replace(",","."));return isFinite(x)?x:null};
 const de=(x,d=1)=>x==null?"–":x.toLocaleString("de-DE",{minimumFractionDigits:d,maximumFractionDigits:d});
 
-let toastT;function toast(t){let el=$(".toast");if(!el){el=document.createElement("div");el.className="toast";el.setAttribute("role","status");$("#phone").appendChild(el)}el.textContent=t;el.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>el.hidden=true,2600)}
+let toastT;function toast(t){let el=$(".toast");if(!el){el=document.createElement("div");el.className="toast";el.setAttribute("role","status");$("#phone").appendChild(el)}el.textContent=t;el.hidden=false;requestAnimationFrame(()=>el.classList.add("da"));clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove("da"),2600)}
 
 /* ---------- Icons ---------- */
 const I={
+ tel:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M5 4.5h3l1.6 4-2 1.3a10.5 10.5 0 0 0 6.6 6.6l1.3-2 4 1.6v3a1.5 1.5 0 0 1-1.6 1.5A16 16 0 0 1 3.5 6.1 1.5 1.5 0 0 1 5 4.5z"/></svg>',
  heute:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>',
  scan:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"/><path d="M7 12h10"/></svg>',
  berichte:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 3.5h7l4 4V20a.5.5 0 0 1-.5.5h-10A.5.5 0 0 1 7 20z"/><path d="M14 3.5V8h4M9.5 12h6M9.5 15.5h6"/></svg>',
@@ -584,6 +587,8 @@ function renderTabs(){
  tabs.innerHTML=`<div class="navbrand">${NFDESIGN.logo()}<button type="button" class="ico" data-go="suche" aria-label="Anlage suchen">${I.lupe}</button></div>`+[["heute","Heute"],...(dk?[]:[["scan","Scannen"]]),["berichte","Berichte"],["info","Info"],["ich","Ich"]].map(([k,l])=>
   `<button type="button" data-tab="${k}" ${S.tab===k?'aria-current="page"':""}>${I[k]}<span>${l}</span>${k==="berichte"&&q?`<i class="badge">${q}</i>`:""}</button>`).join("");
  tabs.hidden=S.view==="einsatz"&&!dk;
+ // Inhalt läuft unter der durchscheinenden Leiste durch: Platz unten freihalten
+ $("#phone").style.setProperty("--tabh",tabs.hidden||dk?"0px":tabs.offsetHeight+"px");
 }
 function header(title,back,extra){
  top.classList.toggle("empty",!title&&!back&&!extra&&S.online);
@@ -592,7 +597,11 @@ function header(title,back,extra){
  (back?"":`<button type="button" class="ico hlupe" data-go="suche" aria-label="Anlage suchen">${I.lupe}</button>`)+
  (S.online?"":`<span class="net off" title="Kein Netz – alles wird auf dem Handy gespeichert"><i></i>Offline${NF.outbox.length?" · "+NF.outbox.length:""}</span>`);
 }
-function go(view,extra){Object.assign(S,{view},extra||{});save();render();main.scrollTop=0}
+/* Vor/Zurück: neue Seite kommt von rechts, zurück geht sie dorthin. Reiterwechsel bleiben ohne Animation (zu häufig). */
+let RICHTUNG=null;
+function go(view,extra){const r=RICHTUNG;RICHTUNG=null;const f=()=>{Object.assign(S,{view},extra||{});save();render();main.scrollTop=0};
+ if(!r||!document.startViewTransition||NFB.reduziert()||view===S.view){f();return}
+ document.documentElement.dataset.richtung=r;const t=document.startViewTransition(f);t.finished.finally(()=>{delete document.documentElement.dataset.richtung})}
 
 /* ---------- Ansichten ---------- */
 function vHeute(){
@@ -604,7 +613,9 @@ function vHeute(){
   ${wartHint()}
   <div class="day"><h3 class="sub">Tour heute</h3><span class="chip ${offen?"or":"ok"}">${offen} offen</span></div>
   ${JOBS.filter(j=>st(j.id)!=="done").map(j=>{const a=ANLAGEN[j.q],s=st(j.id),adr=a.kunde.str+", "+a.kunde.plz+" "+a.kunde.ort;return`
-  <div class="jobrow">
+  <div class="jobrow"><div class="wisch">
+  <div class="wischakt" aria-hidden="true">${a.kunde.tel?`<a class="wa" href="tel:${esc(String(a.kunde.tel).replace(/[^\d+]/g,""))}" tabindex="-1">${I.tel}<span>Anrufen</span></a>`:""}</div>
+  <div class="wischkarte">
   <button type="button" class="job" data-job="${j.id}">
    <div class="t">${j.zeit}<small>${j.dauer}</small></div>
    <div><h3>${esc(a.kunde.name1)}</h3><p>${esc(a.kunde.str)}, ${esc(a.kunde.plz)} ${esc(a.kunde.ort)}</p>
@@ -612,14 +623,16 @@ function vHeute(){
     <div class="chips"><span class="chip ${j.prio==="cr"?"cr":""}">${j.art}</span>
     ${s==="run"?'<span class="chip or">In Arbeit</span>':""}</div></div>
   </button>
-  <a class="maplink" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(adr)}" target="_blank" rel="noopener" aria-label="Route zu ${esc(adr)} in Google Maps öffnen"><span class="mapimg" aria-hidden="true"></span><span>Route</span></a>
   ${hinweiseOffen(a.nv).length?`<button type="button" class="ihint-app" data-hinweis="${esc(a.nv)}" aria-label="Interner Hinweis vom Büro">i</button>`:""}
+  </div></div>
+  <a class="maplink" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(adr)}" target="_blank" rel="noopener" aria-label="Route zu ${esc(adr)} in Google Maps öffnen"><span class="mapimg" aria-hidden="true"></span><span>Route</span></a>
   </div>`}).join("")}
   ${offen?"":`<p class="empty">Alle Einsätze für heute erledigt. Feierabend in Sicht.</p>`}
   ${poolCard()}
   ${erledigt?`<p class="hint" style="text-align:center">${erledigt} Einsatz${erledigt>1?"e":""} heute erledigt · siehe Berichte</p>`:""}
   ${isDesk()?"":`<button type="button" class="btn sec" data-tab="scan">${I.scan.replace('<svg','<svg width="20" height="20"')} Anlage per QR scannen</button>`}
  </div>`;
+ main.querySelectorAll(".wisch").forEach(NFB.wischen);
 }
 let scanStream=null,scanLauf=false;
 function scanStopp(){scanLauf=false;if(scanStream){scanStream.getTracks().forEach(t=>t.stop());scanStream=null}}
@@ -1091,14 +1104,17 @@ function ichAuto(){
 /* ---------- Interne Hinweise vom Büro (stehen in der Anlagenakte) ---------- */
 const hinweiseAlle=nv=>((NF.get("anlagen",nv)||{}).hinweise||[]);
 const hinweiseOffen=nv=>hinweiseAlle(nv).filter(h=>!h.erledigt);
-function zeigeHinweise(nv){let L=$("#hwv");if(!L){L=document.createElement("div");L.id="hwv";document.body.appendChild(L)}
- if(!nv){L.innerHTML="";return}const a=Object.values(ANLAGEN).find(x=>x.nv===nv)||{kunde:{name1:""}},H=hinweiseAlle(nv),offen=H.filter(h=>!h.erledigt).reverse(),alt=H.filter(h=>h.erledigt).reverse();
+function zeigeHinweise(nv,sofort){let L=$("#hwv");if(!L){L=document.createElement("div");L.id="hwv";document.body.appendChild(L)}
+ if(!nv){if(L._blatt){const b=L._blatt;L._blatt=null;b.zu(0,sofort)}else L.innerHTML="";return}
+ NFB.wischenZu();const a=Object.values(ANLAGEN).find(x=>x.nv===nv)||{kunde:{name1:""}},H=hinweiseAlle(nv),offen=H.filter(h=>!h.erledigt).reverse(),alt=H.filter(h=>h.erledigt).reverse();
  const tel=(t)=>{const m=String(t).match(/(\+?\d[\d\s\/-]{6,}\d)/);return m?`<a class="btn" href="tel:${m[1].replace(/[^\d+]/g,"")}" style="text-decoration:none">${esc(m[1])} anrufen</a>`:""};
  L.innerHTML=`<button type="button" class="hwschirm" data-hwzu="1" aria-label="Schließen" tabindex="-1"></button><section class="hwsheet" role="dialog" aria-label="Interner Hinweis"><span class="griff"></span>
   <div class="hwkopf"><span class="ihint-app gross" aria-hidden="true">i</span><div><h2>Hinweis vom Büro</h2><p>${esc(a.kunde.name1)} · ${esc(nv)}</p></div><button type="button" class="ico" data-hwzu="1" aria-label="Schließen">✕</button></div>
   ${offen.length?offen.map(h=>`<article class="panel"><p style="margin:0;font-size:16px;line-height:1.55">${esc(h.text)}</p><span class="hint">${esc(h.von||"")} · ${fmt(new Date(h.datum))}</span>${tel(h.text)}</article>`).join(""):'<p class="hint">Kein offener Hinweis.</p>'}
   ${alt.length?`<h3 class="hwalt">Frühere Hinweise in der Anlagenakte</h3>${alt.map(h=>`<div class="hwz"><time>${fmt(new Date(h.datum))}</time><span><s>${esc(h.text)}</s><br><small>${esc(h.von||"")} · erledigt</small></span></div>`).join("")}`:""}
- </section>`}
+ </section>`;
+ const vorher=document.activeElement;const api=NFB.blatt(L,{weg:()=>{if(L._blatt&&L._blatt!==api)return;L._blatt=null;L.innerHTML="";if(vorher&&vorher.isConnected)vorher.focus({preventScroll:true})}});L._blatt=api;
+ const k=L.querySelector(".hwkopf .ico");if(k)k.focus({preventScroll:true})}
 
 /* ---------- Info (SharePoint: Neuigkeiten und Dokumente) ---------- */
 let INFO=Object.assign({news:null,ordner:{},beitrag:{},treffer:null,fehler:null},(()=>{try{return NF.lokal.lies("info",{})}catch(e){return{}}})());
@@ -1130,9 +1146,11 @@ async function dokHolen(url){
 let DOKV=null;
 async function dokOeffnen(url,name){toast("Wird geladen …");try{const b=await dokHolen(url);if(DOKV)URL.revokeObjectURL(DOKV.url);DOKV={url:URL.createObjectURL(b),name:name||"Dokument",typ:b.type,blob:b};zeigeDok()}catch(e){toast(e.message)}}
 function zeigeDok(){let L=$("#dokv");if(!L){L=document.createElement("div");L.id="dokv";document.body.appendChild(L)}
- if(!DOKV){L.innerHTML="";return}
+ if(!DOKV){const d=L.firstElementChild;if(d&&d.animate&&!NFB.reduziert()){d.animate([{transform:"none"},{transform:"translateY(100%)"}],{duration:300,easing:"cubic-bezier(0.32,0.72,0,1)",fill:"forwards"}).finished.then(()=>{if(!DOKV)L.innerHTML=""})}else L.innerHTML="";return}
+ const neu=!L.firstElementChild;
  L.innerHTML=`<div class="dokv" role="dialog" aria-label="${esc(DOKV.name)}"><header><b>${esc(DOKV.name)}</b><button type="button" class="btn sec" data-dokteilen="1">Öffnen / Teilen</button><button type="button" class="ico" data-dokzu="1" aria-label="Schließen">✕</button></header>
-  <div class="dokb">${/^image\//.test(DOKV.typ)?`<img src="${DOKV.url}" alt="${esc(DOKV.name)}">`:`<iframe src="${DOKV.url}" title="${esc(DOKV.name)}"></iframe>`}</div></div>`}
+  <div class="dokb">${/^image\//.test(DOKV.typ)?`<img src="${DOKV.url}" alt="${esc(DOKV.name)}">`:`<iframe src="${DOKV.url}" title="${esc(DOKV.name)}"></iframe>`}</div></div>`;
+ const d=L.firstElementChild;if(neu&&d.animate)d.animate(NFB.reduziert()?[{opacity:0},{opacity:1}]:[{transform:"translateY(100%)"},{transform:"none"}],{duration:NFB.reduziert()?200:420,easing:"cubic-bezier(0.32,0.72,0,1)"})}
 async function dokTeilen(){if(!DOKV)return;const f=new File([DOKV.blob],DOKV.name.replace(/[\\/:*?"<>|]/g,"-")+(/\.[a-z0-9]{2,4}$/i.test(DOKV.name)?"":DOKV.typ==="application/pdf"?".pdf":".jpg"),{type:DOKV.typ});
  try{if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:DOKV.name});return}}catch(e){if(e.name==="AbortError")return}
  window.open(DOKV.url,"_blank")}
@@ -1182,7 +1200,7 @@ function vInfo(){
  const q=(S.intraQ||"").trim(),W=INFO.ordner[""];
  main.innerHTML=`<div class="pad">
   <div class="greet"><h2>Info</h2><p>Aktuelles und Unterlagen vom Büro</p></div>
-  <label class="search" style="border-width:1px" for="iq"><span style="color:var(--muted);display:grid">${I.lupe.replace('<svg','<svg width="20" height="20"')}</span><input id="iq" type="search" placeholder="Dokument suchen, z. B. Störungscodes" value="${esc(S.intraQ||"")}" style="font-size:16px;font-weight:500;letter-spacing:0"></label>
+  <label class="search" style="border-width:1px" for="iq"><span style="color:var(--muted);display:grid">${I.lupe.replace('<svg','<svg width="20" height="20"')}</span><input id="iq" type="search" enterkeyhint="search" placeholder="Dokument suchen, z. B. Störungscodes" value="${esc(S.intraQ||"")}" style="font-size:16px;font-weight:500;letter-spacing:0"></label>
   ${q.length>=2?`<div class="panel"><h4>Treffer</h4>${INFO.treffer===null?'<p class="hint" style="margin:0">Suche läuft …</p>':INFO.treffer.fehler?`<p class="hint" style="margin:0">${esc(INFO.treffer.fehler)}</p>`:INFO.treffer.length?INFO.treffer.map(spZeile).join(""):'<p class="hint" style="margin:0">Kein Dokument gefunden.</p>'}</div>`:""}
   <div class="panel"><h4>Neuigkeiten</h4>${INFO.news===null?'<p class="hint" style="margin:0">Wird geladen …</p>':INFO.news.length?`<div class="news">${INFO.news.slice(0,12).map(n=>`<button type="button" class="newsitem" data-beitrag="${esc(n.id)}"><time>${n.datum?fmt(new Date(n.datum)):""}</time><b>${esc(n.titel)}</b>${n.text?`<span>${esc(n.text)}</span>`:""}</button>`).join("")}</div>`:`<p class="hint" style="margin:0">${INFO.fehler?esc(INFO.fehler):"Noch keine Neuigkeiten."}</p>`}</div>
   <div class="panel"><h4>Dokumente</h4>${!W?'<p class="hint" style="margin:0">Wird geladen …</p>':W.fehler?`<p class="hint" style="margin:0">${esc(W.fehler)}</p>`:W.length?W.map(d=>d.ordner?dokZeile("ordner",d.name,"Ordner",`data-iord="${esc(d.name)}"`):spZeile(d)).join(""):'<p class="hint" style="margin:0">Im SharePoint-Ordner „Intranet“ liegt noch nichts.</p>'}</div>
@@ -1255,8 +1273,8 @@ function fdSave(){
 const WART={get zeit(){const w=(NF.get("einstellungen","allgemein")||{}).wartung;return w&&w.zeit||"02:00"},get text(){return`Ab ${this.zeit} Uhr wird N-Flow aktualisiert, die App ist dann etwa eine Minute nicht erreichbar. Bitte offene Berichte vorher senden. Entwürfe bleiben auf dem Handy erhalten.`}};
 function showPush(){S.pushSeen=iso(new Date());save();hidePush();const el=document.createElement("div");el.className="push";el.id="push";el.setAttribute("role","alert");
  el.innerHTML=`<button type="button" class="push-b" id="pushOpen"><span class="pp-h"><i>N</i>N-FLOW<span>jetzt</span></span><b>Wartung heute Nacht ${WART.zeit} Uhr</b><span class="pt">${WART.text}</span></button><button type="button" class="push-x" id="pushX" aria-label="Schließen">✕</button>`;
- $("#phone").appendChild(el);if(S.view==="heute")render();clearTimeout(window.__pt);window.__pt=setTimeout(hidePush,9000)}
-function hidePush(){const el=$("#push");if(el)el.remove()}
+ $("#phone").appendChild(el);el._nfb=NFB.mitteilung(el,()=>el.remove());if(S.view==="heute")render();clearTimeout(window.__pt);window.__pt=setTimeout(hidePush,9000)}
+function hidePush(sofort){const el=$("#push");if(!el)return;el.id="";if(sofort||!el._nfb)el.remove();else el._nfb.zu()}
 function wartHint(){if(!S.wartAktiv||S.wartX)return"";const q=S.queue.length;
  return`<div class="wart"><span class="wi">!</span><span><b>Systemwartung heute Nacht ${WART.zeit} Uhr</b><small>App etwa 1 Minute nicht erreichbar.${q?` Du hast noch ${q} Bericht${q>1?"e":""} im Postausgang, bitte vorher senden.`:" Dein Postausgang ist leer, alles übertragen."}</small></span><button type="button" class="wx" id="wartX" aria-label="Hinweis ausblenden">✕</button></div>`}
 /* ---------- Mein Wartungspool ---------- */
@@ -1482,7 +1500,7 @@ document.addEventListener("click",e=>{
  if(t.id==="appNeu"){toast("Suche nach Update …");(navigator.serviceWorker?navigator.serviceWorker.getRegistration():Promise.resolve(null)).then(r=>r&&r.update()).catch(()=>{}).finally(()=>setTimeout(()=>location.reload(),900));return}
  if(d.uw){NF.setze("bestaetigungen",TECH.id+"_"+d.uw,{tech:TECH.id,uw:d.uw,datum:iso(new Date()),name:TECH.name});render();toast("Bestätigt – mit Datum und Name gespeichert");return}
  if(d.doc){if(d.doc.startsWith("/api/")){dokOeffnen(d.doc,t.querySelector("b")?t.querySelector("b").textContent:"Dokument");return}toast(d.doc);return}
- if(d.go){go(d.go);return}
+ if(d.go){RICHTUNG="vor";go(d.go);return}
  if(t.id==="neuScan"){const c=newCode();S.neu=neuBlank(c);toast("Aufkleber "+c+" ist noch frei");go("neu");return}
  if(d.nset&&S.neu){S.neu[d.nset]=d.val;save();render();return}
  if(d.nstep&&S.neu){S.neu[d.nstep]=String(Math.max(0,(+S.neu[d.nstep]||0)+ +d.d));save();render();return}
@@ -1516,9 +1534,9 @@ document.addEventListener("click",e=>{
  if(d.copy!=null){const c=S.kontakte[+d.copy];try{navigator.clipboard.writeText(c.tel).then(()=>toast("Nummer kopiert"),()=>toast(c.tel))}catch(e){toast(c.tel)}return}
  if(d.delk!=null){NF.loesche("kontakte",d.delk);render();return}
  if(t.id==="cAdd"){const r1=$("#cr").value.trim(),n1=$("#cn").value.trim(),t1=$("#ct").value.trim();if(!r1||!n1||!t1){toast("Bitte alle drei Felder ausfüllen");return}NF.setze("kontakte",neueId(),{rolle:r1,name:n1,tel:t1});render();toast("Ansprechpartner gespeichert");return}
- if(d.back==="info"){if(S.infoBeitrag)S.infoBeitrag=null;else if(S.infoPfad){const p=S.infoPfad.split("/");p.pop();S.infoPfad=p.length?p.join("/"):null}go("info");return}
- if(d.back){if(d.back==="anlage"){go("anlage");return}go(d.back);return}
- if(d.job){const j=JOBS.find(x=>x.id===d.job);go("anlage",{q:j.q,from:"heute"});return}
+ if(d.back==="info"){RICHTUNG="zurueck";if(S.infoBeitrag)S.infoBeitrag=null;else if(S.infoPfad){const p=S.infoPfad.split("/");p.pop();S.infoPfad=p.length?p.join("/"):null}go("info");return}
+ if(d.back){RICHTUNG="zurueck";if(d.back==="anlage"){go("anlage");return}go(d.back);return}
+  if(d.job){const j=JOBS.find(x=>x.id===d.job);RICHTUNG="vor";go("anlage",{q:j.q,from:"heute"});return}
  if(d.q&&t.classList.contains("sticker")){toast("Aufkleber erkannt: "+ANLAGEN[d.q].nv);go("anlage",{q:d.q,from:"scan"});return}
  if(t.id==="startE"){let j=JOBS.find(x=>x.q===S.q);if(!j){j=adhocJob(S.q,"Störung","Ungeplanter Einsatz / Notdienst")}if(!j)return;if(!S.reports[j.id])S.reports[j.id]=newReport(j);go("einsatz",{cur:j.id});return}
  if(d.resume){S.cur=d.resume;S.q=S.reports[d.resume].q;go("einsatz");return}
@@ -1562,6 +1580,9 @@ document.addEventListener("click",e=>{
  if(d.clr){r[d.clr]=null;save();render();return}
 });
 function mFokus(sd){setTimeout(()=>{const el=document.querySelector(`.mpform input[data-mv^="${sd}|"]`);if(el){el.focus({preventScroll:true});el.scrollIntoView({block:"center",behavior:"smooth"})}},30)}
+/* Esc schließt Blatt und Dokument, per Tastatur ohne Animation */
+document.addEventListener("keydown",e=>{if(e.key!=="Escape")return;const L=$("#hwv");if(L&&L._blatt){zeigeHinweise(null,true);return}if(DOKV){URL.revokeObjectURL(DOKV.url);DOKV=null;const d=$("#dokv");if(d)d.innerHTML="";return}NFB.wischenZu()});
+main.addEventListener("scroll",()=>top.classList.toggle("unterlegt",main.scrollTop>2),{passive:true});
 document.addEventListener("keydown",e=>{const t=e.target;if(e.key!=="Enter"||!t.dataset||!t.dataset.mv)return;e.preventDefault();
  const alle=[...document.querySelectorAll("input[data-mv]")],i=alle.indexOf(t);
  if(i>=0&&i<alle.length-1&&alle[i+1].dataset.mv.split("|")[0]===t.dataset.mv.split("|")[0]&&(mAnsicht()==="tabelle"||alle[i+1].dataset.mv.split("|")[1]===t.dataset.mv.split("|")[1])){alle[i+1].focus();alle[i+1].select&&alle[i+1].select();return}

@@ -177,10 +177,10 @@ button.chip:active,.ico:active,.ihint-app:active{transform:scale(.92)}
 .intro .nlogo b{animation:iFlow 380ms 620ms var(--ease-out) both}
 @keyframes iBox{from{opacity:0;transform:translateY(-16px) scale(.96)}}
 .intro .introinhalt{position:relative;display:flex;flex-direction:column;align-items:center;gap:22px}
-/* Slogan wie im Briefkopf: kurzer oranger Strich, dann „service redefined.“ */
+/* Slogan wie im Briefkopf: senkrechter oranger Strich, dann „service redefined.“ */
 .intro .slogan{margin:0;display:flex;align-items:center;gap:10px;font:500 15px/1 var(--f-body,"Figtree",system-ui,sans-serif);letter-spacing:.04em;color:var(--muted);
   animation:iSlogan 420ms 760ms var(--ease-out) both}
-.intro .slogan i{display:block;width:18px;height:2px;border-radius:1px;background:var(--logo-strich,#E9660F)}
+.intro .slogan i{display:block;width:2px;height:16px;border-radius:1px;background:var(--logo-strich,#E9660F)}
 @keyframes iSlogan{from{opacity:0;transform:translateY(6px)}}
 /* Kurzer Ladebildschirm bei weiteren Starts am Tag: Logo steht sofort, nur der Slogan blendet ein */
 .intro.kurz .nlogo,.intro.kurz .nlogo .s,.intro.kurz .nlogo .n,.intro.kurz .nlogo i,.intro.kurz .nlogo b{animation:none}

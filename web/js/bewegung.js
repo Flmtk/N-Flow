@@ -188,5 +188,89 @@
   };
   NFB.wischenZu = function () { if (offeneKarte) offeneKarte(); };
 
+  /* ---------- Seitenpanel von rechts (Desktop-App, Schubladen im Büro) ----------
+   * Der Inhalt wird oft neu gezeichnet, deshalb holt die Feder sich das Element jedes Mal neu
+   * und die Gesten hängen am festen Behälter. Am Kopf nach rechts ziehen oder schnippen schließt.
+   * o: { behaelter, panel: () => Element, schirm: () => Element|null, griff: "Selektor", weg: () => void } */
+  NFB.seite = function (o) {
+    var breite = function () { var p = o.panel(); return p ? p.getBoundingClientRect().width + 30 : 600; };
+    var zustand = "zu";                                // zu | auf | schliesst
+    var f = new Feder(breite(), function (x, ende) {
+      var p = o.panel(), s = o.schirm ? o.schirm() : null;
+      if (p) { p.style.transform = x > 0.5 ? "translateX(" + x + "px)" : ""; p.style.visibility = x >= breite() - 1 ? "hidden" : ""; }
+      if (s) s.style.opacity = String(Math.max(0, Math.min(1, 1 - x / breite())));
+      if (ende && zustand === "schliesst" && x >= breite() - 1) { zustand = "zu"; if (o.weg) o.weg(); }
+    });
+    var api = {
+      offen: function () { return zustand !== "zu"; },
+      /* nach jedem Neuzeichnen aufrufen: neues Element bekommt die aktuelle Stellung */
+      gezeichnet: function () { f.malen(f.x, false); },
+      auf: function (sofort) {
+        if (zustand === "auf") { f.malen(f.x, false); return; }
+        if (zustand === "zu") f.setze(breite());
+        zustand = "auf"; f.zu(0, { antwort: 0.42, sofort: sofort });
+      },
+      zu: function (v, sofort) { if (zustand === "zu") { if (o.weg) o.weg(); return; } zustand = "schliesst"; f.zu(breite(), { v: v || 0, antwort: 0.36, sofort: sofort }); },
+      weg: function () { f.halt(); zustand = "zu"; f.x = breite(); },
+    };
+    var s = null, basis = 0, tempo = null, id = null, richtung = null;
+    o.behaelter.addEventListener("pointerdown", function (e) {
+      var g = e.target.closest && e.target.closest(o.griff);
+      if (!g || e.button !== 0 || s || zustand === "zu" || e.target.closest("button, a, input, select, textarea")) return;
+      f.halt(); if (zustand === "schliesst") zustand = "auf";     // mitten im Schließen gegriffen
+      s = { x: e.clientX, y: e.clientY }; basis = f.x; tempo = new Tempo(); tempo.add(e.clientX); id = e.pointerId; richtung = null;
+    });
+    o.behaelter.addEventListener("pointermove", function (e) {
+      if (!s || e.pointerId !== id) return;
+      var dx = e.clientX - s.x, dy = e.clientY - s.y;
+      if (!richtung && Math.hypot(dx, dy) > 8) { richtung = Math.abs(dx) > Math.abs(dy) ? "x" : "y"; if (richtung === "x") { try { o.behaelter.setPointerCapture(id); } catch (x) { /* weg */ } } }
+      if (richtung !== "x") return;
+      tempo.add(e.clientX);
+      var x = basis + dx; if (x < 0) x = -NFB.gummi(-x, breite());
+      f.setze(x);
+    });
+    function los(e) {
+      if (!s || e.pointerId !== id) return; s = null;
+      if (richtung !== "x") { if (f.x !== 0 && zustand === "auf") f.zu(0); return; }
+      klickSchlucken();
+      var v = tempo.wert();
+      if (f.x + NFB.projektion(v) > breite() * 0.45) api.zu(v);
+      else f.zu(0, { v: v, antwort: 0.34, daempfung: Math.abs(v) > 600 ? 0.82 : 1 });
+    }
+    o.behaelter.addEventListener("pointerup", los); o.behaelter.addEventListener("pointercancel", los);
+    return api;
+  };
+
+  /* ---------- Startbild: Logo baut sich auf und fliegt an seinen Platz ----------
+   * Nur einmal am Tag beim Öffnen aus geschlossenem Zustand. ziel() liefert das Logo, sobald die Seite steht. */
+  NFB.startbild = function (schluessel, ziel) {
+    var heute = new Date().toLocaleDateString("sv"), el;
+    try { if (localStorage.getItem(schluessel) === heute || !window.NFDESIGN) return; } catch (e) { return; }
+    el = document.createElement("div"); el.className = "intro"; el.setAttribute("aria-hidden", "true");
+    el.innerHTML = '<div class="grund"></div>' + NFDESIGN.logo("gross");
+    document.body.appendChild(el);
+    var ruhig = NFB.reduziert(), t0 = performance.now(), fertig = false, box = el.querySelector(".nlogo"), grund = el.querySelector(".grund");
+    function suche() { var z = ziel(); return z && z.getBoundingClientRect().width > 0 ? z : null; }
+    function weg(schnell) {
+      if (fertig) return; fertig = true;
+      try { localStorage.setItem(schluessel, heute); } catch (e) { /* privat */ }
+      var z = suche();
+      if (z && !schnell && !ruhig && box.animate) {
+        var a = box.getBoundingClientRect(), b = z.getBoundingClientRect(), s = b.width / a.width;
+        var r = parseFloat(getComputedStyle(z).borderBottomLeftRadius) || 8;
+        z.style.visibility = "hidden"; box.style.transformOrigin = "0 0";
+        box.animate([{ transform: "none", borderRadius: "14px" }, { transform: "translate(" + (b.left - a.left) + "px," + (b.top - a.top) + "px) scale(" + s + ")", borderRadius: "0 0 " + (r / s) + "px " + (r / s) + "px", boxShadow: "none" }],
+          { duration: 480, easing: "cubic-bezier(0.32,0.72,0,1)", fill: "forwards" });
+        grund.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 320, delay: 60, easing: "cubic-bezier(0.23,1,0.32,1)", fill: "forwards" });
+        setTimeout(function () { z.style.visibility = ""; el.remove(); }, 500);
+      } else {
+        if (el.animate) el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: schnell ? 150 : 220, easing: "ease-out", fill: "forwards" });
+        setTimeout(function () { el.remove(); }, schnell ? 160 : 230);
+      }
+    }
+    el.addEventListener("pointerdown", function () { weg(true); });
+    (function warte() { var t = performance.now() - t0; if (fertig) return; if (t >= (ruhig ? 500 : 1050) && (suche() || t > 2500)) return weg(false); setTimeout(warte, 60); })();
+  };
+
   window.NFB = NFB;
 })();

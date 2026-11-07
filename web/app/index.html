@@ -435,36 +435,9 @@ label.f.req>span.unit::after{content:none}
 <script src="/js/bewegung.js"></script>
 </head>
 <body>
-<div class="intro" id="intro" hidden aria-hidden="true"></div>
 <script>
-/* Startbild: nur wenn die App geschlossen war (frischer Seitenaufbau) und nur beim ersten Öffnen am Tag.
- * Nicht beim Sprung über einen QR-Code. Antippen überspringt. Blockiert nie länger als nötig. */
-(function(){
- var el=document.getElementById("intro"),heute=new Date().toLocaleDateString("sv");
- try{if(localStorage.getItem("nflow:intro")===heute||/a=/.test(location.hash)||!window.NFDESIGN)return}catch(e){return}
- var ruhig=matchMedia("(prefers-reduced-motion: reduce)").matches,t0=performance.now(),fertig=false;
- el.innerHTML='<div class="grund"></div>'+NFDESIGN.logo("gross");el.hidden=false;
- var box=el.querySelector(".nlogo"),grund=el.querySelector(".grund");
- function ziel(){var k=document.querySelectorAll("#top .nlogo,#tabs .nlogo");for(var i=0;i<k.length;i++){var r=k[i].getBoundingClientRect();if(r.width>0)return k[i]}return null}
- function weg(schnell){
-  if(fertig)return;fertig=true;try{localStorage.setItem("nflow:intro",heute)}catch(e){}
-  var z=ziel();
-  if(z&&!schnell&&!ruhig&&box.animate){
-   // Das Logo fliegt an seinen Platz oben links: so bleibt klar, wo es herkommt
-   var a=box.getBoundingClientRect(),b=z.getBoundingClientRect(),s=b.width/a.width;
-   z.style.visibility="hidden";box.style.transformOrigin="0 0";
-   box.animate([{transform:"none",borderRadius:"14px"},{transform:"translate("+(b.left-a.left)+"px,"+(b.top-a.top)+"px) scale("+s+")",borderRadius:"0 0 "+(8/s)+"px "+(8/s)+"px",boxShadow:"none"}],{duration:480,easing:"cubic-bezier(0.32,0.72,0,1)",fill:"forwards"});
-   grund.animate([{opacity:1},{opacity:0}],{duration:320,delay:60,easing:"cubic-bezier(0.23,1,0.32,1)",fill:"forwards"});
-   setTimeout(function(){z.style.visibility="";el.remove()},500);
-  }else{
-   var x=el.animate?el.animate([{opacity:1},{opacity:0}],{duration:schnell?150:220,easing:"ease-out",fill:"forwards"}):null;
-   setTimeout(function(){el.remove()},schnell?160:230);
-  }
- }
- el.addEventListener("pointerdown",function(){weg(true)});
- // Nach dem Aufbau (ca. 1 s) abgeben, sobald die App steht; spätestens nach 2,5 s ausblenden
- (function warte(){var t=performance.now()-t0;if(fertig)return;if(t>=(ruhig?500:1050)&&(ziel()||t>2500))return weg(false);setTimeout(warte,60)})();
-})();
+/* Startbild: nur beim ersten Öffnen am Tag aus geschlossenem Zustand, nicht beim Sprung über einen QR-Code */
+if(!/a=/.test(location.hash))NFB.startbild("nflow:intro",function(){return document.querySelector("#top .nlogo, #tabs .nlogo")});
 </script>
 
 <div class="wrap">
@@ -473,6 +446,7 @@ label.f.req>span.unit::after{content:none}
     <main class="main" id="main"></main>
     <div id="foot"></div>
     <nav class="tabs" id="tabs" aria-label="Hauptmenü"></nav>
+    <aside class="dpanel" id="dpanel" hidden aria-label="Anlage"></aside>
   </div>
 </div>
 
@@ -1405,13 +1379,27 @@ function neuSave(){
 }
 function detailPanels(d){return Object.entries(d).map(([h,rows])=>`<div class="panel"><h4>${esc(h)}</h4><dl class="kv">${rows.map(([k,v])=>`<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("")}</dl></div>`).join("")}
 
+/* ---------- PC: Anlage gleitet rechts herein, die Tagesliste bleibt stehen ---------- */
+function panelModus(){return isDesk()&&S.view==="anlage"&&(S.from||"heute")==="heute"}
+let DP=null;
+function dpanelZeigen(m,f){const P=$("#dpanel"),alt=P.querySelector(".dpinhalt"),pos=alt?alt.scrollTop:0,anderer=P.dataset.q&&P.dataset.q!==S.q;
+ P.hidden=false;
+ P.innerHTML=`<div class="dpkopf"><span class="dptitel">Anlage</span><button type="button" class="ico" data-panelzu="1" aria-label="Schließen">✕</button></div><div class="dpinhalt">${m}</div>${f}`;
+ const ih=P.querySelector(".dpinhalt");if(!anderer)ih.scrollTop=pos;
+ if(anderer&&ih.animate&&!NFB.reduziert())ih.animate([{opacity:0},{opacity:1}],{duration:160,easing:"ease-out"});
+ P.dataset.q=S.q;$("#phone").classList.add("mitpanel");
+ main.querySelectorAll("[data-job]").forEach(b=>{const j=JOBS.find(x=>x.id===b.dataset.job);b.classList.toggle("gewaehlt",!!j&&j.q===S.q)});
+ if(!DP)DP=NFB.seite({behaelter:P,panel:()=>$("#dpanel"),griff:".dpkopf, .hero",weg:()=>{dpanelWeg();if(S.view==="anlage"){S.view="heute";save();render()}}});
+ DP.auf()}
+function dpanelWeg(){const P=$("#dpanel");if(!P||P.hidden)return;P.hidden=true;P.innerHTML="";delete P.dataset.q;$("#phone").classList.remove("mitpanel");if(DP)DP.weg()}
 function render(){
  if(S.view==="intra"){S.view="info";S.infoPfad=null}if(S.tab==="intra")S.tab="info";
  aufbauen();if(S.view!=="scan")scanStopp();applyDesk();if(S.view==="scan"&&isDesk())S.view="suche";renderTabs();
  if(S.view==="einsatz"&&!R())S.view="heute";
  if(S.view==="anlage"&&!ANLAGEN[S.q])S.view="heute";
  if(S.view==="neu"&&!S.neu)S.view="scan";
- ({heute:vHeute,scan:vScan,anlage:vAnlage,einsatz:vEinsatz,fertig:vFertig,berichte:vBerichte,ich:vIch,suche:vSuche,neu:vNeu,pool:vPool,info:vInfo,intra:vInfo,fehl:vFehl,folge:vFolge}[S.view]||vHeute)();
+ if(panelModus()){vAnlage();const m=main.innerHTML,f=foot.innerHTML;vHeute();dpanelZeigen(m,f)}
+ else{dpanelWeg();({heute:vHeute,scan:vScan,anlage:vAnlage,einsatz:vEinsatz,fertig:vFertig,berichte:vBerichte,ich:vIch,suche:vSuche,neu:vNeu,pool:vPool,info:vInfo,intra:vInfo,fehl:vFehl,folge:vFolge}[S.view]||vHeute)()}
  fotoVorschau();
 }
 
@@ -1495,6 +1483,7 @@ document.addEventListener("click",e=>{
  if(d.zt){S.zeitTab=d.zt;save();render();return}
  if(d.hinweis){zeigeHinweise(d.hinweis);return}
  if(d.hwzu){zeigeHinweise(null);return}
+ if(d.panelzu){if(DP)DP.zu(0,e.detail===0);return}
  if(d.schema&&t.closest(".schemawahl")){NFDESIGN.setzeSchema(d.schema);render();return}
  if(d.themeset){NFDESIGN.setzeTheme(d.themeset);render();return}
  if(t.id==="appNeu"){toast("Suche nach Update …");(navigator.serviceWorker?navigator.serviceWorker.getRegistration():Promise.resolve(null)).then(r=>r&&r.update()).catch(()=>{}).finally(()=>setTimeout(()=>location.reload(),900));return}
@@ -1536,7 +1525,7 @@ document.addEventListener("click",e=>{
  if(t.id==="cAdd"){const r1=$("#cr").value.trim(),n1=$("#cn").value.trim(),t1=$("#ct").value.trim();if(!r1||!n1||!t1){toast("Bitte alle drei Felder ausfüllen");return}NF.setze("kontakte",neueId(),{rolle:r1,name:n1,tel:t1});render();toast("Ansprechpartner gespeichert");return}
  if(d.back==="info"){RICHTUNG="zurueck";if(S.infoBeitrag)S.infoBeitrag=null;else if(S.infoPfad){const p=S.infoPfad.split("/");p.pop();S.infoPfad=p.length?p.join("/"):null}go("info");return}
  if(d.back){RICHTUNG="zurueck";if(d.back==="anlage"){go("anlage");return}go(d.back);return}
-  if(d.job){const j=JOBS.find(x=>x.id===d.job);RICHTUNG="vor";go("anlage",{q:j.q,from:"heute"});return}
+  if(d.job){const j=JOBS.find(x=>x.id===d.job);if(!isDesk())RICHTUNG="vor";go("anlage",{q:j.q,from:"heute"});return}
  if(d.q&&t.classList.contains("sticker")){toast("Aufkleber erkannt: "+ANLAGEN[d.q].nv);go("anlage",{q:d.q,from:"scan"});return}
  if(t.id==="startE"){let j=JOBS.find(x=>x.q===S.q);if(!j){j=adhocJob(S.q,"Störung","Ungeplanter Einsatz / Notdienst")}if(!j)return;if(!S.reports[j.id])S.reports[j.id]=newReport(j);go("einsatz",{cur:j.id});return}
  if(d.resume){S.cur=d.resume;S.q=S.reports[d.resume].q;go("einsatz");return}
@@ -1581,7 +1570,7 @@ document.addEventListener("click",e=>{
 });
 function mFokus(sd){setTimeout(()=>{const el=document.querySelector(`.mpform input[data-mv^="${sd}|"]`);if(el){el.focus({preventScroll:true});el.scrollIntoView({block:"center",behavior:"smooth"})}},30)}
 /* Esc schließt Blatt und Dokument, per Tastatur ohne Animation */
-document.addEventListener("keydown",e=>{if(e.key!=="Escape")return;const L=$("#hwv");if(L&&L._blatt){zeigeHinweise(null,true);return}if(DOKV){URL.revokeObjectURL(DOKV.url);DOKV=null;const d=$("#dokv");if(d)d.innerHTML="";return}NFB.wischenZu()});
+document.addEventListener("keydown",e=>{if(e.key!=="Escape")return;const L=$("#hwv");if(L&&L._blatt){zeigeHinweise(null,true);return}if(DOKV){URL.revokeObjectURL(DOKV.url);DOKV=null;const d=$("#dokv");if(d)d.innerHTML="";return}if(DP&&DP.offen()){DP.zu(0,true);return}NFB.wischenZu()});
 main.addEventListener("scroll",()=>top.classList.toggle("unterlegt",main.scrollTop>2),{passive:true});
 document.addEventListener("keydown",e=>{const t=e.target;if(e.key!=="Enter"||!t.dataset||!t.dataset.mv)return;e.preventDefault();
  const alle=[...document.querySelectorAll("input[data-mv]")],i=alle.indexOf(t);

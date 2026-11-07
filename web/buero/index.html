@@ -407,14 +407,17 @@ body{padding:0}
 .thumbs img{width:100%;height:100%;object-fit:cover}
 .sigimg{height:42px;max-width:100%;object-fit:contain}
 .qrlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
-@media (prefers-reduced-motion:no-preference){.drawer{animation:slide .18s ease-out}@keyframes slide{from{transform:translateX(30px);opacity:.6}}}
+/* Schublade: Feder statt fester Animation (bewegung.js), am Kopf nach rechts wegziehen */
+.drawer{will-change:transform}.drawer header{cursor:grab;-webkit-user-select:none;user-select:none}.drawer header:active{cursor:grabbing}
 </style>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&family=Barlow+Condensed:wght@400&display=swap">
 <link rel="stylesheet" href="/css/design.css">
 <script src="/js/design.js"></script>
+<script src="/js/bewegung.js"></script>
 <script src="/js/fahrzeug.js"></script>
 </head>
 <body>
+<script>NFB.startbild("nflow:intro-buero",function(){return document.querySelector("#side .nlogo")});</script>
 
 <div class="app">
   <aside class="side" id="side"></aside>
@@ -1416,10 +1419,15 @@ function empForm(E){const neu=!E.id;
 function initials(n){return n.trim().split(/\s+/).map(x=>x[0]||"").join("").slice(0,2).toUpperCase()}
 function slug(n){return n.trim().toLowerCase().replace(/ä/g,"ae").replace(/ö/g,"oe").replace(/ü/g,"ue").replace(/ß/g,"ss").replace(/[^a-z\s-]/g,"").split(/\s+/).join(".")}
 /* ---------- Drawer ---------- */
+/* Schublade kommt von rechts und geht dorthin zurück; per Geste greifbar, Esc schließt sofort */
+let BD=null;
+function drawerFeder(){if(!BD)BD=NFB.seite({behaelter:$("#layer"),panel:()=>$("#layer .drawer"),schirm:()=>$("#layer .scrim"),griff:".drawer header",
+ weg:()=>{if(S.drawer&&$("#layer .drawer")&&BD.offen())return;S.drawer=null;S.af=null;S.kf=null;S.lagerForm=null;save();$("#layer").innerHTML=""}});return BD}
 function drawer(){setTimeout(()=>translate($("#layer")),0);
- const L=$("#layer");if(!S.drawer){L.innerHTML="";return}
+ const L=$("#layer");if(!S.drawer){const b=drawerFeder();if(b.offen()&&L.querySelector(".drawer"))b.zu();else L.innerHTML="";return}
  const [k,id]=S.drawer.split(/:(.*)/);const d=k==="anlform"?dAnlForm(id):k==="kunde"?dKunde(id):k==="aufk"?dAufk(id):k==="order"?dOrder(id):k==="anl"?dAnl(id):k==="neu"?dNeu(id):k==="stat"?dStat():k==="rec"?dRec(id):k==="csv"?dCsv(id):k==="fz"?dFz(id):k==="fzlager"?dFzLager(id):k==="mahn"?dMahn(id):dBer(id);
  L.innerHTML=`<div class="scrim" data-close="1"></div><div class="drawer" role="dialog" aria-label="${esc(d.title)}"><header><div><h2>${esc(d.title)}</h2><p>${esc(d.sub)}</p></div><button type="button" class="ico" data-close="1" aria-label="Schließen" style="margin-left:auto">${I.x}</button></header><div class="body">${d.body}</div><footer>${d.foot}</footer></div>`;
+ drawerFeder().auf();
 }
 
 /* ---------- Administration ---------- */
@@ -1691,7 +1699,7 @@ document.addEventListener("change",e=>{const t=e.target;
  if(t.dataset.mat){const[i,f]=t.dataset.mat.split("|");S.mat[+i][f]=f==="ek"?(parseFloat(t.value)||0):t.value;save();setTimeout(render,0);return}
  if(t.dataset.am){const[i,f]=t.dataset.am.split("|");S.am[+i][f]=f==="iv"?(parseInt(t.value)||12):t.value;save();setTimeout(render,0);return}if(t.dataset.emp&&S.emp){S.emp[t.dataset.emp]=t.type==="checkbox"?t.checked:t.value;if(t.dataset.emp==="name"&&!S.emp.kurz)S.emp.kurz=initials(t.value);save();if(t.tagName==="SELECT"||t.dataset.emp==="name")setTimeout(render,0);return}if(t.dataset.empsk&&S.emp){const k=t.dataset.empsk;S.emp.skills=t.checked?[...new Set([...S.emp.skills,k])]:S.emp.skills.filter(x=>x!==k);save();return}if(t.dataset.nf&&S.nf){S.nf[t.dataset.nf]=t.value;save();if(t.tagName==="SELECT")setTimeout(drawer,0);return}if(t.dataset.betr){const a=anl(t.dataset.betr);a.betreuer=t.value||null;save();render();toast(a.nv+(a.betreuer?" → Pool "+tech(a.betreuer).name:" ohne Monteur"));return}if(t.dataset.wsel){const s=new Set(S.wsel||[]);t.checked?s.add(t.dataset.wsel):s.delete(t.dataset.wsel);S.wsel=[...s];save();render()}});
 document.addEventListener("input",e=>{const t=e.target;if(t.dataset.af&&S.af&&t.tagName!=="SELECT"){S.af[t.dataset.af]=t.value;return}if(t.dataset.kf&&S.kf){S.kf[t.dataset.kf]=t.value;return}if(t.id==="dbq"){S.dbQ=t.value;save();const p=t.selectionStart;render();const n=$("#dbq");if(n){n.focus();try{n.setSelectionRange(p,p)}catch(x){}}return}if(t.dataset.emp&&S.emp&&t.type!=="checkbox"){S.emp[t.dataset.emp]=t.value;save()}if(t.dataset.nf&&S.nf&&t.tagName!=="SELECT"){S.nf[t.dataset.nf]=t.value;save()}});
-document.addEventListener("keydown",e=>{if(e.key==="Escape"&&(S.drawer||S.sel||S.a4||S.rv)){if(S.rv)S.rv=null;else if(S.a4)S.a4=null;else{S.drawer=null;S.sel=null}save();render()}});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&(S.drawer||S.sel||S.a4||S.rv)){if(S.rv)S.rv=null;else if(S.a4)S.a4=null;else{if(S.drawer&&BD){BD.weg();$("#layer").innerHTML=""}S.drawer=null;S.sel=null}save();render()}});
 (async()=>{
  $("#view").innerHTML='<div class="lade">N-Flow lädt …</div>';
  let ich=null;

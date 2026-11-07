@@ -436,8 +436,9 @@ label.f.req>span.unit::after{content:none}
 </head>
 <body>
 <script>
-/* Startbild: nur beim ersten Öffnen am Tag aus geschlossenem Zustand, nicht beim Sprung über einen QR-Code */
-if(!/a=/.test(location.hash))NFB.startbild("nflow:intro",function(){return document.querySelector("#top .nlogo, #tabs .nlogo")});
+/* Startbild nur aus geschlossenem Zustand, nicht beim Sprung über einen QR-Code */
+/* Beim ersten Öffnen am Tag baut sich das Logo auf, bei jedem weiteren Öffnen kommt kurz der Ladebildschirm */
+if(!/a=/.test(location.hash))NFB.startbild("nflow:intro",function(){return document.querySelector("#top .nlogo, #tabs .nlogo")},{ladebild:true,slogan:"service redefined."});
 </script>
 
 <div class="wrap">
@@ -1585,6 +1586,8 @@ let belegDatei=null;
  catch(e){main.innerHTML=`<div class="lade">${esc(e.message)}</div>`;return}
  if(!ich)return;
  RECHTE=ich.rechte||{};uiLaden();if(!S.reports)S.reports={};
+ // Die App startet immer auf „Heute“, nie mitten in einer Ansicht. Angefangene Berichte bleiben als „In Arbeit“ erhalten.
+ Object.assign(S,{view:"heute",tab:"heute",infoPfad:null,infoBeitrag:null});save();
  const h=location.hash.match(/a=([A-Za-z0-9]+)/);
  const sprung=()=>{if(location.hash==="#info"){history.replaceState(null,"",location.pathname);S.tab="info";S.infoPfad=null;S.infoBeitrag=null;S._infoGeladen=false;go("info")}};
  render();lastDk=isDesk();sprung();

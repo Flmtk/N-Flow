@@ -20,6 +20,7 @@ Die Datenbank-Änderung (Migration 008) läuft beim Start automatisch.
 - [x] Messung: leere Messpunkte erlaubt, dann Begründung im Bemerkungsfeld.
 - [x] E-Mails als richtige HTML-Mails mit Logo, Info-Kasten und Impressum; Terminbestätigungen von info@, Rechnungen und Mahnungen von rechnung@.
 - [x] Startbild beim ersten Öffnen am Tag (App und Büro): Logo baut sich auf und fliegt an seinen Platz. Nicht beim QR-Sprung, Antippen überspringt.
+- [x] Ladebildschirm mit „service redefined.“ bei jedem weiteren Öffnen der App aus geschlossenem Zustand; die App startet immer auf „Heute“ (außer beim QR-Sprung).
 - [x] Montags neu anmelden (Büro und App), Hinweis auf der Anmeldeseite, nicht gesendete Einträge bleiben erhalten.
 - [x] App fühlt sich wie eine echte App an: kein Tap-Blitz, keine Verzögerung, kein Zoom bei Eingaben, kein Ziehen-zum-Aktualisieren, Statusleiste in Kopffarbe, Hover nur mit Maus.
 - [x] Bewegungen mit Federn: Rückmeldung beim Drücken, Hinweisblatt ziehen/schnippen, Mitteilung wegwischen, Aufträge nach links wischen („Anrufen“), Vor/Zurück-Übergang, durchscheinende Leiste unten.

@@ -242,14 +242,19 @@
   };
 
   /* ---------- Startbild: Logo baut sich auf und fliegt an seinen Platz ----------
-   * Nur einmal am Tag beim Öffnen aus geschlossenem Zustand. ziel() liefert das Logo, sobald die Seite steht. */
-  NFB.startbild = function (schluessel, ziel) {
-    var heute = new Date().toLocaleDateString("sv"), el;
-    try { if (localStorage.getItem(schluessel) === heute || !window.NFDESIGN) return; } catch (e) { return; }
-    el = document.createElement("div"); el.className = "intro"; el.setAttribute("aria-hidden", "true");
-    el.innerHTML = '<div class="grund"></div>' + NFDESIGN.logo("gross");
+   * Erstes Öffnen am Tag: Logo baut sich auf. Mit o.ladebild kommt bei jedem weiteren Öffnen aus geschlossenem
+   * Zustand ein kurzer Ladebildschirm (Logo steht schon, Slogan blendet ein). ziel() liefert das Logo, sobald die Seite steht. */
+  NFB.startbild = function (schluessel, ziel, o) {
+    o = o || {};
+    var heute = new Date().toLocaleDateString("sv"), el, erstes = true;
+    try { erstes = localStorage.getItem(schluessel) !== heute; } catch (e) { /* privat */ }
+    if (!window.NFDESIGN || (!erstes && !o.ladebild)) return;
+    el = document.createElement("div"); el.className = "intro" + (erstes ? "" : " kurz"); el.setAttribute("aria-hidden", "true");
+    el.innerHTML = '<div class="grund"></div><div class="introinhalt">' + NFDESIGN.logo("gross") +
+      (o.slogan ? '<p class="slogan"><i></i>' + o.slogan + "</p>" : "") + "</div>";
     document.body.appendChild(el);
-    var ruhig = NFB.reduziert(), t0 = performance.now(), fertig = false, box = el.querySelector(".nlogo"), grund = el.querySelector(".grund");
+    var ruhig = NFB.reduziert(), t0 = performance.now(), fertig = false, box = el.querySelector(".nlogo"), grund = el.querySelector(".grund"), slogan = el.querySelector(".slogan");
+    var mindest = ruhig ? 500 : erstes ? (o.slogan ? 1350 : 1050) : 800;
     function suche() { var z = ziel(); return z && z.getBoundingClientRect().width > 0 ? z : null; }
     function weg(schnell) {
       if (fertig) return; fertig = true;
@@ -262,6 +267,7 @@
         box.animate([{ transform: "none", borderRadius: "14px" }, { transform: "translate(" + (b.left - a.left) + "px," + (b.top - a.top) + "px) scale(" + s + ")", borderRadius: "0 0 " + (r / s) + "px " + (r / s) + "px", boxShadow: "none" }],
           { duration: 480, easing: "cubic-bezier(0.32,0.72,0,1)", fill: "forwards" });
         grund.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 320, delay: 60, easing: "cubic-bezier(0.23,1,0.32,1)", fill: "forwards" });
+        if (slogan) slogan.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 160, easing: "ease-out", fill: "forwards" });
         setTimeout(function () { z.style.visibility = ""; el.remove(); }, 500);
       } else {
         if (el.animate) el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: schnell ? 150 : 220, easing: "ease-out", fill: "forwards" });
@@ -269,7 +275,7 @@
       }
     }
     el.addEventListener("pointerdown", function () { weg(true); });
-    (function warte() { var t = performance.now() - t0; if (fertig) return; if (t >= (ruhig ? 500 : 1050) && (suche() || t > 2500)) return weg(false); setTimeout(warte, 60); })();
+    (function warte() { var t = performance.now() - t0; if (fertig) return; if (t >= mindest && (suche() || t > 3000)) return weg(false); setTimeout(warte, 60); })();
   };
 
   window.NFB = NFB;

@@ -176,12 +176,21 @@ button.chip:active,.ico:active,.ihint-app:active{transform:scale(.92)}
 .intro .nlogo i{animation:iLinie 300ms 560ms var(--ease-out) both}
 .intro .nlogo b{animation:iFlow 380ms 620ms var(--ease-out) both}
 @keyframes iBox{from{opacity:0;transform:translateY(-16px) scale(.96)}}
+.intro .introinhalt{position:relative;display:flex;flex-direction:column;align-items:center;gap:22px}
+/* Slogan wie im Briefkopf: kurzer oranger Strich, dann „service redefined.“ */
+.intro .slogan{margin:0;display:flex;align-items:center;gap:10px;font:500 15px/1 var(--f-body,"Figtree",system-ui,sans-serif);letter-spacing:.04em;color:var(--muted);
+  animation:iSlogan 420ms 760ms var(--ease-out) both}
+.intro .slogan i{display:block;width:18px;height:2px;border-radius:1px;background:var(--logo-strich,#E9660F)}
+@keyframes iSlogan{from{opacity:0;transform:translateY(6px)}}
+/* Kurzer Ladebildschirm bei weiteren Starts am Tag: Logo steht sofort, nur der Slogan blendet ein */
+.intro.kurz .nlogo,.intro.kurz .nlogo .s,.intro.kurz .nlogo .n,.intro.kurz .nlogo i,.intro.kurz .nlogo b{animation:none}
+.intro.kurz .slogan{animation-delay:80ms}
 @keyframes iStrich{from{transform:scaleY(0)}}
 @keyframes iN{from{opacity:0;transform:translateX(-5px)}}
 @keyframes iLinie{from{transform:scaleX(0)}}
 @keyframes iFlow{from{opacity:0;letter-spacing:.7em}}
 @media (prefers-reduced-motion:reduce){
-  .intro .nlogo,.intro .nlogo .s,.intro .nlogo .n,.intro .nlogo i,.intro .nlogo b{animation:iRuhig 200ms var(--ease-out) both}
+  .intro .nlogo,.intro .nlogo .s,.intro .nlogo .n,.intro .nlogo i,.intro .nlogo b,.intro .slogan{animation:iRuhig 200ms var(--ease-out) both}
   @keyframes iRuhig{from{opacity:0}}
 }
 

@@ -10,8 +10,7 @@ Einspielen: `cd /docker/n-flow-test && sh ops/update.sh` (das Update baut das Pr
 - Ohne Schlüssel geht „Bin unterwegs“ per E-Mail von info@, wenn beim Kunden eine Adresse hinterlegt ist.
 
 **Enthalten:**
-- [x] Sicherheitscheck vor Arbeitsbeginn (Gasgeruch, CO-Warner, Aufstellraum) mit Sofortmaßnahmen, Pflicht im ersten Schritt, steht im Bericht.
-- [x] Arbeitsschritte zum Abhaken je Einsatzart und Gerätetyp (Gas-Heizgerät, Gebläsebrenner, Öl, Inbetriebnahme); „entfällt“ möglich; Seite „Arbeitsschritte & Sicherheit“ im Servicebericht.
+- [x] Arbeitsschritte zum Abhaken je Einsatzart und Gerätetyp (Gas-Heizgerät, Gebläsebrenner, Öl, Inbetriebnahme); „entfällt“ möglich; Seite „Arbeitsschritte“ im Servicebericht.
 - [x] Büro: Einstellungen › Vorlagen für Arbeitsschritte und Textbausteine.
 - [x] Messung: letzte Messwerte klein unter jedem Feld, starke Abweichungen orange, CO und qA über Grenzwert sofort rot bzw. gelb.
 - [x] Messausdruck fotografieren: Werte werden erkannt und nach Bestätigung in den Messpunkt übernommen.

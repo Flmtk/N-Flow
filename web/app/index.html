@@ -427,12 +427,8 @@ label.f.req>span.unit::after{content:none}
 @media (hover:hover) and (pointer:fine){.phone.desk .tabs .navbrand .ico:hover{background:var(--accent-soft);color:var(--accent)}}
 .phone.desk .tabs .navbrand .ico svg{width:20px;height:20px;padding:0}
 .top .brand+.hlupe,.top .brand+.ico{margin-left:auto}
-/* Sicherheitscheck, Arbeitsschritte, Störungshilfe, Vorwerte */
-.sicher .sfrage{display:grid;gap:6px;padding:8px 0;border-top:1px solid var(--line2)}
-.sicher .sfrage:first-of-type{border-top:0}.sicher .sfrage>span{font-size:14.5px;font-weight:500}.sicher .sfrage .seg{width:100%}
-.phone.desk .sicher .sfrage{grid-template-columns:minmax(0,1fr) 240px;align-items:center}
+/* Arbeitsschritte, Störungshilfe, Vorwerte */
 .shzeile{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:end;margin-bottom:8px}.shzeile .f{margin:0}.shzeile .btn{width:auto;padding:0 14px}
-.sicher.gefahr{border-color:var(--crit,#B3261E)}
 .slist{list-style:none;margin:8px 0 10px;padding:0;display:flex;flex-direction:column;gap:2px}
 .slist li{display:flex;align-items:stretch;gap:6px}
 .slist .sok{flex:1;display:flex;align-items:center;gap:10px;text-align:left;border:0;background:none;padding:9px 4px;font-size:14.5px;min-height:44px;cursor:pointer}
@@ -702,7 +698,7 @@ function newReport(job){const a=ANLAGEN[job.q];return{
  job:job.id,q:job.q,step:0,einsatzart:job.art,grund:job.grund,bestell:"",ansprech:a.ansprech.split(" (")[0],
  zv:"",zb:"",fz:"",km:"",diagnose:"",arbeiten:"",fotos:[],
  mess:newMess(a),
- material:[],zustand:"",sbt:"ok",hinweis:"",nachverfolgen:false,merkblatt:false,nichtVorOrt:false,mailKunde:true,sigK:null,sigT:null,sigName:"",sicher:{},fehlercode:"",schritte:null}}
+ material:[],zustand:"",sbt:"ok",hinweis:"",nachverfolgen:false,merkblatt:false,nichtVorOrt:false,mailKunde:true,sigK:null,sigT:null,sigName:"",fehlercode:"",schritte:null}}
 function R(){return S.reports[S.cur]}
 function auftragInfo(r,a){const fo=(S.folgen||[]).filter(f=>f.q===r.q);return`
  <div class="panel"><h4>Anlage ${a.nv}</h4><dl class="kv"><dt>Gerät</dt><dd>${esc(a.hersteller)} ${esc(a.typ)}</dd><dt>Seriennr.</dt><dd>${esc(a.sernr)}</dd><dt>Baujahr</dt><dd>${a.baujahr}</dd><dt>Leistung</dt><dd>${a.kw} kW</dd><dt>Brennstoff</dt><dd>${esc(a.gas)}</dd><dt>Vertrag</dt><dd>${esc(a.vertrag)}</dd></dl></div>
@@ -721,7 +717,7 @@ function zsum(r){return`<div><b>${de(arbH(r),2)}</b><span>Arbeitszeit h</span></
 /* Messung: Werte oder eine Begründung unten im Feld „Bemerkungen“ (z. B. Anlage außer Betrieb, kein Brennerbetrieb möglich) */
 function messWerte(m){return["ang","ver"].some(sd=>m[sd]&&m[sd].rows.some(x=>Object.entries(x).some(([k,v])=>k!=="pkt"&&k!=="azl"&&String(v==null?"":v).trim()!=="")))}
 function stepOk(i){const r=R();switch(STEPS[i][0]){
- case"auftrag":return!!r.einsatzart&&sicherOk(r,ANLAGEN[r.q]);
+ case"auftrag":return!!r.einsatzart;
  case"zeiten":return arbH(r)>0&&n(r.fz)!=null;
  case"befund":{const c=schritteVon(r);return r.diagnose.trim().length>3&&(c?c.items.every(x=>x.s):r.arbeiten.trim().length>3)}
  case"messung":{const m=mig(r);return messWerte(m)||String(m.bem||"").trim().length>=10}
@@ -729,22 +725,6 @@ function stepOk(i){const r=R();switch(STEPS[i][0]){
  case"fest":return!!r.zustand;
  case"abschluss":return(r.nichtVorOrt||(r.papier&&r.papScan)||(r.sigK&&r.sigName.trim()));
 }}
-
-/* ---------- Sicherheitscheck vor Arbeitsbeginn ----------
- * Drei Fragen beim Betreten. Bei einer Gefahr erscheinen die Sofortmaßnahmen und es muss eingetragen werden, was veranlasst wurde. */
-function sicherFragen(a){const gas=a.energie!=="Öl";return[
- ...(gas?[["gas","Gasgeruch beim Betreten?",["nein","Nein"],["ja","Ja"]]]:[]),
- ["co","CO-Warner bzw. Messgerät beim Betreten",["ok","Kein Alarm"],["alarm","Alarm"]],
- ["raum","Aufstellraum sicher (Zugang, Licht, Zuluft frei)?",["ja","Ja"],["nein","Nein"]]]}
-function sicherGefahr(r){const x=r.sicher||{};return x.gas==="ja"||x.co==="alarm"||x.raum==="nein"}
-function sicherOk(r,a){const x=r.sicher||{};if(!sicherFragen(a).every(f=>x[f[0]]))return false;return!sicherGefahr(r)||String(x.massnahme||"").trim().length>=10}
-function sicherPanel(r,a){const x=r.sicher||{},g=sicherGefahr(r);return`<div class="panel sicher ${g?"gefahr":""}"><h4>Sicherheit vor Arbeitsbeginn</h4>
- ${sicherFragen(a).map(([k,l,j,n])=>`<div class="sfrage"><span>${l}</span><div class="seg" role="group" aria-label="${esc(l)}">${[j,n].map(([v,t])=>`<button type="button" data-sicher="${k}" data-val="${v}" aria-pressed="${x[k]===v}">${t}</button>`).join("")}</div></div>`).join("")}
- ${x.gas==="ja"?`<div class="alert"><b>Gasgeruch: sofort handeln.</b> Keine Schalter betätigen, kein offenes Feuer. Fenster und Türen öffnen, Hauptabsperreinrichtung schließen, Personen warnen, Gebäude verlassen. Von außen den Entstörungsdienst des Gasnetzbetreibers anrufen, bei Gefahr 112.</div>`:""}
- ${x.co==="alarm"?`<div class="alert"><b>CO-Alarm:</b> Raum sofort verlassen, lüften, Anlage von außen abschalten, Bewohner warnen. Erst nach Freimessung wieder betreten.</div>`:""}
- ${x.raum==="nein"?`<div class="alert wa"><b>Aufstellraum nicht sicher:</b> Mangel beseitigen lassen oder Arbeit nicht beginnen. Bitte festhalten, was veranlasst wurde.</div>`:""}
- ${g?`<label class="f req"><span>Was wurde veranlasst?</span><textarea data-bind="sicher.massnahme" style="min-height:64px" placeholder="z. B. Gas abgesperrt, Netzbetreiber informiert, Kunde eingewiesen">${esc(x.massnahme||"")}</textarea></label>`:""}
- ${!g&&sicherFragen(a).every(f=>x[f[0]])?'<p class="hint" style="margin:0">Alles in Ordnung, es kann losgehen.</p>':""}</div>`}
 
 /* ---------- Arbeitsschritte zum Abhaken ---------- */
 function schritteVon(r){const a=ANLAGEN[r.q];if(r.schritte===undefined||r.schritte===null){const l=NFVORLAGEN.passend(VOR().checklisten,r.einsatzart,typFor(a),a.hersteller)[0];
@@ -841,7 +821,7 @@ function vEinsatz(){
 }
 const F=(id,label,val,o={})=>`<label class="f ${o.req?"req":""}"><span>${label}</span>${o.unit?`<span class="unit">`:""}<input id="${id}" type="${o.type||"text"}" ${o.num?'inputmode="decimal" class="num"':""} value="${esc(val)}" data-bind="${o.bind||id}" ${o.ph?`placeholder="${o.ph}"`:""}>${o.unit?`<em>${o.unit}</em></span>`:""}</label>`;
 const STEP={
- auftrag:(r,a)=>`${sicherPanel(r,a)}
+ auftrag:(r,a)=>`
   <div class="panel"><h4>Auftragsdaten</h4>
    <label class="f req"><span>Einsatzart</span><div class="seg g2" role="group">${["Wartung","Störung","Inbetriebnahme","Reparatur"].map(x=>`<button type="button" data-set="einsatzart" data-val="${x}" aria-pressed="${r.einsatzart===x}">${x}</button>`).join("")}</div></label>
    <label class="f"><span>Anforderungsgrund</span><textarea id="grund" data-bind="grund" style="min-height:64px">${esc(r.grund)}</textarea></label>
@@ -1681,7 +1661,6 @@ document.addEventListener("click",e=>{
  if(t.id==="prev"){r.step--;save();render();main.scrollTop=0;return}
  if(t.id==="finish"){finish();return}
  if(d.set){r[d.set]=d.val;if(d.set==="einsatzart"&&r.schritte&&!r.schritte.items.some(x=>x.s))r.schritte=null;save();render();return}
- if(d.sicher){r.sicher=r.sicher||{};r.sicher[d.sicher]=d.val;save();render();return}
  if(d.schritt){const c=schritteVon(r);if(c){const x=c.items[+d.schritt];x.s=x.s===d.val?"":d.val;save();render()}return}
  if(d.schritteallen){const c=schritteVon(r);if(c)c.items.forEach(x=>{if(!x.s)x.s="ok"});save();render();return}
  if(d.sh){stoerungshilfe(r);return}

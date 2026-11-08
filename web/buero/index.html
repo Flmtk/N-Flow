@@ -1259,8 +1259,8 @@ function a4Page1(b,mini){const d=docData(b),a=d.a,r=d.r,k=NF.get("kunden",a.knr)
  </div>${PF("Servicebericht",1)}</div>`}
 function a4Doc(b){const d=docData(b),a=d.a,r=d.r,m=d.m,sumA=d.zt.filter(z=>z.art==="Arbeitszeit").reduce((s,z)=>s+z.h,0),sumR=d.zt.filter(z=>z.art==="Reisezeit").reduce((s,z)=>s+z.h,0);
  const fotos=Array.isArray(r.fotos)&&!DRUCK_OHNE_FOTOS?r.fotos:[],mb=d.gas&&!!m&&r.merkblatt!==false;
- const sch=r.schritte&&Array.isArray(r.schritte.items)&&r.schritte.items.length?r.schritte:null,si=r.sicher&&Object.keys(r.sicher).length?r.sicher:null,fc=String(r.fehlercode||"").trim();
- PGT=3+(m?2:0)+(mb?1:0)+(sch||si||fc?1:0)+Math.ceil(fotos.length/9);let n=1;
+ const sch=r.schritte&&Array.isArray(r.schritte.items)&&r.schritte.items.length?r.schritte:null,fc=String(r.fehlercode||"").trim();
+ PGT=3+(m?2:0)+(mb?1:0)+(sch||fc?1:0)+Math.ceil(fotos.length/9);let n=1;
  const img=id=>id?`<img class="sigimg" src="/api/dateien/${esc(id)}" alt="">`:"";
  const p2=`<div class="pg">${PH("SERVICEBERICHT",b.sb)}<div class="pg-b"><div class="c2 w7">
   <div>${SEC("ZEITERFASSUNG")}<table class="mtb l"><thead><tr><th>Art</th><th>Datum</th><th>von</th><th>bis</th><th>Dauer [h]</th></tr></thead><tbody>${d.zt.map(z=>`<tr><td>${z.art}</td><td>${fmt(z.datum)}</td><td>${z.von}</td><td>${z.bis}</td><td>${de(z.h,2)}</td></tr>`).join("")||'<tr><td colspan="5">–</td></tr>'}</tbody></table></div>
@@ -1273,8 +1273,7 @@ function a4Doc(b){const d=docData(b),a=d.a,r=d.r,m=d.m,sumA=d.zt.filter(z=>z.art
   <p class="pgsm">Mit Ihrer Unterschrift bestätigen Sie die Fertigstellung sowie die Anerkennung unserer Vertragsbedingungen.</p>
   <div class="sigs"><div><b>${esc(a.ort)}, ${fmt(r.zd||b.datum)}</b><span>Ort, Datum</span></div><div>${r.papier?"<b>auf Papier unterschrieben</b>":img(r.sigK)||"&nbsp;"}<span>Unterschrift Kunde</span></div><div><b>${esc(r.sigName||"")}</b><span>Name</span></div><div>${img(r.sigT)||"&nbsp;"}<span>Unterschrift Techniker</span></div></div>
  </div>${PF("Servicebericht",++n)}</div>`;
- const pS=sch||si||fc?`<div class="pg">${PH("ARBEITSSCHRITTE &amp; SICHERHEIT",b.sb,1)}<div class="pg-b">
-  ${si?SEC("SICHERHEIT VOR ARBEITSBEGINN")+`<div class="c3">${FL("Gasgeruch beim Betreten",si.gas==="ja"?"festgestellt":si.gas==="nein"?"nein":"–")}${FL("CO-Warner / Messgerät",si.co==="alarm"?"Alarm":si.co==="ok"?"kein Alarm":"–")}${FL("Aufstellraum sicher",si.raum==="ja"?"ja":si.raum==="nein"?"nein":"–")}</div>${si.massnahme?FL("Veranlasst",si.massnahme):""}`:""}
+ const pS=sch||fc?`<div class="pg">${PH(sch?"ARBEITSSCHRITTE":"STÖRMELDUNG",b.sb,1)}<div class="pg-b">
   ${fc?SEC("STÖRMELDUNG")+FL("Fehlercode / Anzeige",fc):""}
   ${sch?SEC("ARBEITSSCHRITTE · "+esc(sch.name||""))+`<ul class="schl">${sch.items.map(x=>`<li><span class="cb ${x.s==="ok"?"on":""}"></span><span>${esc(x.t)}${x.s==="na"?" <i>(entfällt)</i>":!x.s?" <i>(offen)</i>":""}</span></li>`).join("")}</ul>`:""}
  </div>${PF("Servicebericht",++n)}</div>`:"";

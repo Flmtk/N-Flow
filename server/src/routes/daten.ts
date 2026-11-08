@@ -7,6 +7,7 @@ import { brauche, type Benutzer } from "../sitzung.js";
 import { nachSpeichern } from "../push.js";
 import { nachSpeichernAblage } from "../ablage.js";
 import { nachSpeichernLager } from "../lager.js";
+import { nachSpeichernWissen } from "../einsatzhilfe.js";
 
 /**
  * Gemeinsamer Datenspeicher für Büro und Monteur-App.
@@ -49,6 +50,8 @@ function regelFuer(sammlung: string, id?: string): Regel | null {
   const r = SAMMLUNGEN[sammlung];
   if (!r) return null;
   if (sammlung === "einstellungen" && id === "preise") return { ...r, lesen: "preise", schreiben: "preise" };
+  // Vorlagen (Arbeitsschritte, Textbausteine) pflegt das Büro mit dem Recht „Plantafel“
+  if (sammlung === "einstellungen" && id === "vorlagen") return { ...r, schreiben: "planung" };
   return r;
 }
 
@@ -238,6 +241,7 @@ export async function datenRouten(app: FastifyInstance): Promise<void> {
       void nachSpeichern(s, id, erg.alt ?? null, erg.zeile.daten, b);
       void nachSpeichernAblage(s, id, erg.alt ?? null, erg.zeile.daten);
       void nachSpeichernLager(s, id, erg.zeile.daten);
+      void nachSpeichernWissen(s, id, erg.zeile.daten);
     }
     return erg;
   }

@@ -9,7 +9,8 @@ RUN npm run build && npm prune --omit=dev
 
 FROM node:22-alpine
 # Chromium für die PDF-Erzeugung (Berichte, Rechnungen, Kundenstammblatt)
-RUN apk add --no-cache chromium nss freetype harfbuzz ttf-freefont font-noto
+# chromium für PDFs, tesseract für das Einlesen von Messausdrucken
+RUN apk add --no-cache chromium nss freetype harfbuzz ttf-freefont font-noto tesseract-ocr tesseract-ocr-data-eng tesseract-ocr-data-deu
 ENV NODE_ENV=production
 WORKDIR /app
 COPY --from=bau /app/server/node_modules ./server/node_modules

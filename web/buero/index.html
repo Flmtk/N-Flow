@@ -409,11 +409,14 @@ body{padding:0}
 .qrlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
 /* Schublade: Feder statt fester Animation (bewegung.js), am Kopf nach rechts wegziehen */
 .drawer{will-change:transform}.drawer header{cursor:grab;-webkit-user-select:none;user-select:none}.drawer header:active{cursor:grabbing}
+.schl{columns:2;column-gap:24px;margin:4px 0 0;padding:0;list-style:none;font-size:11px}.schl li{display:flex;gap:6px;align-items:flex-start;break-inside:avoid;padding:2px 0}.schl i{color:#6A6A67}
+.vliste{border-top:1px solid var(--line2);padding-top:12px;margin-top:12px}.vliste:first-of-type{border-top:0;margin-top:0}
 </style>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&family=Barlow+Condensed:wght@400&display=swap">
 <link rel="stylesheet" href="/css/design.css">
 <script src="/js/design.js"></script>
 <script src="/js/bewegung.js"></script>
+<script src="/js/vorlagen.js"></script>
 <script src="/js/fahrzeug.js"></script>
 </head>
 <body>
@@ -931,7 +934,8 @@ function afSave(){const F=S.af,t=x=>String(x??"").trim(),num=x=>x===""||x==null?
  S.af=null;aufbauen();S.drawer="anl:"+nv;save();render();toast(F.nv?nv+" gespeichert":nv+" angelegt")}
 function dKunde(nr){const k=NF.get("kunden",nr)||{},F=S.kf&&S.kf._for===nr?S.kf:(S.kf=Object.assign({},k,{_for:nr}));
  const I1=(f,l)=>`<label class="f">${l}<input type="text" data-kf="${f}" value="${esc(F[f]||"")}"></label>`;
- return{title:`${nr} · ${kundeName(k)}`,sub:`${k.str||""}, ${k.plz||""} ${k.ort||""}`,body:`${zahlungsBox(nr)}<div class="f2">${I1("name1","Name / Firma")}${I1("name2","Vorname / Zusatz")}</div><div class="f3">${I1("str","Straße, Hausnr.")}${I1("plz","PLZ")}${I1("ort","Ort")}</div><div class="f2">${I1("tel","Telefon")}${I1("mail","E-Mail")}</div>
+ return{title:`${nr} · ${kundeName(k)}`,sub:`${k.str||""}, ${k.plz||""} ${k.ort||""}`,body:`${zahlungsBox(nr)}<div class="f2">${I1("name1","Name / Firma")}${I1("name2","Vorname / Zusatz")}</div><div class="f3">${I1("str","Straße, Hausnr.")}${I1("plz","PLZ")}${I1("ort","Ort")}</div><div class="f3">${I1("tel","Telefon")}${I1("mobil","Mobil (für SMS)")}${I1("mail","E-Mail")}</div>
+  <label class="check"><input type="checkbox" data-kfc="benachrichtigen" ${F.benachrichtigen!==false?"checked":""}> Über die Anfahrt informieren („Bin unterwegs“ per SMS oder E-Mail)</label>
   <div><b style="font-size:14px">Anlagen</b><div class="list">${S.anl.filter(a=>a.knr===nr).map(a=>`<button type="button" class="li" data-go="anl:${a.nv}"><span class="dot ok"></span><span><b>${a.nv} · ${esc(a.ger)}</b><small>${esc(a.str)}, ${esc(a.ort)}</small></span><span class="hint">›</span></button>`).join("")||'<p class="hint">Keine.</p>'}</div></div>`,
   foot:`${RECHTE.planung?`<button type="button" class="btn" id="kfSave">Speichern</button><button type="button" class="btn sec" data-afk="${esc(nr)}">+ Anlage für diesen Kunden</button>`:""}`}}
 function dAufk(x){const leer=x==="leer",a=leer?null:anl(x);
@@ -1255,7 +1259,8 @@ function a4Page1(b,mini){const d=docData(b),a=d.a,r=d.r,k=NF.get("kunden",a.knr)
  </div>${PF("Servicebericht",1)}</div>`}
 function a4Doc(b){const d=docData(b),a=d.a,r=d.r,m=d.m,sumA=d.zt.filter(z=>z.art==="Arbeitszeit").reduce((s,z)=>s+z.h,0),sumR=d.zt.filter(z=>z.art==="Reisezeit").reduce((s,z)=>s+z.h,0);
  const fotos=Array.isArray(r.fotos)&&!DRUCK_OHNE_FOTOS?r.fotos:[],mb=d.gas&&!!m&&r.merkblatt!==false;
- PGT=3+(m?2:0)+(mb?1:0)+Math.ceil(fotos.length/9);let n=1;
+ const sch=r.schritte&&Array.isArray(r.schritte.items)&&r.schritte.items.length?r.schritte:null,si=r.sicher&&Object.keys(r.sicher).length?r.sicher:null,fc=String(r.fehlercode||"").trim();
+ PGT=3+(m?2:0)+(mb?1:0)+(sch||si||fc?1:0)+Math.ceil(fotos.length/9);let n=1;
  const img=id=>id?`<img class="sigimg" src="/api/dateien/${esc(id)}" alt="">`:"";
  const p2=`<div class="pg">${PH("SERVICEBERICHT",b.sb)}<div class="pg-b"><div class="c2 w7">
   <div>${SEC("ZEITERFASSUNG")}<table class="mtb l"><thead><tr><th>Art</th><th>Datum</th><th>von</th><th>bis</th><th>Dauer [h]</th></tr></thead><tbody>${d.zt.map(z=>`<tr><td>${z.art}</td><td>${fmt(z.datum)}</td><td>${z.von}</td><td>${z.bis}</td><td>${de(z.h,2)}</td></tr>`).join("")||'<tr><td colspan="5">–</td></tr>'}</tbody></table></div>
@@ -1268,6 +1273,11 @@ function a4Doc(b){const d=docData(b),a=d.a,r=d.r,m=d.m,sumA=d.zt.filter(z=>z.art
   <p class="pgsm">Mit Ihrer Unterschrift bestätigen Sie die Fertigstellung sowie die Anerkennung unserer Vertragsbedingungen.</p>
   <div class="sigs"><div><b>${esc(a.ort)}, ${fmt(r.zd||b.datum)}</b><span>Ort, Datum</span></div><div>${r.papier?"<b>auf Papier unterschrieben</b>":img(r.sigK)||"&nbsp;"}<span>Unterschrift Kunde</span></div><div><b>${esc(r.sigName||"")}</b><span>Name</span></div><div>${img(r.sigT)||"&nbsp;"}<span>Unterschrift Techniker</span></div></div>
  </div>${PF("Servicebericht",++n)}</div>`;
+ const pS=sch||si||fc?`<div class="pg">${PH("ARBEITSSCHRITTE &amp; SICHERHEIT",b.sb,1)}<div class="pg-b">
+  ${si?SEC("SICHERHEIT VOR ARBEITSBEGINN")+`<div class="c3">${FL("Gasgeruch beim Betreten",si.gas==="ja"?"festgestellt":si.gas==="nein"?"nein":"–")}${FL("CO-Warner / Messgerät",si.co==="alarm"?"Alarm":si.co==="ok"?"kein Alarm":"–")}${FL("Aufstellraum sicher",si.raum==="ja"?"ja":si.raum==="nein"?"nein":"–")}</div>${si.massnahme?FL("Veranlasst",si.massnahme):""}`:""}
+  ${fc?SEC("STÖRMELDUNG")+FL("Fehlercode / Anzeige",fc):""}
+  ${sch?SEC("ARBEITSSCHRITTE · "+esc(sch.name||""))+`<ul class="schl">${sch.items.map(x=>`<li><span class="cb ${x.s==="ok"?"on":""}"></span><span>${esc(x.t)}${x.s==="na"?" <i>(entfällt)</i>":!x.s?" <i>(offen)</i>":""}</span></li>`).join("")}</ul>`:""}
+ </div>${PF("Servicebericht",++n)}</div>`:"";
  const T=m?MTB[m.typ]||MTB.heiz:null,betr=(m&&m.betr)||{},dicht=(m&&m.dicht)||{},oel=(m&&m.oel)||{};
  const mHead=`<div class="c3s">${FL("Anlage",a.nv+" · "+a.kunde)}${FL("Messung am",fmt(r.zd||b.datum))}${FL("Techniker",d.t.name)}</div>`;
  const ubs=(side,list)=>{const u=(m[side]&&m[side].ub)||{};const x=list.filter((_,j)=>u[j]);return x.length?`<p class="pgsm">${x.map(esc).join(" · ")}</p>`:""};
@@ -1285,7 +1295,7 @@ function a4Doc(b){const d=docData(b),a=d.a,r=d.r,m=d.m,sumA=d.zt.filter(z=>z.art
   ${SEC("WICHTIGE NUMMERN")}<div class="c3">${FL("Gasnetzbetreiber / Entstörnummer","siehe Gaszähler")}${FL("NOVIS Service",S.cfg.firma.tel||S.cfg.firma.mail)}${FL("Feuerwehr / Notruf","112")}</div>
   <div class="c2">${FL("Anlage",a.nv)}${FL("Übergeben am",fmt(b.datum))}</div></div>${PF("Merkblatt Gasanlagen",++n)}</div>`:"";
  const p7=Array.from({length:Math.ceil(fotos.length/9)},(_,i)=>fotos.slice(i*9,i*9+9)).map((teil,i,alle)=>`<div class="pg">${PH("FOTOS ZU SERVICEBERICHT"+(alle.length>1?` (${i+1}/${alle.length})`:""),b.sb,1)}<div class="pg-b"><div class="fotos">${teil.map(id=>`<img src="/api/dateien/${esc(id)}" alt="">`).join("")}</div></div>${PF("Fotos",++n)}</div>`).join("");
- return a4Page1(b)+p2+p3+p4+p5+p6+p7;
+ return a4Page1(b)+p2+p3+pS+p4+p5+p6+p7;
 }
 function openA4(sb){S.a4=sb;save();viewer()}
 async function vollLaden(sb){try{S.voll[sb]=await NF.holen("berichte",sb)}catch(e){S.voll[sb]={};toast("Bericht konnte nicht vollständig geladen werden")}}
@@ -1307,11 +1317,11 @@ window.addEventListener("resize",fitA4);
 
 /* ---------- Einstellungen: Mitarbeiter ---------- */
 function vSet(){
- const tabs=[["allg","Allgemein"],["noti","Benachrichtigungen"],["alert","Warnungen"],["preise","Preise und Material"],["am","Arbeitsmittel"]].filter(x=>!(ISID()&&["alert","preise"].includes(x[0])));
+ const tabs=[["allg","Allgemein"],["noti","Benachrichtigungen"],["alert","Warnungen"],["preise","Preise und Material"],["vorl","Vorlagen"],["am","Arbeitsmittel"]].filter(x=>!(ISID()&&["alert","preise"].includes(x[0])));
  if(!tabs.some(x=>x[0]===S.setTab))S.setTab="allg";const T=S.setTab;
  top("Einstellungen",T==="team"?`<button type="button" class="btn" data-empnew="1">+ Neuer Mitarbeiter</button>`:T==="am"?`<button type="button" class="btn" id="amAdd">+ Arbeitsmittel</button>`:"");
  const bar=`<div class="stabs" role="tablist">${tabs.map(([k,l])=>`<button type="button" role="tab" data-stab="${k}" aria-selected="${T===k}">${l}</button>`).join("")}</div>`;
- if(T!=="team"){$("#view").innerHTML=`<div class="pad">${bar}${({allg:setAllg,noti:setNoti,alert:setAlert,preise:()=>setPreise()+(RECHTE.rechnungen?setMahn():""),am:setAm})[T]()}</div>`;return}
+ if(T!=="team"){$("#view").innerHTML=`<div class="pad">${bar}${({allg:setAllg,noti:setNoti,alert:setAlert,preise:()=>setPreise()+(RECHTE.rechnungen?setMahn():""),am:setAm,vorl:setVorl})[T]()}</div>`;return}
  const E=S.emp;
  $("#view").innerHTML=`<div class="pad">${bar}
   <div class="panel"><h3>Mitarbeiter <span class="hint">${TECHS.filter(t=>t.aktiv!==false).length} aktiv</span></h3><div class="tbwrap"><table class="tb"><thead><tr><th></th><th>Name</th><th>Rolle</th><th>Standort</th><th>Qualifikationen</th><th>Std./Woche</th><th>Seit</th><th>Status</th></tr></thead><tbody>
@@ -1339,6 +1349,32 @@ function setAllg(){const F=S.cfg.firma,acc=TECHS.filter(t=>t.rolle!=="Monteur"&&
    <label class="f">Handelsregister (HRB)<input type="text" data-cfg="firma.hrb" value="${esc(F.hrb)}" placeholder="nach Eintragung"></label>
    <label class="f">IBAN<input type="text" data-cfg="firma.iban" value="${esc(F.iban)}"></label>
    <label class="f">USt-IdNr.<input type="text" data-cfg="firma.ust" value="${esc(F.ust)}" placeholder="DE…"></label></div></div>`}
+/* ---------- Einstellungen: Vorlagen für den Bericht (Arbeitsschritte, Textbausteine) ---------- */
+function setVorl(){const V=S.vorl||(S.vorl=JSON.parse(JSON.stringify(NFVORLAGEN.aktuell(NF.get("einstellungen","vorlagen"))))),dis=RECHTE.planung?"":"disabled";
+ const sel=(i,k,opts)=>`<select data-vl="${i}|${k}" ${dis}>${opts.map(([v,l])=>`<option value="${v}" ${String(V.checklisten[i][k]||"")===v?"selected":""}>${l}</option>`).join("")}</select>`;
+ return`<div class="grid2"><div class="panel"><h3>Arbeitsschritte zum Abhaken</h3>
+  <p class="hint">Der Monteur bekommt im Bericht automatisch die passende Liste (Einsatzart, Gerätetyp, ggf. Hersteller) und hakt jeden Schritt ab oder markiert ihn als „entfällt“. Die Liste steht im Servicebericht.</p>
+  ${V.checklisten.map((l,i)=>`<div class="vliste"><div class="f2"><label class="f">Name<input type="text" data-vl="${i}|name" value="${esc(l.name||"")}" ${dis}></label>
+   <label class="f">Einsatzart${sel(i,"art",[["","alle"],["Wartung","Wartung"],["Störung","Störung"],["Inbetriebnahme","Inbetriebnahme"],["Reparatur","Reparatur"]])}</label></div>
+   <div class="f2"><label class="f">Gerätetyp${sel(i,"geraet",[["","alle"],["heiz","Gas-Heizgerät"],["bgas","Gas-Gebläsebrenner"],["boel","Öl-Brenner"]])}</label>
+   <label class="f">Nur für Hersteller (optional)<input type="text" data-vl="${i}|hersteller" value="${esc(l.hersteller||"")}" placeholder="z. B. Viessmann" ${dis}></label></div>
+   <label class="f">Schritte, eine Zeile je Schritt<textarea data-vl="${i}|schritte" rows="7" ${dis}>${esc((l.schritte||[]).join("\n"))}</textarea></label>
+   ${RECHTE.planung?`<button type="button" class="btn sec sm" data-vldel="${i}">Liste löschen</button>`:""}</div>`).join("")}
+  ${RECHTE.planung?'<button type="button" class="btn sec" data-vlneu="1">+ Neue Liste</button>':""}</div>
+  <div class="panel"><h3>Textbausteine</h3><p class="hint">Erscheinen im Bericht unter Diagnose und Arbeiten zum Antippen. Eine Zeile je Baustein.</p>
+   <label class="f">Diagnose / Ursache<textarea data-vb="diagnose" rows="7" ${dis}>${esc(V.bausteine.diagnose.join("\n"))}</textarea></label>
+   <label class="f">Durchgeführte Arbeiten<textarea data-vb="arbeiten" rows="9" ${dis}>${esc(V.bausteine.arbeiten.join("\n"))}</textarea></label></div></div>
+ ${RECHTE.planung?`<div class="row" style="gap:8px;margin-top:12px"><button type="button" class="btn" id="vorlSave">Vorlagen speichern</button><button type="button" class="btn sec" id="vorlStd">Auf Standard zurücksetzen</button></div>`:'<p class="hint">Ändern darf, wer das Recht „Plantafel und Aufträge bearbeiten“ hat.</p>'}`}
+document.addEventListener("input",e=>{const t=e.target;if(!S.vorl)return;
+ if(t.dataset.vl){const[i,k]=t.dataset.vl.split("|"),l=S.vorl.checklisten[+i];if(!l)return;l[k]=k==="schritte"?t.value.split("\n").map(x=>x.trim()).filter(Boolean):t.value;save()}
+ if(t.dataset.vb){S.vorl.bausteine[t.dataset.vb]=t.value.split("\n").map(x=>x.trim()).filter(Boolean);save()}});
+document.addEventListener("change",e=>{const t=e.target;if(t.dataset.kfc&&S.kf){S.kf[t.dataset.kfc]=t.checked;save()}});
+document.addEventListener("click",e=>{const t=e.target.closest("button");if(!t)return;
+ if(t.dataset.vlneu&&S.vorl){S.vorl.checklisten.push({id:"l"+Date.now().toString(36),name:"Neue Liste",art:"Wartung",geraet:"",hersteller:"",schritte:[]});save();render();return}
+ if(t.dataset.vldel&&S.vorl){S.vorl.checklisten.splice(+t.dataset.vldel,1);save();render();return}
+ if(t.id==="vorlSave"&&S.vorl){const V=S.vorl;V.checklisten.forEach(l=>{l.name=String(l.name||"").trim()||"Ohne Namen";if(!Array.isArray(l.schritte))l.schritte=String(l.schritte||"").split("\n").filter(Boolean)});
+  NF.setze("einstellungen","vorlagen",{checklisten:V.checklisten,bausteine:V.bausteine});S.vorl=null;save();render();toast("Vorlagen gespeichert, die App hat sie gleich");return}
+ if(t.id==="vorlStd"){S.vorl=JSON.parse(JSON.stringify(NFVORLAGEN.STANDARD));save();render();toast("Standard geladen – zum Übernehmen speichern");return}});
 function setNoti(){const Z=S.cfg.zyk,ev=[["stoer","Neue Störmeldung","über QR-Aufkleber oder Telefon"],["ber","Neuer Bericht eingegangen",""],["antrag","Urlaubs- oder Blockantrag",""],["rech","Rechnung überzogen",""],["absage","Kunde hat einen Termin abgelehnt","Antwort auf die Kalendereinladung"],["pruef","Prüfung eines Arbeitsmittels fällig",""]];
  const GF=TECHS.filter(t=>t.rolle!=="Monteur"&&t.aktiv!==false);
  return`<div class="grid2">
@@ -1583,7 +1619,7 @@ document.addEventListener("click",e=>{
  if(d.afk){const k=NF.get("kunden",d.afk)||{};S.af=Object.assign(afNeu("neu"),{_for:"neu",kunde:d.afk,k_name1:k.name1||"",k_name2:k.name2||"",k_str:k.str||"",k_plz:k.plz||"",k_ort:k.ort||"",k_tel:k.tel||"",k_mail:k.mail||""});S.drawer="anlform:neu";save();drawer();return}
  if(d.afqr&&S.af){S.af.qr=newCode();drawer();return}
  if(t.id==="afSave"){afSave();return}
- if(t.id==="kfSave"){const nr=S.kf._for,F=S.kf,tr=x=>String(x??"").trim();if(!tr(F.name1)){toast("Bitte einen Namen eintragen");return}NF.setze("kunden",nr,{name1:tr(F.name1),name2:tr(F.name2),str:tr(F.str),plz:tr(F.plz),ort:tr(F.ort),tel:tr(F.tel),mail:tr(F.mail)});S.kf=null;aufbauen();save();render();toast(nr+" gespeichert");return}
+ if(t.id==="kfSave"){const nr=S.kf._for,F=S.kf,tr=x=>String(x??"").trim();if(!tr(F.name1)){toast("Bitte einen Namen eintragen");return}NF.setze("kunden",nr,{name1:tr(F.name1),name2:tr(F.name2),str:tr(F.str),plz:tr(F.plz),ort:tr(F.ort),tel:tr(F.tel),mobil:tr(F.mobil),mail:tr(F.mail),benachrichtigen:F.benachrichtigen!==false});S.kf=null;aufbauen();save();render();toast(nr+" gespeichert");return}
  if(d.aufkgo){const x=d.aufkgo,nn=Math.max(1,Math.min(96,+$("#aufkN").value||1)),st=Math.max(1,Math.min(24,+$("#aufkS").value||1));
   const liste=x==="leer"?Array.from({length:nn},()=>({code:newCode(),nv:""})):Array.from({length:nn},()=>({code:anl(x).qr,nv:x}));aufkleberDrucken(liste,st);return}
  if(d.remail||d.retest){const re=d.remail||d.retest,an=d.retest?($("#reTest").value||"").trim():"";if(d.retest&&!an){toast("Bitte eine E-Mail-Adresse eintragen");return}

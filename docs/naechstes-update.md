@@ -1,5 +1,25 @@
 # N-Flow · Liste der Updates
 
+## Update „Einsatzhilfen“ (08.11.2026)
+
+Einspielen: `cd /docker/n-flow-test && sh ops/update.sh` (das Update baut das Programm neu, dabei kommt die Texterkennung tesseract dazu und es dauert etwas länger).
+
+**Neu in der `.env` (für SMS, optional):**
+- `SMS_API_KEY=` API-Schlüssel von seven.io (Konto auf seven.io anlegen, Guthaben aufladen, unter Entwickler › API-Schlüssel erzeugen)
+- `SMS_ABSENDER=NOVIS` (max. 11 Zeichen)
+- Ohne Schlüssel geht „Bin unterwegs“ per E-Mail von info@, wenn beim Kunden eine Adresse hinterlegt ist.
+
+**Enthalten:**
+- [x] Sicherheitscheck vor Arbeitsbeginn (Gasgeruch, CO-Warner, Aufstellraum) mit Sofortmaßnahmen, Pflicht im ersten Schritt, steht im Bericht.
+- [x] Arbeitsschritte zum Abhaken je Einsatzart und Gerätetyp (Gas-Heizgerät, Gebläsebrenner, Öl, Inbetriebnahme); „entfällt“ möglich; Seite „Arbeitsschritte & Sicherheit“ im Servicebericht.
+- [x] Büro: Einstellungen › Vorlagen für Arbeitsschritte und Textbausteine.
+- [x] Messung: letzte Messwerte klein unter jedem Feld, starke Abweichungen orange, CO und qA über Grenzwert sofort rot bzw. gelb.
+- [x] Messausdruck fotografieren: Werte werden erkannt und nach Bestätigung in den Messpunkt übernommen.
+- [x] Störungshilfe: Fehlercode eintragen, „Frühere Fälle“ zeigt Ursachen und getauschte Teile bei gleichem Hersteller/Typ.
+- [x] „Bin unterwegs“: Kunde per SMS (Absender NOVIS) oder E-Mail informieren, Ankunftszeit wählbar; Vermerk am Auftrag und auf der Tagesliste.
+- [x] Kunde: Feld „Mobil (für SMS)“ und Haken „Über die Anfahrt informieren“.
+- [x] Fehler behoben: Antippen des abgedunkelten Hintergrunds schließt das Hinweisblatt wieder.
+
 ## Update vom 07.11.2026 (großes Update)
 
 Einspielen auf dem Server wie immer: `cd /docker/n-flow-test && sh ops/update.sh`

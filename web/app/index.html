@@ -427,12 +427,39 @@ label.f.req>span.unit::after{content:none}
 @media (hover:hover) and (pointer:fine){.phone.desk .tabs .navbrand .ico:hover{background:var(--accent-soft);color:var(--accent)}}
 .phone.desk .tabs .navbrand .ico svg{width:20px;height:20px;padding:0}
 .top .brand+.hlupe,.top .brand+.ico{margin-left:auto}
+/* Sicherheitscheck, Arbeitsschritte, Störungshilfe, Vorwerte */
+.sicher .sfrage{display:grid;gap:6px;padding:8px 0;border-top:1px solid var(--line2)}
+.sicher .sfrage:first-of-type{border-top:0}.sicher .sfrage>span{font-size:14.5px;font-weight:500}.sicher .sfrage .seg{width:100%}
+.phone.desk .sicher .sfrage{grid-template-columns:minmax(0,1fr) 240px;align-items:center}
+.shzeile{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:end;margin-bottom:8px}.shzeile .f{margin:0}.shzeile .btn{width:auto;padding:0 14px}
+.sicher.gefahr{border-color:var(--crit,#B3261E)}
+.slist{list-style:none;margin:8px 0 10px;padding:0;display:flex;flex-direction:column;gap:2px}
+.slist li{display:flex;align-items:stretch;gap:6px}
+.slist .sok{flex:1;display:flex;align-items:center;gap:10px;text-align:left;border:0;background:none;padding:9px 4px;font-size:14.5px;min-height:44px;cursor:pointer}
+.slist .box{width:22px;height:22px;flex:none;border-radius:6px;border:1.5px solid var(--line);display:grid;place-items:center;font-size:14px;font-weight:700;color:#fff}
+.slist li.ok .box{background:var(--ok,#2F6B3D);border-color:var(--ok,#2F6B3D)}
+.slist li.na .sok{color:var(--muted);text-decoration:line-through}
+.slist .sna{flex:none;border:1px solid var(--line);background:var(--surface);border-radius:10px;font-size:12px;padding:0 10px;color:var(--muted);cursor:pointer}
+.slist .sna[aria-pressed="true"]{background:var(--surface2);color:var(--fg);font-weight:600}
+.schritte select,.panel>select{width:100%;margin-bottom:4px}
+.shlist{display:flex;flex-direction:column}.shlist>div{display:flex;gap:12px;padding:8px 0;border-top:1px solid var(--line2);font-size:14px}
+.shlist time{width:78px;flex:none;color:var(--muted);font-variant-numeric:tabular-nums}
+.mvor{display:block;font-size:11px;color:var(--muted);margin-top:2px;font-variant-numeric:tabular-nums}
+td .mvor{text-align:center;margin-top:1px}
+.mi.abw{border-color:var(--accent)!important;box-shadow:0 0 0 1px var(--accent) inset}
+.mi.wa{border-color:#C98A00!important;box-shadow:0 0 0 1px #C98A00 inset}
+.mi.cr{border-color:var(--crit,#B3261E)!important;box-shadow:0 0 0 1px var(--crit,#B3261E) inset}
+.mcalc.cr{color:var(--crit,#B3261E);font-weight:700}.mcalc.wa{color:#A06A00;font-weight:700}
+.mvorinfo{margin:0 0 4px}
+.ocrw{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.uwmin button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
 </style>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&family=Barlow+Condensed:wght@400&display=swap">
 <link rel="stylesheet" href="/css/design.css">
 <script src="/js/design.js"></script>
 <script src="/js/fahrzeug.js"></script>
 <script src="/js/bewegung.js"></script>
+<script src="/js/vorlagen.js"></script>
 </head>
 <body>
 <script>
@@ -448,6 +475,7 @@ if(!/a=/.test(location.hash))NFB.startbild("nflow:intro",function(){return docum
     <div id="foot"></div>
     <nav class="tabs" id="tabs" aria-label="Hauptmenü"></nav>
     <aside class="dpanel" id="dpanel" hidden aria-label="Anlage"></aside>
+    <input type="file" id="ocrIn" accept="image/*" capture="environment" hidden>
   </div>
 </div>
 
@@ -457,7 +485,9 @@ if(!/a=/.test(location.hash))NFB.startbild("nflow:intro",function(){return docum
 "use strict";
 /* ---------- Daten aus N-Flow ---------- */
 let TECH={id:"",nr:"",name:""},ANLAGEN={},JOBS=[],KATALOG=[],POOL=[],PLAN=[],RECHTE={},AUFTRAEGE=[];
-const BAUSTEINE={
+/* Textbausteine und Arbeitsschritte kommen aus Einstellungen › Vorlagen im Büro (js/vorlagen.js), sonst Standard */
+function VOR(){return NFVORLAGEN.aktuell(NF.get("einstellungen","vorlagen"))}
+const BAUSTEINE_ALT={
  diagnose:["Anlage im Rahmen der Wartung geprüft","Ionisationsstrom zu gering","Kondensatablauf verstopft","Zündelektrode verschlissen","Wassermangel, Anlagendruck zu niedrig"],
  arbeiten:["Brenner und Wärmetauscher gereinigt","Elektroden geprüft und eingestellt","Siphon gereinigt und befüllt","Dichtheitsprüfung Gasarmatur durchgeführt","Verbrennung gemessen und eingestellt","Fehlerspeicher ausgelesen und gelöscht","Wartungsanzeige zurückgesetzt"]
 };
@@ -483,14 +513,14 @@ function aufbauen(){
  for(const a of NF.liste("anlagen")){const k=NF.get("kunden",a.knr)||{},key=a.qr||a.nv;
   const ger=String(a.ger||"").split(" ");
   ANLAGEN[key]={nv:a.nv,qr:a.qr,hersteller:a.hersteller||ger[0]||"",typ:a.typ||ger.slice(1).join(" "),sernr:a.sernr||"–",baujahr:a.baujahr||"",kw:+a.kw||0,gas:a.gas||(a.en==="Öl"?"Heizöl EL":"Erdgas H"),energie:a.en||"Gas",medium:"Heizungswasser",druck:a.druck||"–",ans:a.ans||"–",
-   kunde:{nr:a.knr||"",name1:k.name1||"–",name2:k.name2||a.obj||"",str:a.str||k.str||"",plz:a.plz||k.plz||"",ort:a.ort||k.ort||"",tel:k.tel||"",mail:k.mail||""},
+   kunde:{nr:a.knr||"",name1:k.name1||"–",name2:k.name2||a.obj||"",str:a.str||k.str||"",plz:a.plz||k.plz||"",ort:a.ort||k.ort||"",tel:k.tel||"",mobil:k.mobil||"",mail:k.mail||"",benachrichtigen:k.benachrichtigen!==false},
    ansprech:a.ansprech||"–",zugang:a.zugang||"–",vertrag:a.vertrag?`Wartungsvertrag ${a.vertrag} · ${+a.zyk===24?"alle 2 Jahre":"jährlich"}`:"Einzelauftrag",
    hist:ber.filter(b=>b.nv===a.nv).sort((x,y)=>String(y.datum).localeCompare(String(x.datum))).slice(0,10).map(b=>[fmt(b.datum),b.art,[b.zustand,b.qa!=null?"qA "+String(b.qa).replace(".",",")+" %":""].filter(Boolean).join(", ")||b.sb]),
-   maengel:a.maengel||[],details:a.details||null,schema:a.schema||"",_a:a}}
+   maengel:a.maengel||[],details:a.details||null,schema:a.schema||"",letzte:a.letzteMessung||null,_a:a}}
  AUFTRAEGE=NF.liste("auftraege");
  JOBS=AUFTRAEGE.filter(o=>o.tech===TECH.id&&o.date===T&&(o.status==="geplant"||o.status==="erledigt")&&ANLAGEN[qOf(o.nv)])
   .sort((a,b)=>String(a.time).localeCompare(String(b.time)))
-  .map(o=>({id:o.id,q:qOf(o.nv),zeit:o.time||"–",dauer:(o.dauer!=null?String(o.dauer).replace(".",","):"–")+" h",art:o.art,grund:o.leistung&&o.art!=="Wartung"?o.leistung:o.grund,prio:o.prio==="hoch"||o.art==="Störung"?"cr":"",status:o.status}));
+  .map(o=>({id:o.id,q:qOf(o.nv),zeit:o.time||"–",dauer:(o.dauer!=null?String(o.dauer).replace(".",","):"–")+" h",art:o.art,grund:o.leistung&&o.art!=="Wartung"?o.leistung:o.grund,prio:o.prio==="hoch"||o.art==="Störung"?"cr":"",status:o.status,unterwegs:o.unterwegs&&String(o.unterwegs.zeit||"").slice(0,10)===T?o.unterwegs:null}));
  PLAN=AUFTRAEGE.filter(o=>o.tech===TECH.id&&o.date>T&&o.status==="geplant"&&ANLAGEN[qOf(o.nv)]).sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time)).map(o=>({iso:o.date,zeit:o.time||"",q:qOf(o.nv),art:o.art}));
  POOL=NF.liste("anlagen").filter(a=>a.vertrag&&a.betreuer===TECH.id).map(a=>{const k=NF.get("kunden",a.knr)||{},ld=lastDone(a),kw=+a.kw||0;
   const offen=AUFTRAEGE.find(o=>o.nv===a.nv&&o.art==="Wartung"&&o.status==="geplant");
@@ -596,7 +626,7 @@ function vHeute(){
    <div><h3>${esc(a.kunde.name1)}</h3><p>${esc(a.kunde.str)}, ${esc(a.kunde.plz)} ${esc(a.kunde.ort)}</p>
     <p>${esc(a.hersteller)} ${esc(a.typ)}</p>
     <div class="chips"><span class="chip ${j.prio==="cr"?"cr":""}">${j.art}</span>
-    ${s==="run"?'<span class="chip or">In Arbeit</span>':""}</div></div>
+    ${s==="run"?'<span class="chip or">In Arbeit</span>':""}${j.unterwegs&&s!=="done"?`<span class="chip ok">Kunde informiert · ${esc(j.unterwegs.ankunft)}</span>`:""}</div></div>
   </button>
   ${hinweiseOffen(a.nv).length?`<button type="button" class="ihint-app" data-hinweis="${esc(a.nv)}" aria-label="Interner Hinweis vom Büro">i</button>`:""}
   </div></div>
@@ -652,6 +682,7 @@ function vAnlage(){
  <div class="pad">
   ${hinweiseOffen(a.nv).map(h=>`<button type="button" class="hwalert" data-hinweis="${esc(a.nv)}"><span class="ihint-app" aria-hidden="true">i</span><span><b>Hinweis vom Büro</b><br>${esc(h.text)}</span></button>`).join("")}
   ${a.maengel.map(m=>`<div class="alert wa"><b>Offener Mangel:</b> ${esc(m)}</div>`).join("")}
+  ${unterwegsPanel(a,job)}
   ${(S.folgen||[]).filter(f=>f.q===S.q).map(f=>`<div class="alert wa"><b>Folgeauftrag ${f.id}</b> · ${esc(f.dring)}<br>${esc(f.text)}</div>`).join("")}
   <div class="panel"><h4>Vor Ort</h4><dl class="kv"><dt>Ansprechpartner</dt><dd>${esc(a.ansprech)}</dd><dt>Zugang</dt><dd>${esc(a.zugang)}</dd><dt>Telefon</dt><dd class="mono">${esc(a.kunde.tel)}</dd></dl></div>
   <div class="panel"><h4>Anlagendaten</h4><dl class="kv">
@@ -671,7 +702,7 @@ function newReport(job){const a=ANLAGEN[job.q];return{
  job:job.id,q:job.q,step:0,einsatzart:job.art,grund:job.grund,bestell:"",ansprech:a.ansprech.split(" (")[0],
  zv:"",zb:"",fz:"",km:"",diagnose:"",arbeiten:"",fotos:[],
  mess:newMess(a),
- material:[],zustand:"",sbt:"ok",hinweis:"",nachverfolgen:false,merkblatt:false,nichtVorOrt:false,mailKunde:true,sigK:null,sigT:null,sigName:""}}
+ material:[],zustand:"",sbt:"ok",hinweis:"",nachverfolgen:false,merkblatt:false,nichtVorOrt:false,mailKunde:true,sigK:null,sigT:null,sigName:"",sicher:{},fehlercode:"",schritte:null}}
 function R(){return S.reports[S.cur]}
 function auftragInfo(r,a){const fo=(S.folgen||[]).filter(f=>f.q===r.q);return`
  <div class="panel"><h4>Anlage ${a.nv}</h4><dl class="kv"><dt>Gerät</dt><dd>${esc(a.hersteller)} ${esc(a.typ)}</dd><dt>Seriennr.</dt><dd>${esc(a.sernr)}</dd><dt>Baujahr</dt><dd>${a.baujahr}</dd><dt>Leistung</dt><dd>${a.kw} kW</dd><dt>Brennstoff</dt><dd>${esc(a.gas)}</dd><dt>Vertrag</dt><dd>${esc(a.vertrag)}</dd></dl></div>
@@ -690,14 +721,113 @@ function zsum(r){return`<div><b>${de(arbH(r),2)}</b><span>Arbeitszeit h</span></
 /* Messung: Werte oder eine Begründung unten im Feld „Bemerkungen“ (z. B. Anlage außer Betrieb, kein Brennerbetrieb möglich) */
 function messWerte(m){return["ang","ver"].some(sd=>m[sd]&&m[sd].rows.some(x=>Object.entries(x).some(([k,v])=>k!=="pkt"&&k!=="azl"&&String(v==null?"":v).trim()!=="")))}
 function stepOk(i){const r=R();switch(STEPS[i][0]){
- case"auftrag":return!!r.einsatzart;
+ case"auftrag":return!!r.einsatzart&&sicherOk(r,ANLAGEN[r.q]);
  case"zeiten":return arbH(r)>0&&n(r.fz)!=null;
- case"befund":return r.diagnose.trim().length>3&&r.arbeiten.trim().length>3;
+ case"befund":{const c=schritteVon(r);return r.diagnose.trim().length>3&&(c?c.items.every(x=>x.s):r.arbeiten.trim().length>3)}
  case"messung":{const m=mig(r);return messWerte(m)||String(m.bem||"").trim().length>=10}
  case"material":return true;
  case"fest":return!!r.zustand;
  case"abschluss":return(r.nichtVorOrt||(r.papier&&r.papScan)||(r.sigK&&r.sigName.trim()));
 }}
+
+/* ---------- Sicherheitscheck vor Arbeitsbeginn ----------
+ * Drei Fragen beim Betreten. Bei einer Gefahr erscheinen die Sofortmaßnahmen und es muss eingetragen werden, was veranlasst wurde. */
+function sicherFragen(a){const gas=a.energie!=="Öl";return[
+ ...(gas?[["gas","Gasgeruch beim Betreten?",["nein","Nein"],["ja","Ja"]]]:[]),
+ ["co","CO-Warner bzw. Messgerät beim Betreten",["ok","Kein Alarm"],["alarm","Alarm"]],
+ ["raum","Aufstellraum sicher (Zugang, Licht, Zuluft frei)?",["ja","Ja"],["nein","Nein"]]]}
+function sicherGefahr(r){const x=r.sicher||{};return x.gas==="ja"||x.co==="alarm"||x.raum==="nein"}
+function sicherOk(r,a){const x=r.sicher||{};if(!sicherFragen(a).every(f=>x[f[0]]))return false;return!sicherGefahr(r)||String(x.massnahme||"").trim().length>=10}
+function sicherPanel(r,a){const x=r.sicher||{},g=sicherGefahr(r);return`<div class="panel sicher ${g?"gefahr":""}"><h4>Sicherheit vor Arbeitsbeginn</h4>
+ ${sicherFragen(a).map(([k,l,j,n])=>`<div class="sfrage"><span>${l}</span><div class="seg" role="group" aria-label="${esc(l)}">${[j,n].map(([v,t])=>`<button type="button" data-sicher="${k}" data-val="${v}" aria-pressed="${x[k]===v}">${t}</button>`).join("")}</div></div>`).join("")}
+ ${x.gas==="ja"?`<div class="alert"><b>Gasgeruch: sofort handeln.</b> Keine Schalter betätigen, kein offenes Feuer. Fenster und Türen öffnen, Hauptabsperreinrichtung schließen, Personen warnen, Gebäude verlassen. Von außen den Entstörungsdienst des Gasnetzbetreibers anrufen, bei Gefahr 112.</div>`:""}
+ ${x.co==="alarm"?`<div class="alert"><b>CO-Alarm:</b> Raum sofort verlassen, lüften, Anlage von außen abschalten, Bewohner warnen. Erst nach Freimessung wieder betreten.</div>`:""}
+ ${x.raum==="nein"?`<div class="alert wa"><b>Aufstellraum nicht sicher:</b> Mangel beseitigen lassen oder Arbeit nicht beginnen. Bitte festhalten, was veranlasst wurde.</div>`:""}
+ ${g?`<label class="f req"><span>Was wurde veranlasst?</span><textarea data-bind="sicher.massnahme" style="min-height:64px" placeholder="z. B. Gas abgesperrt, Netzbetreiber informiert, Kunde eingewiesen">${esc(x.massnahme||"")}</textarea></label>`:""}
+ ${!g&&sicherFragen(a).every(f=>x[f[0]])?'<p class="hint" style="margin:0">Alles in Ordnung, es kann losgehen.</p>':""}</div>`}
+
+/* ---------- Arbeitsschritte zum Abhaken ---------- */
+function schritteVon(r){const a=ANLAGEN[r.q];if(r.schritte===undefined||r.schritte===null){const l=NFVORLAGEN.passend(VOR().checklisten,r.einsatzart,typFor(a),a.hersteller)[0];
+ r.schritte=l?{id:l.id,name:l.name,items:l.schritte.map(t=>({t,s:""}))}:false}return r.schritte||null}
+function schrittePanel(r){const a=ANLAGEN[r.q],c=schritteVon(r),alle=NFVORLAGEN.passend(VOR().checklisten,r.einsatzart,typFor(a),a.hersteller),wahl=VOR().checklisten;
+ const sel=`<select data-schrittliste="1" aria-label="Liste wählen"><option value="">Keine Liste</option>${wahl.map(l=>`<option value="${esc(l.id)}" ${c&&c.id===l.id?"selected":""}>${esc(l.name)}${alle.includes(l)?"":" (andere)"}</option>`).join("")}</select>`;
+ if(!c)return`<div class="panel"><h4>Arbeitsschritte</h4><p class="hint">Für diesen Einsatz ist keine Liste hinterlegt.</p>${sel}</div>`;
+ const fertig=c.items.filter(x=>x.s).length;
+ return`<div class="panel schritte"><h4 style="display:flex;align-items:center;gap:8px">Arbeitsschritte <span class="hint" style="margin-left:auto">${fertig} von ${c.items.length}</span></h4>${sel}
+  <ul class="slist">${c.items.map((x,i)=>`<li class="${x.s}"><button type="button" class="sok" data-schritt="${i}" data-val="ok" aria-pressed="${x.s==="ok"}"><span class="box" aria-hidden="true">${x.s==="ok"?"✓":""}</span>${esc(x.t)}</button><button type="button" class="sna" data-schritt="${i}" data-val="na" aria-pressed="${x.s==="na"}">entfällt</button></li>`).join("")}</ul>
+  ${fertig<c.items.length?`<button type="button" class="btn sec" data-schritteallen="1">Alle übrigen als erledigt markieren</button>`:'<p class="hint" style="margin:0">Alle Schritte erledigt. Das Freitextfeld unten ist dann optional.</p>'}</div>`}
+
+/* ---------- Störungshilfe aus den eigenen Berichten ---------- */
+const SH={};
+async function stoerungshilfe(r){const a=ANLAGEN[r.q],key=a.nv+"|"+(r.fehlercode||"").trim().toUpperCase();if(!S.online){SH[key]={fehler:"Nur mit Netz verfügbar."};render();return}
+ SH[key]={laedt:true};render();try{SH[key]=await NF.api("/api/einsatz/stoerungshilfe?nv="+encodeURIComponent(a.nv)+"&code="+encodeURIComponent(r.fehlercode||""))}catch(e){SH[key]={fehler:e.message}}if(S.view==="einsatz")render()}
+function stoerPanel(r){const a=ANLAGEN[r.q],key=a.nv+"|"+(r.fehlercode||"").trim().toUpperCase(),x=SH[key];
+ return`<div class="panel stoer"><h4>Störmeldung</h4>
+  <div class="shzeile"><label class="f"><span>Fehlercode / Anzeige</span><input type="text" data-bind="fehlercode" value="${esc(r.fehlercode||"")}" placeholder="z. B. F4, 6A, Störung 133" autocapitalize="characters" autocorrect="off" enterkeyhint="search"></label>
+  <button type="button" class="btn sec" data-sh="1">Frühere Fälle</button></div>
+  ${!x?`<p class="hint" style="margin:0">Zeigt, was bei ${esc(a.hersteller)}-Geräten mit dieser Meldung bisher die Ursache war.</p>`:x.laedt?'<p class="hint" style="margin:0">Suche …</p>':x.fehler?`<p class="hint" style="margin:0">${esc(x.fehler)}</p>`:
+   !x.anzahl?`<p class="hint" style="margin:0">Noch kein Fall ${x.code?"mit „"+esc(x.code)+"“ ":""}bei ${esc(x.geraet.hersteller)} in N-Flow. Was du heute einträgst, hilft beim nächsten Mal.</p>`:
+   `${x.teile.length?`<p class="hint" style="margin:0 0 6px">Oft getauscht: ${x.teile.map(t=>`<b>${esc(t.bez)}</b> (${t.anzahl}×)`).join(", ")}</p>`:""}
+   <div class="shlist">${x.faelle.map(f=>`<div><time>${fmt(f.datum)}</time><span><b>${esc(f.code)}</b> · ${esc(f.geraet)}${f.dieseAnlage?' <span class="chip or">diese Anlage</span>':f.gleicherTyp?"":' <span class="chip">anderer Typ</span>'}<br>${esc(f.ursache)}${f.teile.length?`<br><small>Teile: ${f.teile.map(esc).join(", ")}</small>`:""}</span></div>`).join("")}</div>`}</div>`}
+
+/* ---------- Letzte Messung als Vergleich, Grenzwerte sofort ---------- */
+function vorWert(r,row,i,c){const a=ANLAGEN[r.q],L=a&&a.letzte;if(!L||L.typ!==r.mess.typ)return null;const rows=(L.ver&&L.ver.length?L.ver:L.ang)||[];
+ const lab=mLabel(row,i),p=rows.find(x=>(x.pkt||x.azl)===lab);const v=p?p[c]:null;return v!=null&&String(v).trim()!==""?String(v):null}
+function vorAbw(c,neu,alt){const x=n(neu),y=n(alt);if(x==null||y==null)return false;const d=Math.abs(x-y);
+ return c==="o2"?d>=2:c==="co2"?d>=1.5:c==="co"?x>Math.max(50,2*y):c==="nox"?x>Math.max(30,1.5*y):c==="ta"?d>=25:false}
+function messWarn(c,v){const x=n(v);if(x==null)return"";if(c==="co")return x>500?"cr":x>100?"wa":"";return""}
+function mvKlasse(r,side,i,c,row){const v=row[c];const w=messWarn(c,v);if(w)return w;const alt=vorWert(r,row,i,c);return alt!=null&&vorAbw(c,v,alt)?"abw":""}
+function vorHinweis(r){const a=ANLAGEN[r.q],L=a&&a.letzte;if(!L)return"";return`<p class="hint mvorinfo">Letzte Messung ${L.datum?fmt(L.datum):""}${L.sb?" ("+esc(L.sb)+")":""}: Werte stehen klein unter den Feldern. Starke Abweichungen werden orange markiert.</p>`}
+
+/* ---------- Messausdruck per Foto einlesen ---------- */
+/* Blatt von unten mit wechselndem Inhalt: beim ersten Mal öffnen, danach nur den Inhalt tauschen (die Feder bleibt am selben Element) */
+function blattZeigen(label,inner,beimSchliessen){let L=$("#hwv");if(!L){L=document.createElement("div");L.id="hwv";document.body.appendChild(L)}
+ const sh=L._blatt&&L.querySelector(".hwsheet");if(sh&&sh.getAttribute("aria-label")===label){sh.innerHTML=inner;return}
+ L.innerHTML=`<div class="hwschirm" data-hwzu="1"></div><section class="hwsheet" role="dialog" aria-modal="true" aria-label="${esc(label)}">${inner}</section>`;
+ const api=NFB.blatt(L,{weg:()=>{if(L._blatt&&L._blatt!==api)return;L._blatt=null;L.innerHTML="";if(beimSchliessen)beimSchliessen()}});L._blatt=api}
+let OCR=null;
+async function ocrStart(side,datei){const r=R();if(!r)return;if(!S.online){toast("Texterkennung geht nur mit Netz.");return}
+ OCR={side,laedt:true};zeigeOcr();
+ try{const b=await NF.bildVerkleinern(datei,1800,0.85);const j=await NF.api("/api/einsatz/messausdruck",{method:"POST",body:b,headers:{"content-type":"image/jpeg"}});
+  OCR={side,werte:j.werte||{},text:j.text||"",ziel:+(mig(r)[side].sel||0)}}catch(e){OCR={side,fehler:e.message}}zeigeOcr()}
+const OCRK=[["o2","O₂","Vol.-%"],["co2","CO₂","Vol.-%"],["co","CO","ppm"],["nox","NOx","ppm"],["ta","Abgastemperatur","°C"],["tl","Verbrennungsluft","°C"],["qa","Abgasverlust qA","%"]];
+function zeigeOcr(){const r=R();
+ if(!OCR||!r){zeigeHinweise(null);return}const m=mig(r),sd=m[OCR.side];
+ const inhalt=OCR.laedt?'<p class="hint">Ausdruck wird gelesen …</p>':OCR.fehler?`<div class="alert wa">${esc(OCR.fehler)}</div>`:
+  !Object.keys(OCR.werte).length?'<div class="alert wa">Keine Messwerte erkannt. Bitte den Ausdruck gerade und formatfüllend fotografieren, ohne Schatten.</div>':
+  `<label class="f"><span>Übernehmen in Messpunkt</span><select id="ocrZiel">${sd.rows.map((x,i)=>`<option value="${i}" ${i===OCR.ziel?"selected":""}>${esc(mLabel(x,i))}${mGefuellt(x)?" (hat schon Werte)":""}</option>`).join("")}</select></label>
+   <div class="ocrw">${OCRK.filter(k=>OCR.werte[k[0]]!=null).map(([k,l,u])=>`<label class="f"><span>${l} <em>[${u}]</em></span><input type="text" inputmode="decimal" data-ocrw="${k}" value="${esc(OCR.werte[k])}"></label>`).join("")}</div>
+   <p class="hint">Bitte vor dem Übernehmen mit dem Ausdruck vergleichen. qA rechnet N-Flow selbst aus.</p>`;
+ blattZeigen("Messausdruck einlesen",`<span class="griff" aria-hidden="true"></span>
+  <div class="hwkopf"><h2>Messausdruck · ${OCR.side==="ang"?"angetroffen":"verlassen"}</h2><button type="button" class="ico" data-hwzu="1" aria-label="Schließen">✕</button></div>
+  ${inhalt}${OCR.werte&&Object.keys(OCR.werte).length?`<button type="button" class="btn" data-ocrok="1">Werte übernehmen</button>`:""}`,()=>{OCR=null})}
+function ocrUebernehmen(){const r=R(),m=mig(r),sd=m[OCR.side],i=+($("#ocrZiel")||{value:OCR.ziel}).value,row=sd.rows[i],cols=mCols(m,OCR.side).map(c=>c[0]);
+ document.querySelectorAll("[data-ocrw]").forEach(inp=>{let k=inp.dataset.ocrw;const v=inp.value.trim();if(!v||k==="qa")return;
+  if(k==="tl"&&!cols.includes("tl")){if(!sd.extra.some(x=>x[0]==="Ansaugtemperatur"))sd.extra.push(["Ansaugtemperatur","°C"]);k="x:Ansaugtemperatur"}
+  else if(!cols.includes(k))return;row[k]=v});
+ sd.sel=i;save();zeigeHinweise(null);OCR=null;render();toast("Werte übernommen – bitte kurz prüfen")}
+
+/* ---------- „Bin unterwegs“: Kunde per SMS oder E-Mail informieren ---------- */
+let UW=null;
+function unterwegsPanel(a,job){if(!job||isDone(job.id))return"";const u=job.unterwegs,k=a.kunde;
+ if(k.benachrichtigen===false)return`<div class="panel"><h4>Kunde informieren</h4><p class="hint" style="margin:0">Der Kunde möchte nicht benachrichtigt werden.</p></div>`;
+ return`<div class="panel uw"><h4>Kunde informieren</h4>${u?`<p style="margin:0 0 8px"><span class="chip ok">✓ Informiert um ${new Date(u.zeit).toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"})}</span> per ${u.kanal==="sms"?"SMS":"E-Mail"}, Ankunft gegen <b>${esc(u.ankunft)} Uhr</b></p>`:""}
+  <button type="button" class="btn ${u?"sec":""}" data-unterwegs="${esc(job.id)}">${u?"Neue Ankunftszeit senden":"Bin unterwegs"}</button>
+  <p class="hint" style="margin:6px 0 0">${k.mobil||/^(\+49|0)1[5-7]/.test(String(k.tel).replace(/\s/g,""))?"Geht als SMS mit Absender NOVIS.":k.mail?"Geht per E-Mail an "+esc(k.mail)+".":"Beim Kunden ist weder Handynummer noch E-Mail hinterlegt."}</p></div>`}
+function zeigeUnterwegs(id){const job=JOBS.find(j=>j.id===id);if(!job)return;UW={id,min:UW&&UW.id===id?UW.min:20,sendet:UW&&UW.id===id?UW.sendet:false};
+ const ank=()=>{const z=new Date(Date.now()+UW.min*60000);z.setMinutes(Math.round(z.getMinutes()/5)*5);return z.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"})};
+ blattZeigen("Bin unterwegs",`<span class="griff" aria-hidden="true"></span>
+  <div class="hwkopf"><h2>Bin unterwegs</h2><button type="button" class="ico" data-hwzu="1" aria-label="Schließen">✕</button></div>
+  <p class="hint" style="margin:0 0 10px">Wann bist du ungefähr da?</p>
+  <div class="tb uwmin">${[10,15,20,30,45,60].map(x=>`<button type="button" data-uwmin="${x}" aria-pressed="${UW.min===x}">${x} Min.</button>`).join("")}</div>
+  <div class="result ok" style="margin:12px 0"><div>Ankunft beim Kunden<small>wird auf 5 Minuten gerundet</small></div><b>${ank()} Uhr</b></div>
+  <button type="button" class="btn" data-uwsenden="1" ${UW.sendet?"disabled":""}>${UW.sendet?"Wird gesendet …":"Kunde jetzt informieren"}</button>`,()=>{UW=null})}
+async function unterwegsSenden(){if(!UW||UW.sendet)return;if(!S.online){toast("Ohne Netz kann der Kunde nicht informiert werden.");return}
+ UW.sendet=true;zeigeUnterwegs(UW.id);
+ try{const j=await NF.api("/api/einsatz/unterwegs",{method:"POST",body:{auftrag:UW.id,minuten:UW.min}});
+  const o=AUFTRAEGE.find(x=>x.id===UW.id);if(o)o.unterwegs={zeit:new Date().toISOString(),ankunft:j.ankunft,kanal:j.kanal,an:j.an};const jb=JOBS.find(x=>x.id===UW.id);if(jb)jb.unterwegs=o?o.unterwegs:null;
+  UW=null;zeigeHinweise(null);toast(j.kanal==="sms"?"SMS an "+j.an+" gesendet":"E-Mail an "+j.an+" gesendet");render()}
+ catch(e){if(UW){UW.sendet=false;zeigeUnterwegs(UW.id)}toast(e.message)}}
 function vEinsatz(){
  const r=R(),a=ANLAGEN[r.q],k=STEPS[r.step][0];
  header(a.nv+" · "+r.einsatzart,"anlage",`<button type="button" class="ico icotxt" data-go="folge" aria-label="Folgeauftrag anlegen">${isDesk()?"+ Folgeauftrag":"+ Folge"}</button>`);
@@ -711,7 +841,7 @@ function vEinsatz(){
 }
 const F=(id,label,val,o={})=>`<label class="f ${o.req?"req":""}"><span>${label}</span>${o.unit?`<span class="unit">`:""}<input id="${id}" type="${o.type||"text"}" ${o.num?'inputmode="decimal" class="num"':""} value="${esc(val)}" data-bind="${o.bind||id}" ${o.ph?`placeholder="${o.ph}"`:""}>${o.unit?`<em>${o.unit}</em></span>`:""}</label>`;
 const STEP={
- auftrag:(r,a)=>`
+ auftrag:(r,a)=>`${sicherPanel(r,a)}
   <div class="panel"><h4>Auftragsdaten</h4>
    <label class="f req"><span>Einsatzart</span><div class="seg g2" role="group">${["Wartung","Störung","Inbetriebnahme","Reparatur"].map(x=>`<button type="button" data-set="einsatzart" data-val="${x}" aria-pressed="${r.einsatzart===x}">${x}</button>`).join("")}</div></label>
    <label class="f"><span>Anforderungsgrund</span><textarea id="grund" data-bind="grund" style="min-height:64px">${esc(r.grund)}</textarea></label>
@@ -730,15 +860,17 @@ const STEP={
    ${F("km","Fahrtkilometer",r.km,{num:1,unit:"km"})}</div>
   <div class="panel"><h4>Für den Bericht</h4><div class="sum" id="zsum">${zsum(r)}</div>
    <p class="hint">Diese Zeiten stehen im Servicebericht und werden vom Kunden mit unterschrieben.</p></div>`,
- befund:(r)=>`
+ befund:(r)=>`${["Störung","Reparatur"].includes(r.einsatzart)||r.fehlercode?stoerPanel(r):""}
   <label class="f req"><span>Diagnose / Ursache</span><textarea id="diagnose" data-bind="diagnose" placeholder="Was wurde festgestellt?">${esc(r.diagnose)}</textarea></label>
-  <div class="tb">${BAUSTEINE.diagnose.map(t=>`<button type="button" data-add="diagnose" data-t="${esc(t)}">+ ${esc(t)}</button>`).join("")}</div>
-  <label class="f req"><span>Durchgeführte Arbeiten</span><textarea id="arbeiten" data-bind="arbeiten" placeholder="Was wurde gemacht?" style="min-height:130px">${esc(r.arbeiten)}</textarea></label>
-  <div class="tb">${BAUSTEINE.arbeiten.map(t=>`<button type="button" data-add="arbeiten" data-t="${esc(t)}">+ ${esc(t)}</button>`).join("")}</div>
+  <div class="tb">${VOR().bausteine.diagnose.map(t=>`<button type="button" data-add="diagnose" data-t="${esc(t)}">+ ${esc(t)}</button>`).join("")}</div>
+  ${schrittePanel(r)}
+  <label class="f ${schritteVon(r)?"":"req"}"><span>${schritteVon(r)?"Weitere Arbeiten / Ergänzungen":"Durchgeführte Arbeiten"}</span><textarea id="arbeiten" data-bind="arbeiten" placeholder="Was wurde gemacht?" style="min-height:130px">${esc(r.arbeiten)}</textarea></label>
+  <div class="tb">${VOR().bausteine.arbeiten.map(t=>`<button type="button" data-add="arbeiten" data-t="${esc(t)}">+ ${esc(t)}</button>`).join("")}</div>
   <div class="panel"><h4>Fotos</h4><p class="hint">${(r.fotos||[]).length?(r.fotos||[]).length+" Foto(s) angehängt. Sie gehören zum Bericht.":"Typenschild, Befund vorher/nachher."}</p><div class="fotos" id="fotoVorschau"></div>
    <label class="btn sec" for="foto">Foto aufnehmen oder wählen</label><input id="foto" type="file" accept="image/*" multiple hidden></div>`,
  messung:(r,a)=>{const m=mig(r),T=MT[m.typ];return`
   <div class="mtyp"><span class="chip or">Messblatt ${T.label}</span><span class="hint">aus den Anlagendaten: ${esc(a.hersteller)} ${esc(a.typ)} · ${a.energie==="Öl"?"Öl":esc(a.gas)}</span></div>
+  ${vorHinweis(r)}
   ${mTable(r,a,"ang","Messwerte Anlage angetroffen")}
   ${mTable(r,a,"ver","Messwerte Anlage verlassen")}
   <div id="mSum"></div>
@@ -821,9 +953,10 @@ function mPunkt(r,a,side,title){
    <button type="button" class="btn sec" data-mpgo="${side}|1" ${sel>=n-1?"disabled":""} aria-label="Nächster Messpunkt">›</button></div>
   <div class="mpform">${cols.filter(c=>c[0]!=="pkt"&&c[0]!=="azl").map(c=>{
    if(c[0]==="qa"){const q=rowQa(r,a,row);return`<div class="f mqa"><span>${esc(c[1])} [%]</span><b class="mcalc" id="qa-${side}-${sel}">${q!=null?de(q,1):(row.qa||"–")}</b></div>`}
-   return`<label class="f"><span>${esc(c[1])}${c[2]?` <em>[${esc(c[2])}]</em>`:""}</span><input type="text" inputmode="${c[2]==="ja/nein"||c[0]==="azl"||c[0]==="pkt"?"text":"decimal"}" enterkeyhint="next" class="mi" data-mv="${side}|${sel}|${esc(c[0])}" value="${esc(row[c[0]]??"")}"></label>`}).join("")}</div>
+   const vw=vorWert(r,row,sel,c[0]);return`<label class="f"><span>${esc(c[1])}${c[2]?` <em>[${esc(c[2])}]</em>`:""}</span><input type="text" inputmode="${c[2]==="ja/nein"||c[0]==="azl"||c[0]==="pkt"?"text":"decimal"}" enterkeyhint="next" class="mi ${mvKlasse(r,side,sel,c[0],row)}" data-mv="${side}|${sel}|${esc(c[0])}" value="${esc(row[c[0]]??"")}">${vw!=null?`<small class="mvor">zuletzt ${esc(vw)}</small>`:""}</label>`}).join("")}</div>
   <div class="row" style="gap:8px">${sel<n-1?`<button type="button" class="btn" data-mpgo="${side}|1">Weiter zu ${esc(mLabel(sd.rows[sel+1],sel+1))} ›</button>`:`<button type="button" class="btn sec" data-madd="${side}" ${n>=MMAX[side]?"disabled":""}>+ Messpunkt anlegen</button>`}</div>
   <div class="mtools">${sel>0?`<button type="button" class="chip" data-mcopy="${side}|${sel}">Werte von ${esc(mLabel(sd.rows[sel-1],sel-1))} übernehmen</button>`:""}
+   <button type="button" class="chip" data-ocr="${side}">Ausdruck einlesen</button>
    <button type="button" class="chip" data-mpick="${side}" ${sd.extra.length>=6?"disabled":""}>+ Messgröße</button>
    ${sd.hide.length||sd.extra.length?`<button type="button" class="chip" data-mreset="${side}">Spalten zurücksetzen</button>`:""}
    <button type="button" class="chip" data-mdel="${side}|${sel}">Punkt löschen</button></div>
@@ -836,8 +969,9 @@ function mTabelle(r,a,side,title){
   <div class="mwrap"><table class="mt" lang="de"><thead><tr><th class="mrow">#</th>${cols.map(c=>`<th><span class="mh">${esc(c[1])}</span><span class="mu">${c[2]?"["+esc(c[2])+"]":"&nbsp;"}</span>${fixVis>2?`<button type="button" class="mx" data-mhide="${side}|${esc(c[0])}" aria-label="Spalte ${esc(c[1])} ausblenden">×</button>`:""}</th>`).join("")}</tr></thead>
   <tbody>${sd.rows.map((row,i)=>`<tr><td class="mrow"><span>${i+1}</span><button type="button" class="mx" data-mdel="${side}|${i}" aria-label="Messpunkt ${i+1} löschen">×</button></td>${cols.map(c=>{
    if(c[0]==="qa"){const q=rowQa(r,a,row);return`<td><span class="mcalc" id="qa-${side}-${i}">${q!=null?de(q,1):(row.qa||"")}</span></td>`}
-   return`<td><input type="text" inputmode="${c[2]==="ja/nein"||c[0]==="azl"||c[0]==="pkt"?"text":"decimal"}" enterkeyhint="next" class="mi" data-mv="${side}|${i}|${esc(c[0])}" value="${esc(row[c[0]]??"")}" aria-label="${esc(c[1])} Messpunkt ${i+1}"></td>`}).join("")}</tr>`).join("")}</tbody></table></div>
+   const vw=vorWert(r,row,i,c[0]);return`<td><input type="text" inputmode="${c[2]==="ja/nein"||c[0]==="azl"||c[0]==="pkt"?"text":"decimal"}" enterkeyhint="next" class="mi ${mvKlasse(r,side,i,c[0],row)}" data-mv="${side}|${i}|${esc(c[0])}" value="${esc(row[c[0]]??"")}" aria-label="${esc(c[1])} Messpunkt ${i+1}">${vw!=null?`<small class="mvor">${esc(vw)}</small>`:""}</td>`}).join("")}</tr>`).join("")}</tbody></table></div>
   <div class="mtools"><button type="button" class="chip" data-madd="${side}" ${sd.rows.length>=MMAX[side]?"disabled":""}>+ Messpunkt</button>
+   <button type="button" class="chip" data-ocr="${side}">Ausdruck einlesen</button>
    <button type="button" class="chip" data-mpick="${side}" ${sd.extra.length>=6?"disabled":""}>+ Messgröße</button>
    ${sd.hide.length||sd.extra.length?`<button type="button" class="chip" data-mreset="${side}">Spalten zurücksetzen</button>`:""}
    <span class="hint">${sd.rows.length} von ${MMAX[side]} Messpunkten</span></div>
@@ -845,7 +979,9 @@ function mTabelle(r,a,side,title){
   <div class="ubs">${ub.map((u,j)=>`<label class="check"><input type="checkbox" data-mub="${side}|${j}" ${sd.ub[j]?"checked":""}>${u}</label>`).join("")}</div></div>`;
 }
 function mSum(){const r=R();if(!r)return;const out=$("#mSum");if(!out)return;const a=ANLAGEN[r.q],m=r.mess;
- ["ang","ver"].forEach(side=>m[side].rows.forEach((row,i)=>{const el=$("#qa-"+side+"-"+i);if(el){const q=rowQa(r,a,row);el.textContent=q!=null?de(q,1):""}}));
+ const lim0=qaLimit(a.kw);["ang","ver"].forEach(side=>m[side].rows.forEach((row,i)=>{const el=$("#qa-"+side+"-"+i);if(el){const q=rowQa(r,a,row);el.textContent=q!=null?de(q,1):"";el.classList.toggle("cr",q!=null&&q>lim0);el.classList.toggle("wa",q!=null&&q<=lim0&&q>lim0-1)}}));
+ document.querySelectorAll("input[data-mv]").forEach(inp=>{const[sd,i,c]=inp.dataset.mv.split("|"),row=m[sd]&&m[sd].rows[+i];if(!row)return;const k=mvKlasse(r,sd,+i,c,row);["cr","wa","abw"].forEach(x=>inp.classList.toggle(x,k===x));
+  inp.title=k==="abw"?"Starke Abweichung zur letzten Messung":k==="cr"?"Wert sehr hoch":k==="wa"?"Wert erhöht":""});
  const qs=m.ver.rows.map(x=>rowQa(r,a,x)).filter(x=>x!=null),cos=m.ver.rows.map(x=>n(x.co)).filter(x=>x!=null);
  if(!qs.length){out.innerHTML='<p class="hint">Abgasverlust wird je Messpunkt berechnet, sobald O₂, Abgas- und Verbrennungsluft- bzw. Ansaugtemperatur eingetragen sind.</p>';return}
  const qa=Math.max(...qs),lim=qaLimit(a.kw),cls=qa>lim?"cr":qa>lim-1?"wa":"ok",co=cos.length?Math.max(...cos):null;
@@ -1405,7 +1541,7 @@ function render(){
 }
 
 /* ---------- Ereignisse ---------- */
-function setPath(r,path,val){const p=path.split(".");if(p[0]==="m"){let o=r.mess;for(let i=1;i<p.length-1;i++)o=o[p[i]];o[p[p.length-1]]=val}else r[path]=val}
+function setPath(r,path,val){const p=path.split(".");if(p[0]==="m"){let o=r.mess;for(let i=1;i<p.length-1;i++)o=o[p[i]];o[p[p.length-1]]=val}else{let o=r;for(let i=0;i<p.length-1;i++)o=o[p[i]]=o[p[i]]||{};o[p[p.length-1]]=val}}
 document.addEventListener("input",e=>{
  const t=e.target,b=t.dataset.bind;
  if(t.id==="msearch")matSearch(t.value);
@@ -1426,6 +1562,8 @@ function matSearch(q){const box=$("#mres");q=q.trim().toLowerCase();if(!q){box.i
  box.innerHTML=hits.length?hits.map(k=>`<button type="button" data-mat="${esc(k[0])}">+ ${esc(k[1])} <span class="mono" style="color:var(--muted)">${esc(k[0])}</span></button>`).join(""):'<p class="hint">Kein Artikel gefunden. Freitext-Position folgt in der nächsten Version.</p>'}
 document.addEventListener("change",e=>{
  const t=e.target,r=S.view==="einsatz"&&R();
+ if(t.id==="ocrIn"&&t.files&&t.files[0]){ocrStart(t.dataset.side||"ver",t.files[0]);return}
+ if(t.dataset.schrittliste&&r){const l=VOR().checklisten.find(x=>x.id===t.value);r.schritte=l?{id:l.id,name:l.name,items:l.schritte.map(x=>({t:x,s:""}))}:false;save();render();return}
  if(t.dataset.fa&&S.fa){S.fa[t.dataset.fa]=t.checked;save()}
  if(t.id==="faFoto"&&S.fa&&t.files[0]){hochladen(t.files,ids=>{S.fa.fotos=(S.fa.fotos||[]).concat(ids);S.fa.foto=S.fa.fotos.length;save();render();toast("Foto angehängt")})}
  if(t.dataset.fdchk&&S.fd){S.fd[t.dataset.fdchk]=t.checked;save()}
@@ -1447,7 +1585,7 @@ document.addEventListener("change",e=>{
 });
 document.addEventListener("click",e=>{
  const tr=e.target.closest("tr[data-nach]");if(tr){if(tr.dataset.nach>=isoD()){toast("Heute bitte oben stempeln");return}S.nachDatum=tr.dataset.nach;save();render();const np=$("#nachPanel");if(np&&np.scrollIntoView)np.scrollIntoView({block:"start",behavior:"smooth"});return}
- const t=e.target.closest("button,[data-q]");if(!t)return;const d=t.dataset,r=S.view==="einsatz"&&R();
+ const t=e.target.closest("button,[data-q],[data-hwzu]");if(!t)return;const d=t.dataset,r=S.view==="einsatz"&&R();
 
  if(t.id==="pushAn"){pushAnmelden();return}
  if(t.id==="pushAus"){pushAbmelden();return}
@@ -1484,6 +1622,9 @@ document.addEventListener("click",e=>{
  if(d.zt){S.zeitTab=d.zt;save();render();return}
  if(d.hinweis){zeigeHinweise(d.hinweis);return}
  if(d.hwzu){zeigeHinweise(null);return}
+ if(d.unterwegs){zeigeUnterwegs(d.unterwegs);return}
+ if(d.uwmin&&UW){UW.min=+d.uwmin;zeigeUnterwegs(UW.id);return}
+ if(d.uwsenden){unterwegsSenden();return}
  if(d.panelzu){if(DP)DP.zu(0,e.detail===0);return}
  if(d.schema&&t.closest(".schemawahl")){NFDESIGN.setzeSchema(d.schema);render();return}
  if(d.themeset){NFDESIGN.setzeTheme(d.themeset);render();return}
@@ -1539,7 +1680,13 @@ document.addEventListener("click",e=>{
  if(t.id==="next"){if(!stepOk(r.step))toast("Pflichtfelder in diesem Schritt fehlen noch – du kannst trotzdem weiter.");r.step++;save();render();main.scrollTop=0;return}
  if(t.id==="prev"){r.step--;save();render();main.scrollTop=0;return}
  if(t.id==="finish"){finish();return}
- if(d.set){r[d.set]=d.val;save();render();return}
+ if(d.set){r[d.set]=d.val;if(d.set==="einsatzart"&&r.schritte&&!r.schritte.items.some(x=>x.s))r.schritte=null;save();render();return}
+ if(d.sicher){r.sicher=r.sicher||{};r.sicher[d.sicher]=d.val;save();render();return}
+ if(d.schritt){const c=schritteVon(r);if(c){const x=c.items[+d.schritt];x.s=x.s===d.val?"":d.val;save();render()}return}
+ if(d.schritteallen){const c=schritteVon(r);if(c)c.items.forEach(x=>{if(!x.s)x.s="ok"});save();render();return}
+ if(d.sh){stoerungshilfe(r);return}
+ if(d.ocr){const inp=$("#ocrIn");inp.dataset.side=d.ocr;inp.value="";inp.click();return}
+ if(d.ocrok){ocrUebernehmen();return}
  if(d.mtyp){const m=mig(r);if(m.typ!==d.mtyp){m.typ=d.mtyp;["ang","ver"].forEach(sd=>{m[sd].hide=[];if(d.mtyp!=="heiz"){while(m[sd].rows.length<9)m[sd].rows.push({});m[sd].rows.forEach((x,i)=>{if(!x.azl)x.azl="P"+(i+1)})}});toast("Spalten für "+MT[d.mtyp].label+" – eingetragene Werte bleiben erhalten")}save();render();return}
  if(d.madd){const sd=mig(r)[d.madd];if(sd.rows.length<MMAX[d.madd]){sd.rows.push({});sd.sel=sd.rows.length-1;save();render();mFokus(d.madd)}return}
  if(d.mview){S.mAnsicht=d.mview;save();render();return}

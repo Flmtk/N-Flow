@@ -1,5 +1,17 @@
 # N-Flow · Liste der Updates
 
+## Update „Monteur-App im Apple-Stil“ (09.11.2026)
+
+Einspielen: `cd /docker/n-flow-test && sh ops/update.sh`. Danach die App am Handy einmal ganz schließen und neu öffnen (App-Cache v16).
+
+- [x] Schlichter Stil: grauer Grund, weiße gruppierte Listen, große Titel, feine graue Symbole, Orange nur für Auftragsart und Akzente. Gilt für Handy und Desktop.
+- [x] Oben „| service redefined.“ neben dem Logo (Handy) bzw. unter dem Logo in der Seitenleiste (Desktop).
+- [x] Startbild mit NOVIS-Logo, senkrechtem orangem Strich und Slogan. Im dunklen Modus wird das Logo hell dargestellt.
+- [x] Heute: Karte mit dem nächsten Termin (feiner oranger Rand, leichtes Leuchten), darunter die Tour als Liste.
+- [x] Wischen: nach rechts „Unterwegs“ (ganz durchwischen öffnet direkt das Senden), nach links Anrufen und Karte (ganz durchwischen öffnet die Karte). Lange drücken öffnet die Vorschau. Beim ersten Öffnen zeigt die erste Zeile einmal kurz die Geste.
+- [x] Desktop: Unterwegs, Anrufen und Karte erscheinen beim Überfahren am Zeilenende.
+- [x] Auftrag öffnen: zuerst die Anlagendaten, dann Hinweise, Vor Ort, Details, Historie, Unterlagen; Anrufen und Karte unten unter „Kontakt“.
+
 ## Update „Rabatt und Prüfung vor dem Einreichen“ (09.11.2026)
 
 Einspielen: `cd /docker/n-flow-test && sh ops/update.sh`, danach das Büro neu laden.

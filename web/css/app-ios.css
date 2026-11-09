@@ -1,0 +1,120 @@
+/* N-Flow Monteur-App · Apple-Stil (11/2026)
+ * Schlicht: grauer Grund, weiße gruppierte Listen, große Titel, feine Symbole, Farbe nur sparsam (Orange).
+ * Wird nach design.css geladen und gilt nur für die App. */
+
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){--bg:#F2F2F7;--surface2:#F2F2F7;--line:#E1E1E6}}
+:root[data-theme="light"]{--bg:#F2F2F7;--surface2:#F2F2F7;--line:#E1E1E6}
+:root{--f-display:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;--trenn:color-mix(in srgb,var(--fg) 16%,transparent);--or:#C2510B}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--or:#F08A4B}}
+:root[data-theme="dark"]{--or:#F08A4B}
+
+/* ---------- Kopf: Logo, „service redefined.“, Suche ---------- */
+.top{background:var(--bg);border-bottom:0}
+.top.unterlegt{background:color-mix(in srgb,var(--bg) 84%,transparent);-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);box-shadow:0 .5px 0 var(--trenn)}
+.top h1{font-family:var(--f-display);font-weight:700;font-size:17px;letter-spacing:0}
+.topslogan{display:flex;align-items:center;gap:8px;font:500 13px/1 var(--f-display);letter-spacing:.03em;color:var(--muted);white-space:nowrap}
+.topslogan i{display:block;width:2px;height:14px;border-radius:1px;background:var(--logo-strich,#E9660F)}
+.top .topslogan{margin-left:4px}
+.phone.desk .navbrand{flex-wrap:wrap;row-gap:12px}
+.phone.desk .navbrand .topslogan{order:3;flex-basis:100%;font-size:12.5px;margin:0}
+.phone.desk #tabs{padding-top:120px}
+.hwkopf h2{font-family:var(--f-display);font-weight:700}
+
+/* ---------- Große Titel ---------- */
+.ltitel{padding:4px 4px 2px}
+.ltitel h1{margin:0;font:800 34px/1.08 var(--f-display);letter-spacing:-.02em;color:var(--fg);text-wrap:balance}
+.ltitel p{margin:5px 0 0;color:var(--muted);font-size:15px}
+.ltitel.lt2{padding:6px 20px 4px}
+.ltitel.lt2 h1{font-size:30px}
+
+/* ---------- Gruppierte Listen (Panels wie in den iPhone-Einstellungen) ---------- */
+.ios{gap:18px}
+.panel{border:0;border-radius:14px;box-shadow:none;background:var(--surface);gap:8px}
+.panel h4{font:600 13px/1.2 var(--f-display);letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+dl.kv{grid-template-columns:auto 1fr;gap:0;font-size:15px}
+dl.kv dd{padding-left:14px!important}
+dl.kv dt,dl.kv dd{padding:10px 0;border-top:.5px solid var(--trenn);margin:0}
+dl.kv dt:first-child,dl.kv dt:first-child+dd{border-top:0}
+dl.kv dd{text-align:right}
+.sekt{display:flex;justify-content:space-between;align-items:baseline;margin:6px 4px -10px;font:600 13px/1.2 var(--f-display);letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+.liste{background:var(--surface);border-radius:14px;overflow:hidden}
+
+/* ---------- Nächster Termin: nur die Daten, außen fein orange ---------- */
+.naechst{position:relative;display:flex;align-items:center;gap:14px;width:100%;padding:14px 16px;border:0;border-radius:16px;background:var(--surface);color:var(--fg);text-align:left;
+  box-shadow:0 0 0 1.5px var(--t1,#E9660F);cursor:pointer;transition:transform 160ms var(--ease-out)}
+.naechst::after{content:"";position:absolute;inset:-1.5px;border-radius:17.5px;box-shadow:0 0 14px 2px rgba(233,102,15,.32);opacity:0;pointer-events:none;animation:nGlimm 4000ms ease-in-out infinite}
+@keyframes nGlimm{0%,100%{opacity:0}50%{opacity:1}}
+.naechst:active{transform:scale(.97)}
+.naechst .nz{font:800 22px/1 var(--f-display);font-variant-numeric:tabular-nums;flex:none}
+.naechst .nd{min-width:0;display:flex;flex-direction:column;gap:2px}
+.naechst .nd b{font-size:16px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.naechst .nd span{font-size:14px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ---------- Auftragszeile mit Wischaktionen ---------- */
+.zw{position:relative;overflow:hidden;touch-action:pan-y}
+.zw+.zw .zk::before{content:"";position:absolute;top:0;left:52px;right:0;height:.5px;background:var(--trenn)}
+.zk{position:relative;z-index:1;display:flex;align-items:center;gap:12px;width:100%;min-height:66px;padding:10px 14px 10px 16px;box-sizing:border-box;border:0;border-radius:0;
+  background:var(--surface);color:var(--fg);text-align:left;cursor:pointer;touch-action:pan-y;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;will-change:transform}
+.zk:active{background:var(--hover)}
+.zi{width:24px;height:24px;flex:none;color:var(--muted);display:grid;place-items:center}
+.zi svg{width:24px;height:24px}
+.zm{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.zm b{font-size:16px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.zm small{font-size:14px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.zm .zs{font-size:12.5px;font-weight:700}.zm .zs.or{color:var(--or)}.zm .zs.ok{color:var(--ok)}
+.hwpunkt{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--t1,#E9660F);margin-left:6px;vertical-align:middle}
+.zt{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:1px}
+.zt b{font-size:16px;font-weight:700;font-variant-numeric:tabular-nums}
+.zt small{font-size:12px;font-weight:700;color:var(--or)}
+.zl{position:absolute;inset:0;display:flex;align-items:center;gap:8px;padding:0 0 0 24px;border:0;border-radius:0;background:#C2510B;color:#fff;font-size:14px;font-weight:700;visibility:hidden;cursor:pointer}
+.zl svg{width:22px;height:22px}
+.zr{position:absolute;top:0;bottom:0;right:0;display:flex;visibility:hidden}
+.za{width:84px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#fff;font-size:12px;font-weight:700;text-decoration:none}
+.za svg{width:22px;height:22px}
+.za.gruen{background:#2E7D4F}.za.blau{background:#1D5FBF}
+.zl b,.za b{font-weight:700}
+.zh{display:none}
+
+/* ---------- Vorschau und Aktionslisten ---------- */
+.hwsheet .liste{margin-bottom:12px;background:var(--surface)}
+.kvl>div{display:flex;justify-content:space-between;gap:14px;padding:12px 16px;font-size:15px;position:relative}
+.kvl>div+div::before,.akl>*+*::before{content:"";position:absolute;top:0;left:16px;right:0;height:.5px;background:var(--trenn)}
+.kvl>div span:first-child{color:var(--muted)}
+.kvl>div span:last-child{text-align:right}
+.akl{display:flex;flex-direction:column}
+.akl>a,.akl>button{position:relative;display:flex;align-items:center;gap:12px;min-height:50px;padding:0 16px;border:0;border-radius:0;background:var(--surface);color:var(--fg);font:inherit;font-size:16px;text-decoration:none;text-align:left;cursor:pointer;width:100%;box-sizing:border-box}
+.akl>a:active,.akl>button:active{background:var(--hover)}
+.akl .ali{width:24px;height:24px;color:var(--muted);display:grid;place-items:center;flex:none}
+.akl .ali svg{width:22px;height:22px;stroke-width:1.5}
+.akl .chev{margin-left:auto;color:var(--muted);font-size:22px;line-height:1}
+.panel .akl{margin:0 -14px -14px}
+.panel .akl>*:first-child::before{content:"";position:absolute;top:0;left:16px;right:0;height:.5px;background:var(--trenn)}
+
+/* ---------- Tab-Leiste: feine Symbole, aktiv in Orange ---------- */
+.tabs svg{stroke-width:1.5}
+.tabs button[aria-current="page"]{color:var(--or)}
+
+/* ---------- Startbild mit Firmenlogo ---------- */
+.intro .flogo{width:220px;height:auto;animation:fLogo 600ms var(--ease-out) both}
+.intro .slogan i{transform-origin:center;animation:fStrich 380ms 450ms var(--ease-out) both}
+@keyframes fLogo{from{opacity:0;transform:scale(.96)}}
+@keyframes fStrich{from{transform:scaleY(0)}}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .intro .flogo{filter:invert(1) hue-rotate(180deg)}}
+:root[data-theme="dark"] .intro .flogo{filter:invert(1) hue-rotate(180deg)}
+
+/* ---------- Desktop: Aktionen am Zeilenende beim Überfahren ---------- */
+@media (hover:hover) and (pointer:fine){
+  .phone.desk .zh{display:flex;position:absolute;right:12px;top:50%;transform:translateY(-50%);z-index:2;gap:6px;opacity:0;transition:opacity 150ms ease}
+  .phone.desk .zw:hover .zh{opacity:1}
+  .phone.desk .zw:hover .zt{opacity:0}
+  .zhb{width:34px;height:34px;border-radius:50%;border:0;background:var(--surface2);color:var(--fg);display:grid;place-items:center;cursor:pointer;text-decoration:none}
+  .zhb:hover{background:var(--hover);color:var(--or)}
+  .zhb svg{width:18px;height:18px}
+  .zk:hover{background:color-mix(in srgb,var(--hover) 55%,var(--surface))}
+}
+.phone.desk .ios{max-width:760px}
+
+@media (prefers-reduced-motion:reduce){
+  .naechst::after{animation:none}
+  .intro .flogo,.intro .slogan i{animation:iRuhig 200ms var(--ease-out) both}
+}

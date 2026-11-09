@@ -250,16 +250,16 @@
     try { erstes = localStorage.getItem(schluessel) !== heute; } catch (e) { /* privat */ }
     if (!window.NFDESIGN || (!erstes && !o.ladebild)) return;
     el = document.createElement("div"); el.className = "intro" + (erstes ? "" : " kurz"); el.setAttribute("aria-hidden", "true");
-    el.innerHTML = '<div class="grund"></div><div class="introinhalt">' + NFDESIGN.logo("gross") +
+    el.innerHTML = '<div class="grund"></div><div class="introinhalt">' + (o.firmenlogo ? '<img class="flogo" src="' + o.firmenlogo + '" alt="">' : NFDESIGN.logo("gross")) +
       (o.slogan ? '<p class="slogan"><i></i>' + o.slogan + "</p>" : "") + "</div>";
     document.body.appendChild(el);
-    var ruhig = NFB.reduziert(), t0 = performance.now(), fertig = false, box = el.querySelector(".nlogo"), grund = el.querySelector(".grund"), slogan = el.querySelector(".slogan");
+    var ruhig = NFB.reduziert(), t0 = performance.now(), fertig = false, box = el.querySelector(".nlogo, .flogo"), grund = el.querySelector(".grund"), slogan = el.querySelector(".slogan");
     var mindest = ruhig ? 500 : erstes ? (o.slogan ? 1350 : 1050) : 800;
     function suche() { var z = ziel(); return z && z.getBoundingClientRect().width > 0 ? z : null; }
     function weg(schnell) {
       if (fertig) return; fertig = true;
       try { localStorage.setItem(schluessel, heute); } catch (e) { /* privat */ }
-      var z = suche();
+      var z = o.firmenlogo ? null : suche();             // Firmenlogo blendet aus, statt in die Kopfzeile zu wandern
       if (z && !schnell && !ruhig && box.animate) {
         var a = box.getBoundingClientRect(), b = z.getBoundingClientRect(), s = b.width / a.width;
         var r = parseFloat(getComputedStyle(z).borderBottomLeftRadius) || 8;
@@ -275,7 +275,7 @@
       }
     }
     el.addEventListener("pointerdown", function () { weg(true); });
-    (function warte() { var t = performance.now() - t0; if (fertig) return; if (t >= mindest && (suche() || t > 3000)) return weg(false); setTimeout(warte, 60); })();
+    (function warte() { var t = performance.now() - t0; if (fertig) return; if (t >= mindest && (o.firmenlogo || suche() || t > 3000)) return weg(false); setTimeout(warte, 60); })();
   };
 
   window.NFB = NFB;

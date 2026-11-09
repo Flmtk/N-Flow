@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { config } from "./config.js";
 import { sql } from "./db.js";
+import { nummernZiehen } from "./routes/daten.js";
 import { vormerken } from "./ablage.js";
 import { pdfErzeugen } from "./druck.js";
 import { mailSenden } from "./mail.js";
@@ -19,7 +20,7 @@ import { brauche, type Benutzer } from "./sitzung.js";
  */
 
 type Daten = Record<string, unknown>;
-export const ANGEBOT_GESCHUETZT = ["status", "erstellt", "eingereicht", "freigabe", "versendet", "ergebnis", "rev", "verlauf", "versand"] as const;
+export const ANGEBOT_GESCHUETZT = ["status", "erstellt", "eingereicht", "freigabe", "versendet", "ergebnis", "rev", "verlauf", "versand", "vertraege"] as const;
 
 const jetzt = () => new Date().toISOString();
 const wer = (b: Benutzer) => ({ von: b.id, name: b.name, zeit: jetzt() });
@@ -91,6 +92,31 @@ async function versandVorbereiten(id: string, a: Daten): Promise<{ mail: boolean
   }
 }
 
+
+/** Angenommenes Angebot mit Wartungspauschalen (aus einer Anlagenaufnahme): Vertrag an den Anlagen eintragen,
+ *  Interessent wird Kunde. Die Pauschale aus dem Angebot gilt als vertragliche Pauschale. */
+async function wartungsvertraege(id: string, a: Daten, b: Benutzer): Promise<{ nv: string; vertrag: string; pausch: number }[]> {
+  const pos = ((a.positionen ?? []) as Daten[]).filter((p) => p.typ === "k01" && p.nv);
+  const aus: { nv: string; vertrag: string; pausch: number }[] = [];
+  for (const p of pos) {
+    const nv = String(p.nv);
+    const [z] = await sql<{ d: Daten }[]>`select daten as d from daten where sammlung = 'anlagen' and id = ${nv} and not geloescht`;
+    if (!z) continue;
+    const anl = z.d, auf = (anl.aufnahme ?? {}) as Daten;
+    const vertrag = anl.vertrag && anl.vertrag !== "Nr. folgt" ? String(anl.vertrag) : (await nummernZiehen("W", 1))[0];
+    const pausch = Math.round(Number(p.ep ?? 0) * 100) / 100;
+    const teil: Daten = { vertrag, pausch, zyk: Number(anl.zyk ?? 12) || 12, betreuer: anl.betreuer ?? auf.von ?? null,
+      aufnahme: { ...auf, status: "vertrag", angebot: id, vertragAb: jetzt().slice(0, 10) } };
+    await sql`update daten set daten = daten || ${sql.json(teil as never)}, version = version + 1, geaendert_am = clock_timestamp(), geaendert_von = ${b.name}
+      where sammlung = 'anlagen' and id = ${nv}`;
+    if (anl.knr) await sql`update daten set daten = daten || ${sql.json({ interessent: false } as never)}, version = version + 1, geaendert_am = clock_timestamp(), geaendert_von = ${b.name}
+      where sammlung = 'kunden' and id = ${String(anl.knr)} and (daten->>'interessent')::boolean is true`;
+    await protokolliere(b.name, "Wartungsvertrag angelegt", `${vertrag} · Anlage ${nv} · ${eur(pausch)} netto aus Angebot ${id}`);
+    aus.push({ nv, vertrag, pausch });
+  }
+  return aus;
+}
+
 export async function angebotRouten(app: FastifyInstance) {
   const route = (pfad: string, f: (b: Benutzer, id: string, a: Daten, body: Daten) => Promise<unknown>) =>
     app.post<{ Params: { id: string }; Body: Daten }>(`/api/angebote/:id/${pfad}`, { preHandler: brauche("kalkulation") }, async (anfrage, antwort) => {
@@ -149,8 +175,12 @@ export async function angebotRouten(app: FastifyInstance) {
   route("ergebnis", async (b, id, a, body) => {
     if (!["vers", "angenommen", "abgelehnt"].includes(String(a.status))) throw nein("Erst nach dem Versand.");
     const ok = body.angenommen === true;
-    const d = await aendern(id, { status: ok ? "angenommen" : "abgelehnt", ergebnis: { angenommen: ok, ...wer(b) } }, b, ok ? "Vom Kunden angenommen" : "Vom Kunden abgelehnt");
+    let d = await aendern(id, { status: ok ? "angenommen" : "abgelehnt", ergebnis: { angenommen: ok, ...wer(b) } }, b, ok ? "Vom Kunden angenommen" : "Vom Kunden abgelehnt");
     await protokolliere(b.name, ok ? "Angebot angenommen" : "Angebot abgelehnt", id);
+    if (ok && a.status !== "angenommen") {
+      const vertraege = await wartungsvertraege(id, a, b);
+      if (vertraege.length) d = await aendern(id, { vertraege }, b, "Wartungsvertrag angelegt: " + vertraege.map((v) => `${v.nv} (${v.vertrag})`).join(", "));
+    }
     return d;
   });
 

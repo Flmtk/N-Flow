@@ -17,7 +17,7 @@ import { ANGEBOT_GESCHUETZT } from "../angebote.js";
  */
 
 type Daten = Record<string, unknown>;
-export type Kreis = "A" | "SB" | "RE" | "NV" | "K" | "ANG";
+export type Kreis = "A" | "SB" | "RE" | "NV" | "K" | "ANG" | "W";
 
 interface Regel {
   lesen: Recht;
@@ -66,8 +66,9 @@ const FORMAT: Record<Kreis, (n: number, jahr: number) => string> = {
   NV: (n) => `NV-${String(n).padStart(5, "0")}`,
   K: (n) => `K-${10000 + n}`,
   ANG: (n, j) => `ANG-${j}-${String(n).padStart(4, "0")}`,
+  W: (n, j) => `W-${j}-${String(n).padStart(3, "0")}`,
 };
-const MIT_JAHR: Record<Kreis, boolean> = { A: true, SB: true, RE: true, NV: false, K: false, ANG: true };
+const MIT_JAHR: Record<Kreis, boolean> = { A: true, SB: true, RE: true, NV: false, K: false, ANG: true, W: true };
 
 /** Zieht fortlaufende Nummern. Rechnungsnummern nur einzeln beim Anlegen (lückenlos). */
 export async function nummernZiehen(kreis: Kreis, anzahl: number, db: typeof sql = sql): Promise<string[]> {

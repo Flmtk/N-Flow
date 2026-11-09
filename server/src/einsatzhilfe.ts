@@ -117,6 +117,32 @@ export function messausdruckLesen(text: string): Record<string, string> {
   return w;
 }
 
+
+/** Typenschild: Hersteller, Typ, Seriennummer, Baujahr und Nennleistung aus dem erkannten Text herauslesen.
+ *  Nur Vorschläge, der Monteur bestätigt jeden Wert. */
+const HERSTELLER = ["Buderus", "Viessmann", "Vaillant", "Wolf", "Weishaupt", "Brötje", "Broetje", "Junkers", "Bosch", "Remeha", "Elco", "Hoval", "MHG",
+  "De Dietrich", "Riello", "Giersch", "Rotex", "Intercal", "Windhager", "ÖkoFEN", "Hargassner", "Paradigma", "Ferroli", "Baxi", "Atlantic", "Stiebel Eltron", "Daikin"];
+export function typenschildLesen(text: string): Record<string, string> {
+  const w: Record<string, string> = {};
+  const t = text.replace(/[|]/g, " ");
+  const h = HERSTELLER.find((x) => new RegExp("\\b" + x.replace(/ö/i, "[oö]").replace(" ", "\\s*") + "\\b", "i").test(t));
+  if (h) w.hersteller = h === "Broetje" ? "Brötje" : h;
+  const zeilen = t.split(/\r?\n/).map((z) => z.trim()).filter(Boolean);
+  for (const z of zeilen) {
+    if (!w.sernr) { const m = z.match(/(?:S\/N|SN|Ser(?:ien)?\.?[\s-]*(?:Nr|No|Nummer)\.?|Fabr(?:ik)?\.?[\s-]*Nr\.?|Herstell[\s-]*Nr\.?|Serial\s*(?:No|Number)?)\s*[:.]?\s*([A-Z0-9][A-Z0-9\-\/ ]{4,24})/i); if (m) w.sernr = m[1].trim().replace(/\s+/g, ""); }
+    if (!w.typ) { const m = z.match(/\b(?:Type|Typ|Modell|Model)\b\s*[:.]?\s*([A-Za-z0-9][\w\-\/., ]{2,30})/i); if (m) w.typ = m[1].trim(); }
+    if (!w.baujahr) { const m = z.match(/(?:Baujahr|BJ|Herstell(?:ungs)?jahr|Year|Prod\.?)\s*[:.]?\s*((?:19|20)\d{2})/i); if (m) w.baujahr = m[1]; }
+  }
+  // Nennleistung: größter plausibler kW-Wert (bei Bereichen wie 4,7–25 kW der obere)
+  const kw: number[] = [];
+  for (const m of t.matchAll(/(\d{1,4}(?:[.,]\d{1,2})?)\s*(?:[-–]\s*(\d{1,4}(?:[.,]\d{1,2})?)\s*)?kW\b/gi)) {
+    const x = Number((m[2] ?? m[1]).replace(",", ".")); if (x >= 3 && x <= 5000) kw.push(x);
+  }
+  if (kw.length) w.kw = String(Math.max(...kw)).replace(".", ",");
+  if (!w.baujahr) { const m = t.match(/\b(19[89]\d|20[0-4]\d)\b/); if (m) w.baujahr = m[1]; }
+  return w;
+}
+
 export async function einsatzhilfeRouten(app: FastifyInstance) {
   /* Störungshilfe: frühere Fälle mit gleicher Störmeldung bei gleichem Gerätetyp (bzw. Hersteller) */
   app.get<{ Querystring: { nv?: string; code?: string } }>("/api/einsatz/stoerungshilfe", { preHandler: brauche("eigene") }, async (anfrage, antwort) => {
@@ -200,6 +226,18 @@ export async function einsatzhilfeRouten(app: FastifyInstance) {
         try { text = await tesseract(bild, "eng"); } catch { return antwort.code(500).send({ fehler: "Texterkennung fehlgeschlagen: " + msg }); }
       }
       return { werte: messausdruckLesen(text), text: text.slice(0, 3000) };
+    });
+    bereich.post("/api/einsatz/typenschild", { preHandler: brauche("eigene"), bodyLimit: 12 * 1024 * 1024 }, async (anfrage, antwort) => {
+      const bild = anfrage.body as Buffer;
+      if (!Buffer.isBuffer(bild) || bild.length < 1000) return antwort.code(400).send({ fehler: "Kein Bild erhalten" });
+      let text = "";
+      try { text = await tesseract(bild, (process.env.OCR_SPRACHE || "deu+eng").trim()); }
+      catch (e) {
+        const msg = (e as Error).message;
+        if (/ENOENT/.test(msg)) return antwort.code(501).send({ fehler: "Texterkennung ist auf dem Server nicht installiert." });
+        try { text = await tesseract(bild, "eng"); } catch { return antwort.code(500).send({ fehler: "Texterkennung fehlgeschlagen: " + msg }); }
+      }
+      return { werte: typenschildLesen(text), text: text.slice(0, 3000) };
     });
   });
 }

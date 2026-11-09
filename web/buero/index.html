@@ -122,6 +122,7 @@ label.f{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--mu
 .card.Störung::before{background:var(--crit)}
 .card.Reparatur::before,.card.Folgeauftrag::before{background:var(--warn)}
 .card.Inbetriebnahme::before{background:var(--t2)}
+.card.Anlagenaufnahme::before{background:var(--accent)}
 .card.Umbau::before{background:var(--t4)}
 .card.Sonstiges::before{background:var(--t3)}
 .card.Intern::before{background:var(--muted)}
@@ -422,11 +423,13 @@ body{padding:0}
 .knum{width:76px;text-align:right;font:inherit;font-variant-numeric:tabular-nums;border:1px solid var(--line);border-radius:8px;padding:6px 8px;background:var(--surface);color:var(--fg)}
 .knum.kein{width:58px;text-align:left}.knum.kep{width:96px}
 .kin{width:100%;font:inherit;font-weight:600;border:1px solid var(--line);border-radius:8px;padding:6px 8px;background:var(--surface);color:var(--fg)}
-.kta{width:100%;resize:vertical;font:inherit;font-size:13.5px;line-height:1.45;border:1px dashed var(--line);border-radius:8px;padding:6px 9px;background:transparent;color:var(--fg);min-height:32px;transition:border-color .2s,background .2s}
+.kta{width:100%;resize:none;overflow:hidden;font:inherit;font-size:13.5px;line-height:1.45;border:1px dashed var(--line);border-radius:8px;padding:6px 9px;background:transparent;color:var(--fg);min-height:32px;transition:border-color .2s,background .2s}
 .kta:focus,.knum:focus,.kin:focus{outline:none;border-color:var(--accent);border-style:solid;background:var(--surface)}
 .kta:disabled,.knum:disabled,.kin:disabled{background:transparent;border-color:transparent;color:var(--fg);opacity:1}
 .kta:disabled:placeholder-shown{display:none}
 .kein0{color:var(--muted);font-size:13px}.kst{color:var(--accent)}
+.kk01{display:block;font-size:12.5px;color:var(--muted);margin-top:4px}.kk01 b{color:var(--accent)}
+.kaufg{display:flex;flex-direction:column;gap:10px;padding:12px 0;border-top:1px solid var(--line)}.kaufg:first-of-type{border-top:0;padding-top:0}.kaufk{display:flex;flex-direction:column}.kaufk span{color:var(--muted);font-size:13px}
 .kstd{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted);margin-top:6px}
 .kx{border:0;background:none;color:var(--muted);width:30px;height:30px;border-radius:8px;display:grid;place-items:center}.kx svg{width:16px;height:16px}.kx:hover{background:var(--surface2);color:var(--cr,#c0392b)}
 .krb{display:flex;flex-direction:column;gap:10px}
@@ -1667,6 +1670,7 @@ const KDEF={
   {id:"zusatz",titel:"Zusätzliche Leistungen",text:"Leistungen, die über den beschriebenen Umfang hinausgehen, werden entsprechend dem Zeitaufwand zu unseren aktuellen Stundensätzen berechnet.",std:true},
   {id:"zeiten",titel:"Liefer- und Ausführungszeiten",text:"Von uns genannte Liefer- und Ausführungszeiten im Angebotsstadium sind zum Zeitpunkt der Angebotserstellung ermittelt. Eine verbindliche Aussage kann erst zum Zeitpunkt der Auftragsvergabe vorgenommen werden.",std:true},
   {id:"daten",titel:"Vertraulichkeit und Datenschutz",text:"Wir bestätigen die Einhaltung der geltenden Datenschutzbestimmungen.",std:true}]};
+KDEF.bausteine.push({id:"wv",titel:"Wartungsvertrag",text:"Die Wartungspauschale gilt je Anlage und Wartung und umfasst Arbeitszeit, Anfahrt, Abgasmessung und das übliche Wartungsmaterial. Ersatzteile und Arbeiten, die über die Wartung hinausgehen, berechnen wir nach Aufwand zu unseren aktuellen Sätzen. Der Vertrag läuft ein Jahr und verlängert sich jeweils um ein weiteres Jahr, wenn er nicht drei Monate vor Ablauf gekündigt wird. Die Termine stimmen wir rechtzeitig mit Ihnen ab.",std:false});
 function KP(){const g=NF.get("einstellungen","kalkulation")||{};return Object.assign({},KDEF,g,{katalog:Array.isArray(g.katalog)?g.katalog:KDEF.katalog,bausteine:Array.isArray(g.bausteine)?g.bausteine:KDEF.bausteine})}
 const KST={entwurf:["","Entwurf"],pruef:["wa","Zur Freigabe"],frei:["ok","Freigegeben"],vers:["or","Versendet"],angenommen:["ok","Angenommen"],abgelehnt:["cr","Abgelehnt"]};
 const kChip=s=>{const x=KST[s]||KST.entwurf;return`<span class="chip ${x[0]}">${x[1]}</span>`};
@@ -1676,23 +1680,28 @@ const kNeben=P=>[["km","Personal- und Reisekosten","km",+(P.kmPersonal+P.kmFahrz
 const kZ=v=>{const x=parseFloat(String(v).replace(/\s/g,"").replace(/\.(?=\d{3}(\D|$))/g,"").replace(",","."));return isNaN(x)?0:x};
 function kRechnen(a,P){P=P||KP();const pos=a.positionen||[],nb=a.neben||[],g=k=>+((nb.find(n=>n.art===k)||{}).menge||0);
  const leist=pos.reduce((s,p)=>s+(+p.menge||0)*(+p.ep||0),0),nebenSum=nb.reduce((s,n)=>s+(+n.menge||0)*(+n.ep||0),0),netto=leist+nebenSum;
- const mw=+(a.mwst??P.mwst),mwst=netto*mw/100,std=pos.reduce((s,p)=>s+(+p.menge||0)*(+p.std||0),0),fahrt=g("km")/(+P.tempo||1);
- const kosten=[["Arbeitszeit",std*P.intStd],["Fahrzeit",fahrt*P.intStd],["Fahrzeug",g("km")*P.intKm],["Messgerät",g("tage")*P.intMess],["Übernachtung",g("naechte")*P.intNacht]];
+ const fk=pos.filter(p=>p.typ==="k01").reduce((s,p)=>s+2*(+p.km||0)*(+p.menge||0),0),kmG=g("km")+fk;
+ const mw=+(a.mwst??P.mwst),mwst=netto*mw/100,std=pos.reduce((s,p)=>s+(+p.menge||0)*(+p.std||0),0),fahrt=kmG/(+P.tempo||1);
+ const kosten=[["Arbeitszeit",std*P.intStd],["Fahrzeit",fahrt*P.intStd],["Fahrzeug",kmG*P.intKm],["Messgerät",g("tage")*P.intMess],["Übernachtung",g("naechte")*P.intNacht]];
  const ks=kosten.reduce((s,k)=>s+k[1],0),db=netto-ks;return{leist,nebenSum,netto,mw,mwst,brutto:netto+mwst,kosten,db,marge:netto?db/netto*100:0}}
 const kIchFrei=a=>a.status==="pruef"&&ICH_ID()!==(a.erstellt||{}).von&&ICH_ID()!==(a.eingereicht||{}).von;
 const ICH_ID=()=>(NF.ich&&NF.ich.benutzer&&NF.ich.benutzer.id)||"";
-const kPruefN=()=>RECHTE.kalkulation?ANGS().filter(kIchFrei).length:0;
+const AUFN=()=>NF.liste("anlagen").filter(a=>a&&a.nv&&a.aufnahme);
+const kAufBereit=()=>AUFN().filter(a=>a.aufnahme.status==="fertig"&&!a.aufnahme.angebot);
+const kPruefN=()=>RECHTE.kalkulation?ANGS().filter(kIchFrei).length+kAufBereit().length:0;
 
 function vKalk(){
  if(!RECHTE.kalkulation){top("Kalkulation");$("#view").innerHTML=`<div class="pad"><div class="panel"><p>Dafür fehlt das Recht „Kalkulation und Angebote“.</p></div></div>`;return}
  const T=S.kalkTab||"liste",a=S.kalkId&&NF.get("angebote",S.kalkId);
  if(T==="angebot"&&!a){S.kalkTab="liste";return vKalk()}
- top(T==="angebot"?a.betreff||a.nr:T==="set"?"Kalkulation · Einstellungen":"Kalkulation",T==="angebot"?kChip(a.status)+(a.rev>1?`<span class="chip">Rev. ${a.rev}</span>`:""):T==="liste"?`<button type="button" class="btn" data-kneu="1">+ Neues Angebot</button>`:"");
- const tabs=[["liste","Angebote"],...(a?[["angebot",a.nr]]:[]),["set","Einstellungen"]];
+ top(T==="angebot"?a.betreff||a.nr:T==="set"?"Kalkulation · Einstellungen":T==="aufn"?"Kalkulation · Anlagenaufnahmen":"Kalkulation",T==="angebot"?kChip(a.status)+(a.rev>1?`<span class="chip">Rev. ${a.rev}</span>`:""):T==="liste"?`<button type="button" class="btn" data-kneu="1">+ Neues Angebot</button>`:"");
+ const nb=kAufBereit().length,tabs=[["liste","Angebote"],["aufn","Aufnahmen"+(nb?` (${nb})`:"")],...(a?[["angebot",a.nr]]:[]),["set","Einstellungen"]];
  const bar=`<div class="stabs" role="tablist">${tabs.map(([k,l])=>`<button type="button" role="tab" data-ktab="${k}" aria-selected="${T===k}">${esc(l)}</button>`).join("")}</div>`;
- $("#view").innerHTML=`<div class="pad kalkv">${bar}${T==="liste"?kListe():T==="set"?kSet():kAngebot(a)}</div>`;
+ $("#view").innerHTML=`<div class="pad kalkv">${bar}${T==="liste"?kListe():T==="set"?kSet():T==="aufn"?kAufnahmen():kAngebot(a)}</div>`;
  if(T==="angebot")kWerte();
+ document.querySelectorAll(".kalkv textarea.kta").forEach(kHoehe);
 }
+function kHoehe(t){t.style.height="auto";t.style.height=(t.scrollHeight+2)+"px"}
 function kListe(){const P=KP(),f=S.kfilter||"alle",L=ANGS();
  const filt=L.filter(a=>f==="alle"||(f==="pruef"?a.status==="pruef":f==="offen"?["entwurf","pruef","frei"].includes(a.status):["vers","angenommen","abgelehnt"].includes(a.status)));
  const n=kPruefN();
@@ -1709,7 +1718,7 @@ function kAngebot(a){const P=KP(),dis=a.status!=="entwurf"?"disabled":"",k=a.kun
    <td style="text-align:right"><input class="knum kep" inputmode="decimal" data-kp="${i}|ep" value="${de(p.ep||0,2)}" ${dis} aria-label="Einzelpreis"></td>
    <td style="text-align:right;white-space:nowrap"><b id="kz-${i}">${eur((+p.menge||0)*(+p.ep||0))}</b></td>
    <td>${dis?"":`<button type="button" class="kx" data-kdel="${i}" aria-label="Position entfernen">${I.x}</button>`}</td></tr>
-  <tr class="ktext"><td></td><td colspan="5"><textarea class="kta" rows="${Math.min(6,Math.max(1,String(p.text||"").split("\n").length))}" data-kp="${i}|text" placeholder="Freitext zur Position" ${dis}>${esc(p.text||"")}</textarea>
+  <tr class="ktext"><td></td><td colspan="5"><textarea class="kta" rows="${Math.min(6,Math.max(1,String(p.text||"").split("\n").length))}" data-kp="${i}|text" placeholder="Freitext zur Position" ${dis}>${esc(p.text||"")}</textarea>${p.typ==="k01"&&p.k01?`<small class="kk01">K-01 · ${de(p.k01.h,2)} h · Zone ${p.k01.zone} · ${eur(p.k01.p)}${Math.abs((+p.ep||0)-p.k01.p)>0.005?` · <b>Preis angepasst</b>`:""}</small>`:""}
    ${p.typ==="frei"?`<label class="kstd">Zeit intern <input class="knum" inputmode="decimal" data-kp="${i}|std" value="${de(p.std||0,1)}" ${dis}> Std. je Einheit</label>`:""}</td></tr>`;
  const nbZeile=(n,i)=>`<tr class="kpos"><td>${pos.length+i+1}</td><td><b>${esc(n.bez)}</b> <span class="kst">*</span></td>
    <td style="text-align:right;white-space:nowrap"><input class="knum" inputmode="decimal" data-kn="${i}|menge" value="${de(n.menge||0,0)}" ${dis} aria-label="${esc(n.bez)} Menge"> <span class="kein0">${esc(n.einheit)}</span></td>
@@ -1730,7 +1739,8 @@ function kAngebot(a){const P=KP(),dis=a.status!=="entwurf"?"disabled":"",k=a.kun
  const schritte=[["ok","Erstellt",`${erst.name||""}`],[a.status==="entwurf"?"jetzt":"ok","Zur Freigabe",ein.name?`von ${ein.name}`:""],[a.status==="pruef"?"jetzt":frei.name?"ok":"","Freigegeben",frei.name||""],
   ...(frei.name?[[a.versand?(a.versand.mail?"ok":"cr"):"",a.versand&&a.versand.mail===false?"Mail an rechnung@ fehlgeschlagen":"PDF, SharePoint und Mail an rechnung@",""]]:[]),
   [["vers","angenommen","abgelehnt"].includes(a.status)?"ok":a.status==="frei"?"jetzt":"","Versendet",(a.versendet||{}).name||""],
-  ...(a.ergebnis?[[a.ergebnis.angenommen?"ok":"cr",a.ergebnis.angenommen?"Angenommen":"Abgelehnt",a.ergebnis.name||""]]:[])];
+  ...(a.ergebnis?[[a.ergebnis.angenommen?"ok":"cr",a.ergebnis.angenommen?"Angenommen":"Abgelehnt",a.ergebnis.name||""]]:[]),
+  ...(a.vertraege&&a.vertraege.length?[["ok","Wartungsvertrag angelegt",a.vertraege.map(v=>v.vertrag+" · "+v.nv).join(", ")]]:[])];
  return`<div class="kalk"><div class="kl">
   ${a.anmerkung&&a.status==="entwurf"?`<div class="kwarte">Zurückgegeben von ${esc(a.anmerkung.name||"")}: ${esc(a.anmerkung.text||"")}</div>`:""}
   <div class="panel"><h3>Kunde</h3>
@@ -1791,7 +1801,9 @@ async function kAktion(was,body){const id=S.kalkId;
   for(let i=0;i<50&&NF.ausstehend("angebote",id);i++){NF.senden();await new Promise(r=>setTimeout(r,100))}
   if(NF.ausstehend("angebote",id)){toast("Keine Verbindung – bitte gleich noch einmal versuchen.");render();return}}
  try{const d=await NF.api(`/api/angebote/${encodeURIComponent(id)}/${was}`,{method:"POST",body:body||{}});
-  const z=NF.store.angebote&&NF.store.angebote[id];if(z){z.daten=Object.assign({},d);delete z.daten.hinweis}NF.abholen();
+  const z=NF.store.angebote&&NF.store.angebote[id];if(z){z.daten=Object.assign({},d);delete z.daten.hinweis}
+  if(was==="ergebnis"){try{await NF.abholen()}catch(x){}aufbauen()}else NF.abholen();
+  if(was==="ergebnis"&&d.vertraege&&d.vertraege.length){toast("Angenommen · Wartungsvertrag "+d.vertraege.map(v=>v.vertrag).join(", ")+" angelegt");render();return}
   toast(d.hinweis?"Freigegeben, aber Mail nicht gesendet: "+d.hinweis:{einreichen:"Zur Freigabe eingereicht",freigeben:"Freigegeben – PDF, SharePoint und Mail an rechnung@",zurueck:"Zurück in Bearbeitung",versendet:"Als versendet markiert","neue-fassung":"Neue Fassung angelegt","mail-wiederholen":"Mail erneut gesendet",ergebnis:"Gespeichert"}[was]||"Erledigt");render()}
  catch(e){toast(e.message)}}
 
@@ -1831,13 +1843,81 @@ function kFeld(t,speichern){const a=S.kalkId&&NF.get("angebote",S.kalkId),d=t.da
  if(d.ks&&speichern){kSetSpeichere({[d.ks]:kZ(t.value)});return true}
  if(d.kc&&speichern){const[i,f]=d.kc.split("|"),k=P.katalog.map(x=>Object.assign({},x));k[+i][f]=["ep","std"].includes(f)?kZ(t.value):t.value;kSetSpeichere({katalog:k});return true}
  if(d.kb&&speichern){const[i,f]=d.kb.split("|"),b=P.bausteine.map(x=>Object.assign({},x));b[+i][f]=t.value;kSetSpeichere({bausteine:b});return true}}
-document.addEventListener("input",e=>{if(S.view!=="kalk")return;const t=e.target;if(t.classList.contains("kta")){t.rows=Math.min(6,Math.max(1,t.value.split("\n").length))}if(t.type!=="checkbox")kFeld(t,false)});
+document.addEventListener("input",e=>{if(S.view!=="kalk")return;const t=e.target;if(t.classList.contains("kta"))kHoehe(t);if(t.type!=="checkbox")kFeld(t,false)});
 document.addEventListener("change",e=>{if(S.view!=="kalk")return;const t=e.target,d=t.dataset,a=S.kalkId&&NF.get("angebote",S.kalkId);
  if(t.id==="kKundeWahl"&&a){const nr=t.value.split(" · ")[0].trim(),k=NF.get("kunden",nr);if(!k){toast("Kunde nicht gefunden");return}
   kSpeichere({kunde:{knr:nr,name:[k.name1,k.name2].filter(Boolean).join(", "),anschrift:[k.str,[k.plz,k.ort].filter(Boolean).join(" ")].filter(Boolean).join(", "),mail:k.mail||"",ansprech:(a.kunde||{}).ansprech||""}});render();return}
  if(d.krb&&a){const rb=new Set(a.rb||[]);t.checked?rb.add(d.krb):rb.delete(d.krb);kSpeichere({rb:[...rb]});return}
  if(d.kbstd){const P=KP(),b=P.bausteine.map(x=>Object.assign({},x));b[+d.kbstd].std=t.checked;kSetSpeichere({bausteine:b});return}
  if(kFeld(t,true))kWerte()});
+
+/* ---------- Anlagenaufnahme: Büro plant, Monteur erfasst vor Ort, daraus das Angebot zum Wartungsvertrag (K-01) ----------
+ * Die Aufnahme ist kostenlos (die erste reguläre Anfahrt ist die Inspektion). Status an der Anlage: geplant → fertig → (angebot) → vertrag. */
+const WV_BAUSTEIN=KDEF.bausteine.find(b=>b.id==="wv");
+const kAnl=x=>S.anl.find(y=>y.nv===x.nv)||anlBuero(x);
+const kAdr=a=>[a.str,[a.plz,a.ort].filter(Boolean).join(" ")].filter(Boolean).join(", ");
+function kAufnahmen(){
+ const F=S.kauf||(S.kauf={art:"stamm",kunde:"",name1:"",name2:"",str:"",plz:"",ort:"",tel:"",mail:"",ansprech:"",hinweis:"",tech:"",date:"",time:"08:00",dauer:"1.5"});
+ const kd=NF.liste("kunden").filter(x=>x&&x.nr).sort((x,y)=>String(x.name1).localeCompare(String(y.name1)));
+ const L=AUFN(),bereit=kAufBereit(),geplant=L.filter(a=>a.aufnahme.status==="geplant"),fertig=L.filter(a=>a.aufnahme.angebot||a.aufnahme.status==="vertrag");
+ const gruppen={};bereit.forEach(a=>{(gruppen[a.knr]=gruppen[a.knr]||[]).push(a)});
+ const kn=knr=>{const k=NF.get("kunden",knr)||{};return esc([k.name1,k.name2].filter(Boolean).join(", ")||knr)+(k.interessent?' <span class="chip">Interessent</span>':"")};
+ const auftrag=nv=>S.orders.find(o=>o.nv===nv&&o.art==="Anlagenaufnahme");
+ const I1=(k,l,o={})=>`<label class="f">${l}<input type="${o.type||"text"}" data-kauf="${k}" value="${esc(F[k]||"")}" ${o.ph?`placeholder="${o.ph}"`:""} ${o.inp?`inputmode="${o.inp}"`:""}></label>`;
+ return`${Object.keys(gruppen).length?`<div class="panel"><h3>Bereit für das Angebot</h3>${Object.entries(gruppen).map(([knr,as])=>`<div class="kaufg"><div class="kaufk"><b>${kn(knr)}</b><span>${as.length} Anlage${as.length>1?"n":""} · aufgenommen von ${esc(as[0].aufnahme.name||"")}</span></div>
+   <div style="overflow-x:auto"><table class="tb"><thead><tr><th>Anlage</th><th>Gerät</th><th>Ort</th><th>Zustand</th><th style="text-align:right">K-01</th></tr></thead><tbody>${as.map(x=>{const a=kAnl(x),r=k01(a);
+    return`<tr><td><b>${esc(a.nv)}</b></td><td>${esc(a.ger)} · ${de(+a.kw||0,0)} kW${geraete(a)>1?` · ${geraete(a)} Geräte`:""}</td><td>${esc(a.ort||"")}</td><td><span class="chip ${{gut:"ok",mittel:"wa",schlecht:"cr"}[x.aufnahme.zustand]||""}">${esc(x.aufnahme.zustand||"–")}</span>${x.aufnahme.hinweis?`<br><small>${esc(x.aufnahme.hinweis)}</small>`:""}</td>
+     <td style="text-align:right;white-space:nowrap"><b>${eur(r.p)}</b><br><small>${de(r.h,2)} h · Zone ${r.zone}</small></td></tr>`}).join("")}</tbody></table></div>
+   <div class="row" style="gap:8px"><button type="button" class="btn" data-kaufang="${esc(knr)}">Angebot Wartungsvertrag erstellen</button></div></div>`).join("")}</div>`:""}
+ <div class="grid2">
+ <div class="panel"><h3>Anlagenaufnahme planen</h3>
+  <div class="seg" role="group" aria-label="Kundenart"><button type="button" data-kaufart="stamm" aria-pressed="${F.art==="stamm"}">Kundenstamm</button><button type="button" data-kaufart="neu" aria-pressed="${F.art==="neu"}">Interessent</button></div>
+  ${F.art==="stamm"?`<label class="f">Kunde<input type="text" list="kAufKunden" data-kauf="kunde" value="${esc(F.kunde)}" placeholder="Name oder Kundennummer"><datalist id="kAufKunden">${kd.map(x=>`<option value="${esc(x.nr+" · "+[x.name1,x.name2].filter(Boolean).join(", "))}"></option>`).join("")}</datalist></label>`
+  :`<div class="f2">${I1("name1","Firma / Name")}${I1("name2","Zusatz (Objekt, Vorname)")}</div>${I1("str","Straße, Hausnr.")}<div class="f2">${I1("plz","PLZ",{inp:"numeric"})}${I1("ort","Ort")}</div><div class="f2">${I1("tel","Telefon",{type:"tel"})}${I1("mail","E-Mail",{type:"email"})}</div>`}
+  ${I1("ansprech","Ansprechpartner vor Ort")}
+  <label class="f">Hinweis für den Monteur<textarea data-kauf="hinweis" rows="2" placeholder="z. B. drei Heizräume, Hausmeister vorher anrufen">${esc(F.hinweis)}</textarea></label>
+  <div class="f2"><label class="f">Monteur<select data-kauf="tech"><option value="">– später einplanen –</option>${MONT().map(t=>`<option value="${t.id}" ${F.tech===t.id?"selected":""}>${esc(t.name)}</option>`).join("")}</select></label>${I1("dauer","Dauer (h)",{inp:"decimal"})}</div>
+  <div class="f2">${I1("date","Datum",{type:"date"})}${I1("time","Uhrzeit",{type:"time"})}</div>
+  <div class="row"><button type="button" class="btn" data-kaufplan="1">Aufnahme anlegen</button></div></div>
+ <div class="panel"><h3>Geplant</h3>${geplant.length?`<div style="overflow-x:auto"><table class="tb"><thead><tr><th>Anlage</th><th>Kunde</th><th>Termin</th></tr></thead><tbody>${geplant.map(a=>{const o=auftrag(a.nv);
+   return`<tr><td><b>${esc(a.nv)}</b></td><td>${kn(a.knr)}<br><small>${esc(kAdr(a))}</small></td><td>${o&&o.date?`${fmt(o.date)} ${esc(o.time||"")}<br><small>${esc(tech(o.tech).name)}</small>`:'<span class="chip wa">einzuplanen</span>'}</td></tr>`}).join("")}</tbody></table></div>`:'<p style="margin:0;color:var(--muted)">Keine offenen Aufnahmen.</p>'}
+  ${fertig.length?`<h3 style="margin-top:8px">Erledigt</h3><div style="overflow-x:auto"><table class="tb"><thead><tr><th>Anlage</th><th>Kunde</th><th>Angebot</th></tr></thead><tbody>${fertig.slice(-12).reverse().map(a=>{const g=a.aufnahme.angebot&&NF.get("angebote",a.aufnahme.angebot);
+   return`<tr ${g?`class="click" data-kopen="${esc(g.nr)}" tabindex="0"`:""}><td><b>${esc(a.nv)}</b></td><td>${kn(a.knr)}</td><td>${g?`${esc(g.nr)} ${kChip(g.status)}`:"–"}${a.vertrag&&a.aufnahme.status==="vertrag"?`<br><small>Vertrag ${esc(a.vertrag)}</small>`:""}</td></tr>`}).join("")}</tbody></table></div>`:""}</div></div>`}
+
+function kAufPlanen(){const F=S.kauf,neu=F.art==="neu";let knr="";
+ if(neu){if(!F.name1.trim()||!F.str.trim()||!F.ort.trim()){toast("Bitte Name, Straße und Ort eintragen");return}}
+ else{knr=String(F.kunde).split(" · ")[0].trim();if(!NF.get("kunden",knr)){toast("Bitte einen Kunden aus der Liste wählen");return}}
+ if(F.tech&&!F.date){toast("Bitte auch ein Datum wählen oder den Monteur leer lassen");return}
+ const ok=[...(neu?["K"]:[]),"NV","A"].map(k=>nrBereit(k,1));if(ok.includes(false))return;
+ if(neu){knr=NF.nummer("K");NF.setze("kunden",knr,{nr:knr,name1:F.name1.trim(),name2:F.name2.trim(),str:F.str.trim(),plz:F.plz.trim(),ort:F.ort.trim(),tel:F.tel.trim(),mail:F.mail.trim(),interessent:true})}
+ const k=NF.get("kunden",knr)||{},nv=NF.nummer("NV");
+ NF.setze("anlagen",nv,{nv,knr,str:k.str||"",plz:k.plz||"",ort:k.ort||"",ansprech:F.ansprech.trim(),kw:0,en:"Gas",zyk:12,
+  aufnahme:{status:"geplant",hinweis:F.hinweis.trim(),angelegt:{von:ICH_ID(),name:ME().name,zeit:new Date().toISOString()}}});
+ const o={id:NF.nummer("A"),nv,art:"Anlagenaufnahme",quelle:"Büro",grund:"Anlagenaufnahme für den Wartungsvertrag"+(F.hinweis.trim()?": "+F.hinweis.trim():""),leistung:"Anlagenaufnahme",abr:"Keine",pausch:"",dauer:parseFloat(String(F.dauer).replace(",","."))||1.5,tech:null,date:null,time:null,status:"offen"};
+ if(F.tech&&F.date){if(absOn(F.tech,F.date,true).some(a=>a.art==="Urlaub")){toast(tech(F.tech).name+" hat an diesem Tag Urlaub");return}o.tech=F.tech;o.date=F.date;o.time=F.time||nextSlot(F.tech,F.date,o.dauer);o.status="geplant"}
+ aufbauen();S.orders.push(o);S.kauf=null;save();aufbauen();render();
+ toast(`Aufnahme ${nv} angelegt${o.status==="geplant"?` · ${tech(o.tech).name}, ${fmtS(o.date)} ${o.time}`:" · steht unter „Einzuplanen“"}`)}
+
+async function kAngebotAusAufnahme(knr,btn){const P=KP(),k=NF.get("kunden",knr)||{},anl=kAufBereit().filter(a=>a.knr===knr);if(!anl.length)return;
+ let bs=P.bausteine;if(!bs.some(b=>b.id==="wv")){bs=[...bs,WV_BAUSTEIN];kSetSpeichere({bausteine:bs})}
+ const pos=anl.map(x=>{const a=kAnl(x),r=k01(a);
+  return{typ:"k01",nv:a.nv,bez:`Wartungspauschale ${a.ger&&a.ger!=="–"?a.ger:"Heizungsanlage"}, ${de(+a.kw||0,0)} kW`,
+   text:`Anlage ${a.nv}, ${kAdr(a)}\n${+a.zyk===24?"Wartung alle zwei Jahre":"Jährliche Wartung"} nach Herstellervorgaben einschließlich Anfahrt, Abgasmessung und Wartungsmaterial.`,
+   menge:1,einheit:"Wartung",ep:r.p,std:Math.round(r.h*100)/100,km:km("Biebergemünd",a.ort),k01:{h:Math.round(r.h*100)/100,zone:r.zone,p:r.p}}});
+ if(btn)btn.disabled=true;
+ try{const a=await NF.anlegen("angebote",{betreff:anl.length>1?`Wartungsvertrag für ${anl.length} Heizungsanlagen`:"Wartungsvertrag Heizungsanlage",interessent:!!k.interessent,
+   kunde:{knr,name:[k.name1,k.name2].filter(Boolean).join(", "),anschrift:kAdr(k),mail:k.mail||"",ansprech:anl[0].ansprech||""},positionen:pos,
+   neben:kNeben(P).map(([art,bez,einheit,ep,text])=>({art,bez,einheit,ep,text,menge:0})),rb:[...new Set([...bs.filter(b=>b.std).map(b=>b.id),"wv"])],
+   mwst:P.mwst,gueltigTage:P.gueltig,zahlungsziel:P.ziel,quelle:"aufnahme"});
+  anl.forEach(x=>NF.setze("anlagen",x.nv,{aufnahme:Object.assign({},x.aufnahme,{angebot:a.nr})}));aufbauen();
+  S.kalkId=a.nr;S.kalkTab="angebot";save();render();toast("Angebot "+a.nr+" aus der Aufnahme erstellt")}
+ catch(x){toast(x.message);if(btn)btn.disabled=false}}
+document.addEventListener("click",e=>{if(S.view!=="kalk")return;const t=e.target.closest("button");if(!t)return;const d=t.dataset;
+ if(d.kaufart){S.kauf.art=d.kaufart;save();render();return}
+ if(d.kaufplan){kAufPlanen();return}
+ if(d.kaufang){kAngebotAusAufnahme(d.kaufang,t);return}});
+document.addEventListener("input",e=>{if(S.view!=="kalk"||!S.kauf)return;const t=e.target;if(t.dataset.kauf){S.kauf[t.dataset.kauf]=t.value}});
+document.addEventListener("change",e=>{if(S.view!=="kalk"||!S.kauf)return;const t=e.target;if(t.dataset.kauf){S.kauf[t.dataset.kauf]=t.value;save()}});
 
 /* Angebot als PDF (A4 wie die Rechnung, mehrseitig). Vor der Freigabe mit Wasserzeichen ENTWURF.
  * angebotSeiten() verteilt die Blöcke auf Seiten und misst dabei, ob sie noch über die Fußzeile passen. */

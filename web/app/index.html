@@ -449,6 +449,7 @@ td .mvor{text-align:center;margin-top:1px}
 .mvorinfo{margin:0 0 4px}
 .ocrw{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .uwmin button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
+.f.erkannt input,.f.erkannt select{box-shadow:0 0 0 2px var(--accent) inset}
 </style>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&family=Barlow+Condensed:wght@400&display=swap">
 <link rel="stylesheet" href="/css/design.css">
@@ -674,20 +675,23 @@ function vAnlage(){
  header("Anlage",S.from||"heute");
 
  const r=job&&S.reports[job.id];const fertig=job&&isDone(job.id);
- main.innerHTML=`<div class="hero"><span class="nv">${a.nv} · ${esc(a.vertrag)}</span><h2>${esc(a.hersteller)} ${esc(a.typ)}</h2><p>${esc(a.kunde.name1)}${a.kunde.name2?" · "+esc(a.kunde.name2):""}<br>${esc(a.kunde.str)}, ${esc(a.kunde.plz)} ${esc(a.kunde.ort)}</p></div>
+ const auf=(a._a&&a._a.aufnahme)||null,aufJob=job&&job.art==="Anlagenaufnahme";
+ main.innerHTML=`<div class="hero"><span class="nv">${a.nv} · ${auf&&auf.status!=="vertrag"?"Anlagenaufnahme":esc(a.vertrag)}</span><h2>${a.hersteller||a.typ?esc(a.hersteller)+" "+esc(a.typ):"Anlage noch nicht erfasst"}</h2><p>${esc(a.kunde.name1)}${a.kunde.name2?" · "+esc(a.kunde.name2):""}<br>${esc(a.kunde.str)}, ${esc(a.kunde.plz)} ${esc(a.kunde.ort)}</p></div>
  <div class="pad">
   ${hinweiseOffen(a.nv).map(h=>`<button type="button" class="hwalert" data-hinweis="${esc(a.nv)}"><span class="ihint-app" aria-hidden="true">i</span><span><b>Hinweis vom Büro</b><br>${esc(h.text)}</span></button>`).join("")}
   ${a.maengel.map(m=>`<div class="alert wa"><b>Offener Mangel:</b> ${esc(m)}</div>`).join("")}
   ${unterwegsPanel(a,job)}
   ${(S.folgen||[]).filter(f=>f.q===S.q).map(f=>`<div class="alert wa"><b>Folgeauftrag ${f.id}</b> · ${esc(f.dring)}<br>${esc(f.text)}</div>`).join("")}
   <div class="panel"><h4>Vor Ort</h4><dl class="kv"><dt>Ansprechpartner</dt><dd>${esc(a.ansprech)}</dd><dt>Zugang</dt><dd>${esc(a.zugang)}</dd><dt>Telefon</dt><dd class="mono">${esc(a.kunde.tel)}</dd></dl></div>
-  <div class="panel"><h4>Anlagendaten</h4><dl class="kv">
+  ${auf&&auf.status==="geplant"?`<div class="panel"><h4>Anlagenaufnahme</h4><p style="margin:0">Alle Anlagendaten vor Ort erfassen. Sie sind die Grundlage für das Angebot zum Wartungsvertrag. Die Aufnahme ist für den Kunden kostenlos.</p>${auf.hinweis?`<div class="alert wa" style="margin-top:10px"><b>Hinweis vom Büro:</b> ${esc(auf.hinweis)}</div>`:""}</div>`:`<div class="panel"><h4>Anlagendaten</h4><dl class="kv">
    <dt>Seriennr.</dt><dd class="mono">${esc(a.sernr)}</dd><dt>Baujahr</dt><dd>${a.baujahr}</dd><dt>Nennleistung</dt><dd>${a.kw} kW</dd>
-   ${a.energie==="Öl"?`<dt>Brennstoff</dt><dd>${esc(a.gas)}</dd>`:`<dt>Gasart</dt><dd>${esc(a.gas)}</dd><dt>Anschlussdruck</dt><dd>${a.ans} mbar</dd>`}<dt>Betriebsdruck</dt><dd>${a.druck} bar</dd></dl></div>
+   ${a.energie==="Öl"?`<dt>Brennstoff</dt><dd>${esc(a.gas)}</dd>`:`<dt>Gasart</dt><dd>${esc(a.gas)}</dd><dt>Anschlussdruck</dt><dd>${a.ans} mbar</dd>`}<dt>Betriebsdruck</dt><dd>${a.druck} bar</dd></dl></div>`}
   ${a.details?detailPanels(a.details):""}
   <div class="panel"><h4>Historie</h4>${a.hist.length?`<div class="hist">${a.hist.map(h=>`<div><time>${h[0]}</time><span><b>${esc(h[1])}</b><br>${esc(h[2])}</span></div>`).join("")}</div>`:'<p class="hint">Noch keine Einsätze dokumentiert. Das ist der erste Besuch.</p>'}</div>
   ${unterlagenPanel(a)}
  </div>`;
+ if(aufJob){foot.innerHTML=`<div class="foot">${fertig||auf&&auf.status!=="geplant"?`<button class="btn sec" type="button" disabled>Aufnahme abgeschlossen</button>`:
+  `<button class="btn sec" type="button" data-go="fehl" style="flex:0 0 38%">Kunde nicht da</button><button class="btn" type="button" id="aufStart">${S.neu&&S.neu.nv===a.nv?"Aufnahme fortsetzen":"Anlage aufnehmen"}</button>`}</div>`;return}
  foot.innerHTML=`<div class="foot">${fertig?`<button class="btn sec" type="button" data-tab="berichte">Bericht ansehen</button>`:
   `<button class="btn sec" type="button" data-go="fehl" style="flex:0 0 38%">Kunde nicht da</button><button class="btn" type="button" id="startE">${r?"Einsatz fortsetzen":"Einsatz starten"}</button>`}</div>`;
 }
@@ -1406,29 +1410,33 @@ function neuBlank(code){return{code,energie:"Gas",geraet:"Brennwertkessel",kunde
  regler_herst:"",regler_typ:"",regler_sw:"",aussenf:true,hk_gem:"1",hk_ungem:"0",glt:false,
  pumpen:"2",weiche:"Hydraulische Weiche",mag:"",druck:"1,5",wwJa:"Ja",ww:"WW-Speicher",ww_l:"",schema:0,schemaName:"",kaskade:"Nein",
  abgas:"LAS (raumluftunabhängig)",intervall:"12",vertrag:"Wartungsvertrag",typenschild:0}}
-const NFeld=(k,label,o={})=>{const v=S.neu[k];return`<label class="f ${o.req?"req":""}"><span>${label}</span>${o.unit?'<span class="unit">':""}${o.opts?`<select data-nb="${k}">${o.opts.map(x=>`<option ${x===v?"selected":""}>${x}</option>`).join("")}</select>`:`<input type="${o.type||"text"}" ${o.num?'inputmode="decimal" class="num"':""} data-nb="${k}" value="${esc(v)}" ${o.ph?`placeholder="${o.ph}"`:""}>`}${o.unit?`<em>${o.unit}</em></span>`:""}</label>`};
+const NFeld=(k,label,o={})=>{const v=S.neu[k];return`<label class="f ${o.req?"req":""} ${(S.neu._erkannt||[]).includes(k)?"erkannt":""}"><span>${label}</span>${o.unit?'<span class="unit">':""}${o.opts?`<select data-nb="${k}">${o.opts.map(x=>`<option ${x===v?"selected":""}>${x}</option>`).join("")}</select>`:`<input type="${o.type||"text"}" ${o.num?'inputmode="decimal" class="num"':""} data-nb="${k}" value="${esc(v)}" ${o.ph?`placeholder="${o.ph}"`:""}>`}${o.unit?`<em>${o.unit}</em></span>`:""}</label>`};
 const NSEG=(k,opts)=>`<div class="seg ${opts.length>3?"g2":""}" role="group">${opts.map(x=>`<button type="button" data-nset="${k}" data-val="${x}" aria-pressed="${S.neu[k]===x}">${x}</button>`).join("")}</div>`;
 const STEP_N=(k,label)=>{const v=+S.neu[k]||0;return`<div class="check" style="justify-content:space-between"><span>${label}</span><span class="row" style="gap:6px;flex:0 0 auto;align-items:center"><button type="button" class="chip" data-nstep="${k}" data-d="-1" aria-label="weniger">−</button><b class="mono" style="min-width:20px;text-align:center">${v}</b><button type="button" class="chip" data-nstep="${k}" data-d="1" aria-label="mehr">+</button></span></div>`};
 function vNeu(){
  const N=S.neu;if(!N){go("scan");return}
- header("Neue Anlage anlegen","scan");
+ const AUF=N.modus==="aufnahme",KA=AUF?NF.get("kunden",N.kunde)||{}:null;
+ header(AUF?"Anlagenaufnahme":"Neue Anlage anlegen",AUF?"anlage":"scan");
  const kunden=NF.liste("kunden").sort((a,b)=>String(a.name1).localeCompare(String(b.name1)));
  const oel=N.energie==="Öl",geblaese=N.geraet==="Kessel mit Gebläsebrenner"||oel;
- main.innerHTML=`<div class="hero" style="padding-top:12px"><span class="nv">Aufkleber ${esc(N.code)} · wird ${nextNv()}</span><h2>Anlage bei Inbetriebnahme erfassen</h2><p>Pflichtfelder sind markiert. Alles andere kann der Innendienst später ergänzen.</p></div>
+ main.innerHTML=`<div class="hero" style="padding-top:12px">${AUF?`<span class="nv">${esc(N.nv)} · Grundlage für den Wartungsvertrag</span><h2>Anlage aufnehmen</h2><p>Pflichtfelder sind markiert. Fang am besten mit dem Typenschild an, die erkannten Werte werden eingetragen.</p>`
+  :`<span class="nv">Aufkleber ${esc(N.code)} · wird ${nextNv()}</span><h2>Anlage bei Inbetriebnahme erfassen</h2><p>Pflichtfelder sind markiert. Alles andere kann der Innendienst später ergänzen.</p>`}</div>
  <div class="pad">
-  <div class="panel"><h4>Kunde und Standort</h4>
+  ${AUF?tsPanel(N):""}
+  ${AUF?`<div class="panel"><h4>Kunde und Standort</h4><dl class="kv"><dt>Kunde</dt><dd>${esc([KA.name1,KA.name2].filter(Boolean).join(", ")||"–")}${KA.interessent?' <span class="chip">Interessent</span>':""}</dd><dt>Adresse</dt><dd>${esc([N.k_str,[N.k_plz,N.k_ort].filter(Boolean).join(" ")].filter(Boolean).join(", ")||"–")}</dd></dl>
+   ${NFeld("ansprech","Ansprechpartner vor Ort")}${NFeld("zugang","Zugang / Aufstellort",{req:1,ph:"z. B. Heizraum UG, Schlüssel beim Hausmeister"})}</div>`:`<div class="panel"><h4>Kunde und Standort</h4>
    <label class="f req"><span>Kunde</span><select data-nb="kunde"><option value="neu" ${N.kunde==="neu"?"selected":""}>Neuer Kunde</option>${kunden.map(k=>`<option value="${k.nr}" ${N.kunde===k.nr?"selected":""}>${esc(k.name1)} · ${esc(k.ort)}</option>`).join("")}</select></label>
    ${N.kunde==="neu"?`${NFeld("k_name1","Name / Firma",{req:1})}${NFeld("k_name2","Zusatz (Objekt, Vorname)")}${NFeld("k_str","Straße, Hausnr.",{req:1})}
    <div class="grid2" style="grid-template-columns:110px 1fr">${NFeld("k_plz","PLZ",{req:1,num:1})}${NFeld("k_ort","Ort",{req:1})}</div>
    <div class="grid2">${NFeld("k_tel","Telefon")}${NFeld("k_mail","E-Mail")}</div>`:""}
-   ${NFeld("ansprech","Ansprechpartner vor Ort")}${NFeld("zugang","Zugang / Aufstellort",{ph:"z. B. Heizraum UG, Schlüssel beim Hausmeister"})}</div>
+   ${NFeld("ansprech","Ansprechpartner vor Ort")}${NFeld("zugang","Zugang / Aufstellort",{ph:"z. B. Heizraum UG, Schlüssel beim Hausmeister"})}</div>`}
 
   <div class="panel"><h4>Wärmeerzeuger</h4>
    <label class="f req"><span>Energieart</span>${NSEG("energie",["Gas","Öl"])}</label>
    ${oel?"":`<label class="f req"><span>Bauart</span>${NSEG("geraet",["Brennwertkessel","Wandgerät","Kessel mit Gebläsebrenner","Niedertemperatur"])}</label>`}
    <div class="grid2">${NFeld("hersteller","Hersteller",{req:1})}${NFeld("typ","Typ / Ausführung",{req:1})}</div>
-   ${NFeld("sernr","Seriennummer",{req:1})}
-   <div class="grid3">${NFeld("baujahr","Baujahr",{req:1,num:1})}${NFeld("kw","Nennleistung",{req:1,num:1,unit:"kW"})}${NFeld("ibn","Inbetriebnahme",{type:"date"})}</div>
+   ${NFeld("sernr","Seriennummer",{req:!AUF})}
+   <div class="grid3">${NFeld("baujahr","Baujahr",{req:1,num:1})}${NFeld("kw","Nennleistung",{req:1,num:1,unit:"kW"})}${NFeld("ibn",AUF?"Inbetriebnahme (falls bekannt)":"Inbetriebnahme",{type:"date"})}</div>
    ${oel?`${NFeld("oel","Brennstoff",{opts:["Heizöl EL schwefelarm","Heizöl EL A Bio 10","Heizöl EL A Bio 20"]})}`
     :`<div class="grid2">${NFeld("gasart","Gasart",{req:1,opts:["Erdgas H","Erdgas L","Flüssiggas"]})}${NFeld("ans","Anschlussdruck",{req:1,num:1,unit:"mbar"})}</div>`}
   </div>
@@ -1441,7 +1449,7 @@ function vNeu(){
    ${NFeld("filter","Ölfilter / Leitung",{opts:["Einstrang mit Rücklaufzuführung","Einstrang","Zweistrang"]})}`:""}</div>`:""}
 
   <div class="panel"><h4>Regelung</h4>
-   <div class="grid2">${NFeld("regler_herst","Hersteller",{req:1})}${NFeld("regler_typ","Regler / Modul",{req:1,ph:"z. B. Logamatic 5313"})}</div>
+   <div class="grid2">${NFeld("regler_herst","Hersteller",{req:!AUF})}${NFeld("regler_typ","Regler / Modul",{req:!AUF,ph:"z. B. Logamatic 5313"})}</div>
    ${NFeld("regler_sw","Softwarestand")}
    ${STEP_N("hk_gem","Heizkreise gemischt")}${STEP_N("hk_ungem","Heizkreise ungemischt")}
    <label class="check"><input type="checkbox" data-nchk="aussenf" ${N.aussenf?"checked":""}>Außenfühler vorhanden</label>
@@ -1458,26 +1466,48 @@ function vNeu(){
 
   <div class="panel"><h4>Abgas und Wartung</h4>
    ${NFeld("abgas","Abgasanlage",{opts:["LAS (raumluftunabhängig)","Schornstein (raumluftabhängig)","Abgasleitung im Schacht, raumluftabhängig","Außenwandanschluss"]})}
-   <div class="grid2">${NFeld("intervall","Wartungsintervall",{opts:["12","24"],unit:"Mon."})}${NFeld("vertrag","Vertrag",{opts:["Wartungsvertrag","Einzelauftrag","Noch offen"]})}</div></div>
+   ${AUF?`${NFeld("intervall","Gewünschtes Wartungsintervall",{opts:["12","24"],unit:"Mon."})}
+   <label class="check"><input type="checkbox" data-nchk="neutra" ${N.neutra?"checked":""}>Neutralisationsanlage vorhanden</label>
+   <label class="check"><input type="checkbox" data-nchk="awsv" ${N.awsv?"checked":""}>Öltank prüfpflichtig nach AwSV</label>`
+   :`<div class="grid2">${NFeld("intervall","Wartungsintervall",{opts:["12","24"],unit:"Mon."})}${NFeld("vertrag","Vertrag",{opts:["Wartungsvertrag","Einzelauftrag","Noch offen"]})}</div>`}</div>
+  ${AUF?`<div class="panel"><h4>Für die Kalkulation</h4>
+   <label class="f req"><span>Zustand der Anlage</span>${NSEG("zustand",["gut","mittel","schlecht"])}</label>
+   <label class="f"><span>Besonderheiten, Mängel, Teile für die erste Inspektion</span><textarea data-nb="hinweis" rows="4" placeholder="z. B. Brennraum stark verschmutzt, Ionisationselektrode tauschen, Heizraum nur über Garage erreichbar">${esc(N.hinweis||"")}</textarea></label>
+   <p class="hint">${(N.fotos||[]).length?"✓ "+N.fotos.length+" Foto(s) angehängt.":"Fotos von Heizraum, Anlage und Abgasweg helfen bei der Kalkulation."}</p>
+   <label class="btn sec" for="aufFoto">Fotos aufnehmen</label><input id="aufFoto" type="file" accept="image/*" multiple hidden></div>`:""}
 
   <div class="panel"><h4>Anlagenschema</h4><p class="hint">${N.schema?"✓ "+esc(N.schemaName||"Anlagenschema")+" angehängt.":"Hydraulikschema als Foto, PDF oder Skizze. Es liegt danach in der Anlagenakte und im Kundenordner."}</p>
    <label class="btn sec" for="schemaNeu">${N.schema?"Anderes Schema wählen":"Anlagenschema ablegen"}</label><input id="schemaNeu" type="file" accept="image/*,application/pdf" hidden></div>
-  <div class="panel"><h4>Typenschild</h4><p class="hint">${N.typenschild?"✓ Foto vom Typenschild angehängt.":"Ein Foto vom Typenschild hilft dem Innendienst beim Prüfen der Daten."}</p>
-   <label class="btn sec" for="tsFoto">Typenschild fotografieren</label><input id="tsFoto" type="file" accept="image/*" hidden></div>
+  ${AUF?"":tsPanel(N)}
 
  </div>`;
- foot.innerHTML=`<div class="foot"><button class="btn" type="button" id="neuSave">Anlage anlegen</button></div>`;
+ foot.innerHTML=`<div class="foot"><button class="btn" type="button" id="neuSave">${AUF?"Aufnahme abschließen":"Anlage anlegen"}</button></div>`;
 }
-function neuMissing(){const N=S.neu,oel=N.energie==="Öl",gb=N.geraet==="Kessel mit Gebläsebrenner"||oel;
- const req=[["hersteller","Hersteller"],["typ","Typ"],["sernr","Seriennummer"],["baujahr","Baujahr"],["kw","Nennleistung"],["regler_herst","Regler-Hersteller"],["regler_typ","Regler"]];
- if(N.kunde==="neu")req.unshift(["k_name1","Kundenname"],["k_str","Straße"],["k_plz","PLZ"],["k_ort","Ort"]);
+const tsPanel=N=>`<div class="panel"><h4>Typenschild</h4><p class="hint">${N._tsLaeuft?"Typenschild wird gelesen …":N.typenschild?"✓ Foto vom Typenschild angehängt."+((N._erkannt||[]).length?" Erkannte Werte sind orange markiert, bitte prüfen.":""):"Foto vom Typenschild: Hersteller, Typ, Seriennummer, Baujahr und Leistung werden erkannt und eingetragen."}</p>
+   <label class="btn sec" for="tsFoto">Typenschild fotografieren</label><input id="tsFoto" type="file" accept="image/*" hidden></div>`;
+/* Typenschild lesen: nur leere Felder füllen, erkannte Werte markieren */
+async function tsLesen(datei){const N=S.neu;if(!N)return;N._tsLaeuft=true;render();
+ try{const b=await NF.bildVerkleinern(datei,1800,0.85);const j=await NF.api("/api/einsatz/typenschild",{method:"POST",body:b,headers:{"content-type":"image/jpeg"}});
+  const w=j.werte||{},neu=[];for(const k of["hersteller","typ","sernr","baujahr","kw"])if(w[k]&&!String(N[k]||"").trim()||(k==="baujahr"&&w[k]&&N[k]===String(new Date().getFullYear()))){N[k]=w[k];neu.push(k)}
+  N._erkannt=[...new Set([...(N._erkannt||[]),...neu])];toast(neu.length?neu.length+" Werte erkannt, bitte prüfen":"Keine Werte erkannt, bitte von Hand eintragen")}
+ catch(e){toast(e.message)}finally{N._tsLaeuft=false;save();render()}}
+/* Anlagenaufnahme: Platzhalter-Anlage vom Büro wird vor Ort vollständig erfasst */
+function aufnahmeStart(){const a=ANLAGEN[S.q],x=a&&a._a;if(!x)return;const k=NF.get("kunden",x.knr)||{};
+ const N=Object.assign(neuBlank(null),{modus:"aufnahme",nv:x.nv,kunde:x.knr,k_str:x.str||k.str||"",k_plz:x.plz||k.plz||"",k_ort:x.ort||k.ort||"",ansprech:x.ansprech||"",zugang:x.zugang||"",
+  baujahr:"",ibn:"",regler_herst:"",zustand:"",hinweis:"",fotos:[]});
+ S.neu=S.neu&&S.neu.modus==="aufnahme"&&S.neu.nv===x.nv?S.neu:N;go("neu")}
+function neuMissing(){const N=S.neu,oel=N.energie==="Öl",gb=N.geraet==="Kessel mit Gebläsebrenner"||oel,AUF=N.modus==="aufnahme";
+ const req=AUF?[["zugang","Zugang / Aufstellort"],["hersteller","Hersteller"],["typ","Typ"],["baujahr","Baujahr"],["kw","Nennleistung"],["zustand","Zustand"]]
+  :[["hersteller","Hersteller"],["typ","Typ"],["sernr","Seriennummer"],["baujahr","Baujahr"],["kw","Nennleistung"],["regler_herst","Regler-Hersteller"],["regler_typ","Regler"]];
+ if(N.kunde==="neu"&&!AUF)req.unshift(["k_name1","Kundenname"],["k_str","Straße"],["k_plz","PLZ"],["k_ort","Ort"]);
  if(!oel)req.push(["ans","Anschlussdruck"]);
  if(gb)req.push(["br_herst","Brenner-Hersteller"],["br_typ","Brenner-Typ"]);
- if(oel)req.push(["duese","Düse"],["pumpdruck","Pumpendruck"]);
+ if(oel&&!AUF)req.push(["duese","Düse"],["pumpdruck","Pumpendruck"]);
  return req.filter(([k])=>!String(N[k]||"").trim()).map(x=>x[1])}
 function neuSave(){
  const miss=neuMissing();if(miss.length){toast("Es fehlt noch: "+miss.slice(0,3).join(", ")+(miss.length>3?" …":""));return}
  const N=S.neu,oel=N.energie==="Öl",gb=N.geraet==="Kessel mit Gebläsebrenner"||oel;
+ if(N.modus==="aufnahme"){aufnahmeSpeichern(N,oel,gb);return}
  if(NF.liste("anlagen").some(a=>a.qr===N.code)){toast("Dieser Aufkleber gehört schon zu einer Anlage");return}
  const nv=nr("NV");if(!nv)return;let knr=N.kunde;
  if(knr==="neu"){knr=nr("K");if(!knr)return;NF.setze("kunden",knr,{name1:N.k_name1.trim(),name2:N.k_name2.trim(),str:N.k_str.trim(),plz:N.k_plz.trim(),ort:N.k_ort.trim(),tel:N.k_tel.trim(),mail:N.k_mail.trim()})}
@@ -1493,6 +1523,22 @@ function neuSave(){
  aufbauen();
  const j=adhocJob(N.code,"Inbetriebnahme","Erstinbetriebnahme, Anlage neu angelegt");
  S.neu=null;if(j)S.reports[j.id]=newReport(j);toast(nv+" angelegt, Aufkleber zugeordnet");go("anlage",{q:N.code,from:"heute"});
+}
+function aufnahmeSpeichern(N,oel,gb){
+ const v=x=>String(x||"").trim()||"–";
+ const details={"Regelung":[["Regler",[N.regler_herst,N.regler_typ].filter(Boolean).join(" ")||"–"],["Software",v(N.regler_sw)],["Heizkreise",N.hk_gem+" gemischt, "+N.hk_ungem+" ungemischt"],["Außenfühler",N.aussenf?"ja":"nein"],["GLT",N.glt?"ja":"nein"]],
+  "Hydraulik":[["Pumpen",N.pumpen],["Systemtrennung",N.weiche],["MAG Vordruck",N.mag?N.mag+" bar":"–"],["Warmwasser",N.wwJa==="Nein"?"nein":N.ww+(N.ww_l?" · "+N.ww_l+" l":"")+(N.ww_herst?" · "+N.ww_herst:"")],["Kaskade",N.kaskade]],
+  "Abgas / Wartung":[["Abgasanlage",N.abgas],["Intervall",N.intervall+" Monate"],["Neutralisation",N.neutra?"ja":"nein"],...(oel?[["AwSV-Prüfpflicht",N.awsv?"ja":"nein"]]:[]),["Inbetriebnahme",N.ibn?fmt(N.ibn):"unbekannt"]],
+  "Aufnahme":[["Zustand",N.zustand],["Hinweise",v(N.hinweis)],["Aufgenommen",TECH.name+", "+fmt(isoD())]]};
+ if(gb)details["Brenner"]=[["Brenner",[N.br_herst,N.br_typ].filter(Boolean).join(" ")||"–"],["Seriennr.",v(N.br_sernr)],...(oel?[["Düse",N.duese?N.duese+" gph "+N.winkel:"–"],["Pumpendruck",N.pumpdruck?N.pumpdruck+" bar":"–"],["Tank",(N.tank?N.tank+" l ":"")+N.tankart],["Leitung",N.filter]]:[])];
+ const alt=NF.get("anlagen",N.nv)||{};
+ NF.setze("anlagen",N.nv,{ansprech:N.ansprech,zugang:N.zugang,hersteller:N.hersteller.trim(),typ:N.typ.trim(),ger:(N.hersteller+" "+N.typ).trim(),sernr:N.sernr.trim(),baujahr:+N.baujahr||null,kw:n(N.kw)||0,
+  en:oel?"Öl":"Gas",gas:oel?N.oel:N.gasart,ans:oel?"":N.ans,druck:N.druck,geraete:N.kaskade==="Nein"?1:parseInt(N.kaskade)||1,ibn:N.ibn||null,zyk:+N.intervall||12,
+  details,schema:N.schema||alt.schema||null,typenschild:N.typenschild||null,
+  aufnahme:Object.assign({},alt.aufnahme||{},{status:"fertig",von:TECH.id,name:TECH.name,zeit:new Date().toISOString(),zustand:N.zustand,hinweis:N.hinweis||"",fotos:N.fotos||[],neutra:!!N.neutra,awsv:!!N.awsv})});
+ const job=JOBS.find(j=>j.q===S.q&&j.art==="Anlagenaufnahme")||JOBS.find(j=>ANLAGEN[j.q]&&ANLAGEN[j.q].nv===N.nv&&j.art==="Anlagenaufnahme");
+ if(job)NF.setze("auftraege",job.id,{status:"erledigt",erledigtAm:new Date().toISOString()});
+ S.neu=null;aufbauen();toast("Aufnahme gespeichert · liegt jetzt in der Kalkulation");go("heute");
 }
 function detailPanels(d){return Object.entries(d).map(([h,rows])=>`<div class="panel"><h4>${esc(h)}</h4><dl class="kv">${rows.map(([k,v])=>`<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("")}</dl></div>`).join("")}
 
@@ -1531,7 +1577,7 @@ document.addEventListener("input",e=>{
  if(t.dataset.fd&&S.fd){S.fd[t.dataset.fd]=t.value;save()}
  if(t.id==="fdsearch"){const q=t.value.trim().toLowerCase(),box=$("#fdres");box.innerHTML=q?KATALOG.filter(k=>(k.join(" ")).toLowerCase().includes(q)).slice(0,6).map(k=>`<button type="button" data-fdmat="${esc(k[0])}">+ ${esc(k[1])}</button>`).join(""):""}
  if(t.id==="nd"){S.nachDatum=t.value;save();render()}
- if(t.dataset.nb&&S.neu){S.neu[t.dataset.nb]=t.value;save();if(t.tagName==="SELECT")render()}
+ if(t.dataset.nb&&S.neu){S.neu[t.dataset.nb]=t.value;if(S.neu._erkannt&&S.neu._erkannt.includes(t.dataset.nb)){S.neu._erkannt=S.neu._erkannt.filter(k=>k!==t.dataset.nb);const l=t.closest(".f");if(l)l.classList.remove("erkannt")}save();if(t.tagName==="SELECT")render()}
  if(t.id==="q"){suche(t.value);save()}
  if(!b)return;
  if(S.view==="einsatz"&&R()){setPath(R(),b,t.value);save();const zs=$("#zsum");if(zs)zs.innerHTML=zsum(R());if(b.startsWith("m."))calc();refreshFoot();
@@ -1552,7 +1598,8 @@ document.addEventListener("change",e=>{
  if(t.id==="schemaNeu"&&S.neu&&t.files[0]){const nm=t.files[0].name;hochladen(t.files,ids=>{S.neu.schema=ids[0];S.neu.schemaName=nm;save();render();toast("Anlagenschema angehängt")})}
  if(t.id==="unterDatei"&&t.files[0]){unterlagenHinzu(t.files);return}
  if(t.id==="schemaAnl"&&t.files[0]){const nv=ANLAGEN[S.q].nv;hochladen(t.files,ids=>{NF.setze("anlagen",nv,{schema:ids[0]});render();toast("Anlagenschema abgelegt")})}
- if(t.id==="tsFoto"&&S.neu&&t.files[0]){hochladen(t.files,ids=>{S.neu.typenschild=ids[0];save();render();toast("Typenschild angehängt")})}
+ if(t.id==="tsFoto"&&S.neu&&t.files[0]){const fdat=t.files[0];hochladen(t.files,ids=>{S.neu.typenschild=ids[0];save();tsLesen(fdat)})}
+ if(t.id==="aufFoto"&&S.neu&&t.files[0]){const nn=t.files.length;hochladen(t.files,ids=>{S.neu.fotos=(S.neu.fotos||[]).concat(ids);save();render();toast(nn+" Foto(s) angehängt")})}
  if(t.id==="bk"){S.belegKat=t.value;save();render()}
  if(t.id==="bf"&&t.files[0]){const f=t.files[0];NF.bildVerkleinern(f).then(bl=>{belegDatei=bl;const u=URL.createObjectURL(bl),im=new Image();im.onload=()=>{const c=document.createElement("canvas"),sc=96/Math.max(im.width,im.height);c.width=im.width*sc;c.height=im.height*sc;c.getContext("2d").drawImage(im,0,0,c.width,c.height);S.belegFoto=c.toDataURL("image/jpeg",.7);save();render();toast("Quittung fotografiert")};im.src=u}).catch(()=>toast("Foto konnte nicht gelesen werden"))}
  if(t.id==="papScan"&&r&&t.files[0]){hochladen(t.files,ids=>{r.papScan=ids[0];save();render();toast("Scan angehängt")})}
@@ -1616,6 +1663,7 @@ document.addEventListener("click",e=>{
  if(d.nset&&S.neu){S.neu[d.nset]=d.val;save();render();return}
  if(d.nstep&&S.neu){S.neu[d.nstep]=String(Math.max(0,(+S.neu[d.nstep]||0)+ +d.d));save();render();return}
  if(t.id==="neuSave"){neuSave();return}
+ if(t.id==="aufStart"){aufnahmeStart();return}
 
 
  if(d.open){toast("Anlage "+ANLAGEN[d.open].nv);go("anlage",{q:d.open,from:"suche"});return}

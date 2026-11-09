@@ -1,5 +1,23 @@
 # N-Flow · Liste der Updates
 
+## Update „Anlagenaufnahme und Wartungsvertrag“ (09.11.2026)
+
+Einspielen: `cd /docker/n-flow-test && sh ops/update.sh`. Keine neuen Einträge in der `.env`, keine Datenbank-Migration.
+
+**Nach dem Einspielen:**
+- Büro neu laden. Am Handy N-Flow einmal ganz schließen und neu öffnen (App-Cache v15).
+- Unter Kalkulation › Einstellungen › Rahmenbedingungen den neuen Baustein „Wartungsvertrag“ prüfen (Leistungsumfang, Laufzeit, Kündigungsfrist). Der Text ist ein Vorschlag und gehört juristisch geprüft.
+
+**Enthalten:**
+- [x] Kalkulation › Aufnahmen: Anlagenaufnahme planen, für einen Kunden aus dem Stamm oder einen Interessenten, mit Monteur, Termin und Hinweis. Der Auftrag erscheint in der Plantafel und beim Monteur unter „Heute“.
+- [x] Die Aufnahme ist kostenlos; die erste reguläre Anfahrt ist die Inspektion.
+- [x] Monteur-App: Einsatz „Anlagenaufnahme“ mit dem Erfassungsformular (Wärmeerzeuger, Brenner, Regelung, Hydraulik, Abgas). Dazu Zustand, Besonderheiten, Fotos, Neutralisation und AwSV.
+- [x] Typenschild fotografieren: Hersteller, Typ, Seriennummer, Baujahr und Leistung werden erkannt und orange markiert eingetragen. Das geht auch beim Anlegen einer neuen Anlage.
+- [x] Fertige Aufnahmen stehen in der Kalkulation mit der Pauschale nach K-01 (Stunden, Zone) und zählen im Menü mit.
+- [x] Ein Klick erstellt das Angebot zum Wartungsvertrag: eine Position je Anlage mit K-01-Preis und Freitext. Der Preis ist anpassbar, die Abweichung von K-01 wird angezeigt. Intern zählt die Fahrt mit.
+- [x] Nach dem Angebot geht alles wie gewohnt: Vier-Augen-Freigabe, PDF, SharePoint und Mail an rechnung@.
+- [x] Angenommen: Die Anlage bekommt automatisch einen Wartungsvertrag (W-JJJJ-NNN) mit der angebotenen Pauschale. Der Monteur der Aufnahme wird Betreuer, und aus dem Interessenten wird ein Kunde.
+
 ## Update „Kalkulation und Angebote“ (09.11.2026)
 
 Einspielen: `cd /docker/n-flow-test && sh ops/update.sh`. Keine neuen Einträge in der `.env`, keine Datenbank-Migration.

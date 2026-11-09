@@ -722,7 +722,7 @@ function vDash(){
  const bk=[["bis 14 Tage",sumB(offen.filter(r=>alt(r)<=14)),""],["15–30 Tage",sumB(offen.filter(r=>alt(r)>14&&alt(r)<=30)),""],["über 30 Tage",sumB(offen.filter(r=>alt(r)>30)),"spaet"]];
  const mon=[];for(let i=5;i>=0;i--){const d=D(TODAY);d.setDate(1);d.setMonth(d.getMonth()-i);mon.push({k:d.toISOString().slice(0,7),n:d.toLocaleDateString("de-DE",{month:"short"}).replace(".","")})}
  mon.forEach(m=>{m.u=R.filter(r=>String(r.datum).slice(0,7)===m.k).reduce((x,r)=>x+(+r.netto||0),0);m.b=R.filter(r=>r.status==="bezahlt"&&String(r.bezahlt||"").slice(0,7)===m.k).reduce((x,r)=>x+(+r.netto||0),0)});
- const mx=Math.max(1,...mon.map(m=>Math.max(m.u,m.b))),dies=mon[5],vor=mon[4],veraend=vor.u?Math.round((dies.u-vor.u)/vor.u*100):null;
+ const mx=Math.max(1,...mon.map(m=>Math.max(m.u,m.b))),dies=mon[5],vor=mon[4],veraend=vor.u&&dies.u?Math.round((dies.u-vor.u)/vor.u*100):null;
  // Woche: Auslastung je Monteur
  const wo=monday(TODAY),tage=[0,1,2,3,4].map(k=>addD(wo,k)),soll=40;
  const ausl=MONT().map(t=>{const hh=tage.reduce((x,d)=>x+load(t.id,d),0);return{t,h:hh,p:Math.min(100,hh/soll*100)}});
@@ -742,7 +742,7 @@ function vDash(){
     <div class="dknr"><button type="button" class="dbtn dunkel" data-view="re">Rechnungen</button><button type="button" class="dbtn hell" data-view="ber">Berichte abrechnen</button></div>
     <div class="dalter">${bk.map(([l,v,c])=>`<div class="${c}"><span>${l}</span><b>${eur(v)}</b></div>`).join("")}</div></section>`:""}
    <div class="dkpis">
-    ${mitGeld?kpi("akz",`Umsatz ${esc(D(TODAY).toLocaleDateString("de-DE",{month:"long"}))}`,eur(dies.u),veraend==null?"netto":`${veraend>=0?"+":""}${veraend} % zum Vormonat`,IK.pfeil,"view:re"):kpi("akz","Einsätze heute",heute.length,`${MONT().length} Monteure`,IK.heute,"view:plan")}
+    ${mitGeld?kpi("akz",`Umsatz ${esc(D(TODAY).toLocaleDateString("de-DE",{month:"long"}))}`,eur(dies.u),veraend==null?(dies.u?"netto":"noch keine Rechnung diesen Monat"):`${veraend>=0?"+":""}${veraend} % zum Vormonat`,IK.pfeil,"view:re"):kpi("akz","Einsätze heute",heute.length,`${MONT().length} Monteure`,IK.heute,"view:plan")}
     ${kpi(stoer.length?"warn":"","Einzuplanen",pool.length,stoer.length?`${stoer.length} Störung${stoer.length>1?"en":""}`:"Aufträge ohne Termin",IK.kal,"view:plan")}
     ${kpi("","Berichte prüfen",ber.length,ber.length?"warten auf dich":"alles geprüft",IK.ber,"view:ber")}
     ${kpi("","Wartungen fällig",wf.length,"in den nächsten 30 Tagen",IK.wart,"view:wart")}

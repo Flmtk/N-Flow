@@ -11,6 +11,7 @@ export const RECHTE = {
   preise: "Preise, Warnungen, Ergebnisse",
   mitarbeiter: "Mitarbeiter verwalten",
   admin: "Administration, Datenbank, Updates",
+  kalkulation: "Kalkulation und Angebote",
 } as const;
 export type Recht = keyof typeof RECHTE;
 

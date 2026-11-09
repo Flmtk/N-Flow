@@ -1,5 +1,25 @@
 # N-Flow · Liste der Updates
 
+## Update „Kalkulation und Angebote“ (09.11.2026)
+
+Einspielen: `cd /docker/n-flow-test && sh ops/update.sh`. Keine neuen Einträge in der `.env`, keine Datenbank-Migration.
+
+**Nach dem Einspielen:**
+- Im Büro einmal neu laden. Der Punkt „Kalkulation“ erscheint für die Geschäftsführung (Recht „Kalkulation und Angebote“, unter Administration › Rechte auch für andere Rollen freischaltbar).
+- Unter Kalkulation › Einstellungen die internen Werte prüfen (Stundensatz, Zeit je Anlagentyp, Mindestmarge). Vorbelegt sind Werte aus der Excel-Vorlage bzw. Schätzwerte.
+- Die Mail nach der Freigabe geht von info@ an rechnung@. Solange Microsoft-Mail noch blockiert ist, steht im Angebot „Mail nicht gesendet“ mit dem Knopf „Mail erneut senden“.
+
+**Enthalten:**
+- [x] Kalkulation aus der Excel-Vorlage: Leistungen aus dem Katalog (GDRA-Typen, Stunden), freie Positionen, Nebenkosten (km, Messgerät, Übernachtung) mit Kennzeichnung „geschätzt“.
+- [x] Freitextfeld unter jeder Position (auch bei Nebenkosten), erscheint im Angebot unter der Bezeichnung.
+- [x] Kunde aus dem Kundenstamm oder Interessent ohne Kundennummer.
+- [x] Intern: Kosten, Deckungsbeitrag und Marge live, Warnfarbe unter der Mindestmarge.
+- [x] Rahmenbedingungen als Textbausteine zum An- und Abwählen; Texte werden beim Einreichen festgeschrieben.
+- [x] Freigabe immer im Vier-Augen-Prinzip: wer erstellt oder eingereicht hat, kann nicht freigeben (Server prüft). Push an die andere Geschäftsführung, Zähler im Menü.
+- [x] Nach der Freigabe: PDF (mehrseitig, vorher mit Wasserzeichen ENTWURF), Ablage in SharePoint (Kunden › Kunde › Angebote bzw. Angebote › Interessenten), Mail mit PDF an rechnung@ „bitte versenden“.
+- [x] Danach: als versendet markieren, Angenommen/Abgelehnt, neue Fassung (Rev. 2, 3 …) mit erneuter Freigabe. Verlauf und Protokoll.
+- [x] Einstellungen: Leistungskatalog, Nebenkosten-Sätze, interne Kosten, MwSt., Gültigkeit, Zahlungsziel, Textbausteine.
+
 ## Update „Einsatzhilfen“ (08.11.2026)
 
 Einspielen: `cd /docker/n-flow-test && sh ops/update.sh` (das Update baut das Programm neu, dabei kommt die Texterkennung tesseract dazu und es dauert etwas länger).

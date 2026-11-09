@@ -411,6 +411,56 @@ body{padding:0}
 .drawer{will-change:transform}.drawer header{cursor:grab;-webkit-user-select:none;user-select:none}.drawer header:active{cursor:grabbing}
 .schl{columns:2;column-gap:24px;margin:4px 0 0;padding:0;list-style:none;font-size:11px}.schl li{display:flex;gap:6px;align-items:flex-start;break-inside:avoid;padding:2px 0}.schl i{color:#6A6A67}
 .vliste{border-top:1px solid var(--line2);padding-top:12px;margin-top:12px}.vliste:first-of-type{border-top:0;margin-top:0}
+/* Kalkulation */
+.kalkv{display:flex;flex-direction:column;gap:16px}
+.kalk{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px;align-items:start}
+.kalk .kl,.kalk .kr{display:flex;flex-direction:column;gap:16px;min-width:0}
+.kalk .kr{position:sticky;top:12px}
+@media(max-width:1100px){.kalk{grid-template-columns:1fr}.kalk .kr{position:static}}
+.kalkv .panel h3{display:flex;align-items:center;gap:8px}
+.ktab td{vertical-align:middle}.ktab tr.kpos td{border-bottom:0;padding-bottom:2px}.ktab tr.ktext td{padding-top:0}
+.knum{width:76px;text-align:right;font:inherit;font-variant-numeric:tabular-nums;border:1px solid var(--line);border-radius:8px;padding:6px 8px;background:var(--surface);color:var(--fg)}
+.knum.kein{width:58px;text-align:left}.knum.kep{width:96px}
+.kin{width:100%;font:inherit;font-weight:600;border:1px solid var(--line);border-radius:8px;padding:6px 8px;background:var(--surface);color:var(--fg)}
+.kta{width:100%;resize:vertical;font:inherit;font-size:13.5px;line-height:1.45;border:1px dashed var(--line);border-radius:8px;padding:6px 9px;background:transparent;color:var(--fg);min-height:32px;transition:border-color .2s,background .2s}
+.kta:focus,.knum:focus,.kin:focus{outline:none;border-color:var(--accent);border-style:solid;background:var(--surface)}
+.kta:disabled,.knum:disabled,.kin:disabled{background:transparent;border-color:transparent;color:var(--fg);opacity:1}
+.kta:disabled:placeholder-shown{display:none}
+.kein0{color:var(--muted);font-size:13px}.kst{color:var(--accent)}
+.kstd{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted);margin-top:6px}
+.kx{border:0;background:none;color:var(--muted);width:30px;height:30px;border-radius:8px;display:grid;place-items:center}.kx svg{width:16px;height:16px}.kx:hover{background:var(--surface2);color:var(--cr,#c0392b)}
+.krb{display:flex;flex-direction:column;gap:10px}
+.krb label{display:flex;gap:10px;align-items:flex-start;cursor:pointer}.krb input[type=checkbox]{margin-top:3px;accent-color:var(--accent);width:17px;height:17px}
+.krb label span{display:flex;flex-direction:column;gap:2px}.krb small{color:var(--muted);font-size:12.5px;line-height:1.45}
+.kbs{display:flex;flex-direction:column;gap:6px;padding:12px;border:1px solid var(--line);border-radius:12px}.kbs label{font-size:13px;color:var(--muted)}.kbs .btn{align-self:flex-start}
+.ksum{display:flex;flex-direction:column;gap:7px;font-variant-numeric:tabular-nums}
+.ksum div{display:flex;justify-content:space-between}.ksum span:first-child{color:var(--muted)}
+.ksum .kn{border-top:1px solid var(--line);padding-top:9px;font-size:17px}.ksum .kn span{color:var(--fg)!important}.ksum .kb{font-size:13px}
+.kbal{position:relative;height:8px;border-radius:5px;background:var(--surface2);overflow:visible;margin:4px 0 12px}
+.kbal i{position:absolute;inset:0;border-radius:5px;background:var(--ok,#2e9e5b);transform-origin:left;transform:scaleX(0)}
+.kbal.wa i{background:var(--accent)}.kbal b{position:absolute;top:-4px;width:2px;height:16px;background:var(--fg);opacity:.45;border-radius:1px}
+.kint{display:flex;flex-direction:column;gap:6px;font-size:13.5px;font-variant-numeric:tabular-nums}.kint div{display:flex;justify-content:space-between}.kint span:first-child{color:var(--muted)}
+.kint .kdb{border-top:1px solid var(--line);padding-top:7px;font-weight:700}.kint .kdb span{color:var(--fg)!important}
+.kschr{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:0}
+.kschr li{position:relative;padding:0 0 14px 24px;font-size:14px;color:var(--muted)}
+.kschr li:before{content:"";position:absolute;left:4px;top:4px;width:10px;height:10px;border-radius:50%;border:2px solid var(--line);background:var(--surface)}
+.kschr li:not(:last-child):after{content:"";position:absolute;left:10px;top:18px;bottom:2px;width:2px;background:var(--line)}
+.kschr li.ok{color:var(--fg)}.kschr li.ok:before{background:var(--ok,#2e9e5b);border-color:var(--ok,#2e9e5b)}
+.kschr li.jetzt{color:var(--fg);font-weight:600}.kschr li.jetzt:before{border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
+.kschr li.cr:before{background:var(--cr,#c0392b);border-color:var(--cr,#c0392b)}
+.kschr small{display:block;font-weight:400;color:var(--muted);font-size:12.5px}
+.kakt{display:flex;flex-direction:column;gap:8px}.kakt .btn{width:100%;justify-content:center}
+.kwarte{background:var(--accent-soft);color:var(--fg);border-radius:10px;padding:10px 12px;font-size:13.5px}
+.kverl{margin-top:12px;font-size:12.5px;color:var(--muted)}.kverl summary{cursor:pointer;font-weight:600}.kverl div{display:flex;gap:10px;padding:3px 0}.kverl time{font-variant-numeric:tabular-nums;min-width:86px}
+.kreg{display:flex;flex-direction:column;gap:8px;font-size:14px}.kreg div{display:flex;justify-content:space-between;gap:10px}.kreg span{color:var(--muted)}
+.kein1{display:flex;align-items:center;gap:6px}.kein1 input{flex:1;min-width:0;text-align:right}.kein1 em{font-style:normal;color:var(--muted);font-size:13px;white-space:nowrap}
+tr.click{cursor:pointer}
+/* Angebot im Druck */
+.angp{position:relative}.aentw{position:absolute;top:45%;left:50%;transform:translate(-50%,-50%) rotate(-30deg);font-size:110px;font-weight:800;letter-spacing:.08em;color:rgba(233,102,15,.10);pointer-events:none;z-index:0}
+table.atb td:nth-child(2){text-align:left}table.atb td:nth-child(n+3){white-space:nowrap}.atb .atx{font-weight:400;color:#4b515a;font-size:10px;line-height:1.45;margin-top:2px}
+.arb{font-size:10.5px;line-height:1.5;color:#3b4049;margin:0 0 8px}.ahinw{font-size:10.5px;color:#5d636c;margin:4px 0 0}
+.rhimg.klein{width:46%}.afolge{font-size:10px;color:#7a808a;margin:10px 0 6px;letter-spacing:.04em}.aseite{position:absolute;right:64px;bottom:20px;font-size:9px;color:#7a808a}
+input[type=email]{width:100%;background:var(--surface2);border:1px solid transparent;border-radius:10px;padding:9px 11px;font-size:15px;color:var(--fg)}.kta:disabled{resize:none}
 </style>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&family=Barlow+Condensed:wght@400&display=swap">
 <link rel="stylesheet" href="/css/design.css">
@@ -462,6 +512,7 @@ const I={
  ber:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 3.5h7l4 4V20a.5.5 0 0 1-.5.5h-10A.5.5 0 0 1 7 20z"/><path d="M14 3.5V8h4M9.5 12h6M9.5 15.5h6"/></svg>',
  fz:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3.5 15.5V8.5a1 1 0 0 1 1-1h9.5l3.5 4h2a1 1 0 0 1 1 1v3"/><circle cx="7.5" cy="16.5" r="2"/><circle cx="16.5" cy="16.5" r="2"/><path d="M9.5 16.5h5M14 7.5v4h4"/></svg>',
  team:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8.5" r="3"/><circle cx="17" cy="9.5" r="2.5"/><path d="M3.5 19c.9-3 3-4.5 5.5-4.5s4.6 1.5 5.5 4.5M15 14.6c2.6-.3 4.5 1.1 5.5 4"/></svg>',
+ kalk:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="3.5" width="14" height="17" rx="2"/><path d="M8 7.5h8M8.5 12h1M11.5 12h1M14.5 12h1M8.5 15.5h1M11.5 15.5h1M14.5 15.5h1"/></svg>',
  lupe:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 5 5"/></svg>',
  x:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg>'
 };
@@ -597,7 +648,7 @@ function nav(){
   teamN=S.abs.filter(a=>a.status==="offen").length+S.bel.filter(b=>b.status==="offen").length,
   wN=S.anl.filter(a=>a.vertrag&&due(a)<=addD(TODAY,30)&&!openFor(a.nv,"Wartung")).length;
  const reN=(S.rech||[]).filter(r=>r.status==="offen"&&addD(r.datum,14)<TODAY).length;
- const it=[["dash","Übersicht",""],["plan","Plantafel",pool],["wart","Wartungsplanung",wN],["anl","Kunden und Anlagen",""],["ber","Berichte",berN],["re","Rechnungen",reN],["team","Team",teamN],["fz","Fahrzeuge",fzN()],["set","Einstellungen",""],["adm","Administration",""]].filter(x=>!(ISID()&&x[0]==="re")&&!(x[0]==="adm"&&!ISADM()));
+ const it=[["dash","Übersicht",""],["plan","Plantafel",pool],["wart","Wartungsplanung",wN],["anl","Kunden und Anlagen",""],["ber","Berichte",berN],["re","Rechnungen",reN],["team","Team",teamN],["fz","Fahrzeuge",fzN()],["kalk","Kalkulation",kPruefN()],["set","Einstellungen",""],["adm","Administration",""]].filter(x=>!(ISID()&&x[0]==="re")&&!(x[0]==="adm"&&!ISADM())&&!(x[0]==="kalk"&&!RECHTE.kalkulation));
  $("#side").innerHTML=`<div class="brand">${NFDESIGN.logo()}<span class="bt"><b>NOVIS</b><span>Büro · Planung</span></span></div>`+
   it.map(([k,l,c])=>`<button type="button" class="nav" data-view="${k}" ${S.view===k?'aria-current="page"':""}>${I[k]}<span>${l}</span>${c?`<span class="cnt">${c}</span>`:""}</button>`).join("")+
   `<button type="button" class="nav" data-href="/app/">${I.anl}<span>Monteur-App</span></button>`+
@@ -1016,13 +1067,14 @@ async function drucken(art,id){
  const fertig=f=>{window.NF_DRUCK={fertig:true,fehler:f||""}};
  try{
   document.body.innerHTML="";document.body.classList.add("druckmodus");
-  const L=document.createElement("div");L.id=art==="rechnung"?"relayer":"a4layer";document.body.appendChild(L);
+  const L=document.createElement("div");L.id=art==="rechnung"||art==="angebot"?"relayer":"a4layer";document.body.appendChild(L);
   let html="";
   if(art==="bericht"){const b=S.ber.find(x=>x.sb===id);if(!b)return fertig("Bericht "+id+" nicht gefunden");await vollLaden(b.sb);html=a4Doc(b)}
   else if(art==="rechnung"){const r=S.rech.find(x=>x.re===id);if(!r)return fertig("Rechnung "+id+" nicht gefunden");if(r.sb)await vollLaden(r.sb);html=reDoc(r)+(r.sb?`<div class="annexp">${a4Doc(berFor(r))}</div>`:"")}
   else if(art==="kunde"){if(!NF.get("kunden",id))return fertig("Kunde "+id+" nicht gefunden");html=kdDoc(id)}
   else if(art==="belegliste"){if(!/^\d{4}-\d{2}$/.test(id))return fertig("Monat ungültig");html=belegListeDoc(id)}
   else if(art==="mahnung"){const m=NF.get("mahnungen",id);if(!m)return fertig("Mahnung "+id+" nicht gefunden");html=mahnDoc(m)}
+  else if(art==="angebot"){const a=NF.get("angebote",id);if(!a)return fertig("Angebot "+id+" nicht gefunden");L.innerHTML=`<div class="a4v"><div class="a4s"><div class="a4p" id="angz"></div></div></div>`;await Promise.all([...document.images].map(im=>im.complete?0:new Promise(r=>{im.onload=im.onerror=r})));if(document.fonts&&document.fonts.ready)await document.fonts.ready;angebotSeiten($("#angz"),a);await new Promise(r=>setTimeout(r,80));if(document.fonts&&document.fonts.ready)await document.fonts.ready;angebotSeiten($("#angz"),a);await new Promise(r=>setTimeout(r,50));return fertig()}
   else return fertig("Unbekannte Druckart");
   L.innerHTML=`<div class="a4v"><div class="a4s"><div class="a4p">${html}</div></div></div>`;
   await Promise.all([...L.querySelectorAll("img")].map(im=>im.complete?0:new Promise(r=>{im.onload=im.onerror=r})));
@@ -1466,8 +1518,8 @@ function drawer(){setTimeout(()=>translate($("#layer")),0);
 }
 
 /* ---------- Administration ---------- */
-const PERMS=["Eigene Tour, Berichte, Zeiten","Plantafel und Aufträge bearbeiten","Berichte prüfen","Rechnungen und Zahlungen","Preise, Warnungen, Ergebnisse","Mitarbeiter verwalten","Administration, Datenbank, Updates"];
-const PKEYS=["eigene","planung","berichte_pruefen","rechnungen","preise","mitarbeiter","admin"];
+const PERMS=["Eigene Tour, Berichte, Zeiten","Plantafel und Aufträge bearbeiten","Berichte prüfen","Rechnungen und Zahlungen","Preise, Warnungen, Ergebnisse","Mitarbeiter verwalten","Administration, Datenbank, Updates","Kalkulation und Angebote"];
+const PKEYS=["eigene","planung","berichte_pruefen","rechnungen","preise","mitarbeiter","admin","kalkulation"];
 function rechteAusMatrix(){S.rights={};for(const r of ROLLEN)S.rights[r]=PKEYS.map(k=>S.matrix&&S.matrix[r]&&S.matrix[r][k]?1:0)}
 const DBT={kunden:{label:"Kunden",key:"nr",kreis:"K"},anlagen:{label:"Anlagen",key:"nv",kreis:"NV"},auftraege:{label:"Aufträge",key:"id",kreis:"A"},berichte:{label:"Berichte",key:"sb"},rechnungen:{label:"Rechnungen",key:"re"},
  artikel:{label:"Artikel",key:""},arbeitsmittel:{label:"Arbeitsmittel",key:""},abwesenheiten:{label:"Abwesenheiten",key:"id"},belege:{label:"Belege",key:"id"},zeiten:{label:"Arbeitszeiten",key:""}};
@@ -1596,7 +1648,237 @@ const EN={"Auftrag":"Job","Arbeitszeit":"Working time","Fahrzeit":"Travel time",
 function translate(root){if(S.cfg.lang!=="en"||!root)return;const w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);let n;const L=[];while(n=w.nextNode())L.push(n);
  L.forEach(n=>{const t=n.nodeValue,k=t.trim();if(k&&EN[k]!==undefined)n.nodeValue=t.replace(k,EN[k])})}
 /* ---------- Render ---------- */
-function render(){if(!S.anl)return;viewer();reViewer();nav();try{({dash:vDash,plan:vPlan,wart:vWart,anl:vAnl,ber:vBer,re:vRe,team:vTeam,fz:vFz,set:vSet,adm:vAdm}[S.view]||vDash)()}finally{}drawer();["#side","#top","#view","#layer"].forEach(x=>translate($(x)))}
+function render(){if(!S.anl)return;viewer();reViewer();nav();try{({dash:vDash,plan:vPlan,wart:vWart,anl:vAnl,ber:vBer,re:vRe,team:vTeam,fz:vFz,set:vSet,adm:vAdm,kalk:vKalk}[S.view]||vDash)()}finally{}drawer();["#side","#top","#view","#layer"].forEach(x=>translate($(x)))}
+
+/* ---------- Kalkulation und Angebote (Geschäftsführung) ----------
+ * Daten: Sammlung „angebote“ (Nummer ANG-JJJJ-NNNN vom Server), Einstellungen in einstellungen/kalkulation.
+ * Status ändern nur die Routen /api/angebote/:id/… (Vier-Augen-Prinzip, PDF, SharePoint, Mail an rechnung@). */
+const KDEF={
+ katalog:[
+  {id:"gdra1",bez:"1- und 2-schienige Schrankanlagen (MOP ≤ 16 bar)",text:"Der Preis versteht sich je Anlage des beschriebenen Anlagentyps und zzgl. Reisekosten.",einheit:"Anl.",ep:300,std:2.5},
+  {id:"gdra2",bez:"1- und 2-schienige Gebäudestationen (MOP ≤ 16 bar)",text:"Der Preis versteht sich je Anlage des beschriebenen Anlagentyps und zzgl. Reisekosten.",einheit:"Anl.",ep:375,std:3},
+  {id:"gdra3",bez:"3- und 4-schienige Gebäudestationen (MOP > 16 bar)",text:"Der Preis versteht sich je Anlage des beschriebenen Anlagentyps und zzgl. Reisekosten.",einheit:"Anl.",ep:900,std:7},
+  {id:"std",bez:"Zusätzliche Leistungen nach Zeitaufwand",text:"",einheit:"Std.",ep:120,std:1}],
+ kmPersonal:1.10,kmFahrzeug:0.85,messTag:60,nacht:150,intStd:75,intKm:0.45,tempo:70,intNacht:110,intMess:25,margeMin:25,mwst:19,gueltig:30,ziel:14,
+ bausteine:[
+  {id:"aufwand",titel:"Aufwandskalkulation",text:"Die Kalkulation des Zeitaufwandes beruht auf den uns zur Verfügung gestellten Unterlagen und Informationen. Sollten während der Auftragsabwicklung Abweichungen auftreten oder von uns festgestellt werden, behalten wir uns eine Preisanpassung bzw. die Berechnung von entstandenen Mehrkosten vor.",std:true},
+  {id:"zugang",titel:"Freier Zugang",text:"Der freie Zugang zu den Anlagen und den zu erfassenden Betriebsmitteln muss ungehindert und ohne Wartezeiten möglich sein. Uns entstehende Wartezeiten berechtigen uns zur Berechnung der entstandenen Kosten.",std:true},
+  {id:"personal",titel:"Auftragsabwicklung",text:"Zur Auftragsabwicklung wird ausschließlich eigenes Personal eingesetzt. Unsere Mitarbeiter sind als Sachkundige nach den DVGW-Arbeitsblättern G 491, G 459-2, G 492, G 280, G 498, G 499 und G 495 qualifiziert und beauftragt.",std:true},
+  {id:"zusatz",titel:"Zusätzliche Leistungen",text:"Leistungen, die über den beschriebenen Umfang hinausgehen, werden entsprechend dem Zeitaufwand zu unseren aktuellen Stundensätzen berechnet.",std:true},
+  {id:"zeiten",titel:"Liefer- und Ausführungszeiten",text:"Von uns genannte Liefer- und Ausführungszeiten im Angebotsstadium sind zum Zeitpunkt der Angebotserstellung ermittelt. Eine verbindliche Aussage kann erst zum Zeitpunkt der Auftragsvergabe vorgenommen werden.",std:true},
+  {id:"daten",titel:"Vertraulichkeit und Datenschutz",text:"Wir bestätigen die Einhaltung der geltenden Datenschutzbestimmungen.",std:true}]};
+function KP(){const g=NF.get("einstellungen","kalkulation")||{};return Object.assign({},KDEF,g,{katalog:Array.isArray(g.katalog)?g.katalog:KDEF.katalog,bausteine:Array.isArray(g.bausteine)?g.bausteine:KDEF.bausteine})}
+const KST={entwurf:["","Entwurf"],pruef:["wa","Zur Freigabe"],frei:["ok","Freigegeben"],vers:["or","Versendet"],angenommen:["ok","Angenommen"],abgelehnt:["cr","Abgelehnt"]};
+const kChip=s=>{const x=KST[s]||KST.entwurf;return`<span class="chip ${x[0]}">${x[1]}</span>`};
+const ANGS=()=>NF.liste("angebote").filter(a=>a&&a.nr).sort((a,b)=>String(b.nr).localeCompare(String(a.nr)));
+const kNeben=P=>[["km","Personal- und Reisekosten","km",+(P.kmPersonal+P.kmFahrzeug).toFixed(2),`Personalkosten ${de(P.kmPersonal,2)} €/km, Fahrzeugkosten ${de(P.kmFahrzeug,2)} €/km, Abrechnung nach gefahrenen km`],
+ ["tage","Tagespauschale Messgerät","Tag",P.messTag,""],["naechte","Übernachtungspauschale","Nacht",P.nacht,"Abrechnung nach Anzahl der Übernachtungen"]];
+const kZ=v=>{const x=parseFloat(String(v).replace(/\s/g,"").replace(/\.(?=\d{3}(\D|$))/g,"").replace(",","."));return isNaN(x)?0:x};
+function kRechnen(a,P){P=P||KP();const pos=a.positionen||[],nb=a.neben||[],g=k=>+((nb.find(n=>n.art===k)||{}).menge||0);
+ const leist=pos.reduce((s,p)=>s+(+p.menge||0)*(+p.ep||0),0),nebenSum=nb.reduce((s,n)=>s+(+n.menge||0)*(+n.ep||0),0),netto=leist+nebenSum;
+ const mw=+(a.mwst??P.mwst),mwst=netto*mw/100,std=pos.reduce((s,p)=>s+(+p.menge||0)*(+p.std||0),0),fahrt=g("km")/(+P.tempo||1);
+ const kosten=[["Arbeitszeit",std*P.intStd],["Fahrzeit",fahrt*P.intStd],["Fahrzeug",g("km")*P.intKm],["Messgerät",g("tage")*P.intMess],["Übernachtung",g("naechte")*P.intNacht]];
+ const ks=kosten.reduce((s,k)=>s+k[1],0),db=netto-ks;return{leist,nebenSum,netto,mw,mwst,brutto:netto+mwst,kosten,db,marge:netto?db/netto*100:0}}
+const kIchFrei=a=>a.status==="pruef"&&ICH_ID()!==(a.erstellt||{}).von&&ICH_ID()!==(a.eingereicht||{}).von;
+const ICH_ID=()=>(NF.ich&&NF.ich.benutzer&&NF.ich.benutzer.id)||"";
+const kPruefN=()=>RECHTE.kalkulation?ANGS().filter(kIchFrei).length:0;
+
+function vKalk(){
+ if(!RECHTE.kalkulation){top("Kalkulation");$("#view").innerHTML=`<div class="pad"><div class="panel"><p>Dafür fehlt das Recht „Kalkulation und Angebote“.</p></div></div>`;return}
+ const T=S.kalkTab||"liste",a=S.kalkId&&NF.get("angebote",S.kalkId);
+ if(T==="angebot"&&!a){S.kalkTab="liste";return vKalk()}
+ top(T==="angebot"?a.betreff||a.nr:T==="set"?"Kalkulation · Einstellungen":"Kalkulation",T==="angebot"?kChip(a.status)+(a.rev>1?`<span class="chip">Rev. ${a.rev}</span>`:""):T==="liste"?`<button type="button" class="btn" data-kneu="1">+ Neues Angebot</button>`:"");
+ const tabs=[["liste","Angebote"],...(a?[["angebot",a.nr]]:[]),["set","Einstellungen"]];
+ const bar=`<div class="stabs" role="tablist">${tabs.map(([k,l])=>`<button type="button" role="tab" data-ktab="${k}" aria-selected="${T===k}">${esc(l)}</button>`).join("")}</div>`;
+ $("#view").innerHTML=`<div class="pad kalkv">${bar}${T==="liste"?kListe():T==="set"?kSet():kAngebot(a)}</div>`;
+ if(T==="angebot")kWerte();
+}
+function kListe(){const P=KP(),f=S.kfilter||"alle",L=ANGS();
+ const filt=L.filter(a=>f==="alle"||(f==="pruef"?a.status==="pruef":f==="offen"?["entwurf","pruef","frei"].includes(a.status):["vers","angenommen","abgelehnt"].includes(a.status)));
+ const n=kPruefN();
+ return`<div class="row" style="gap:10px;align-items:center;flex-wrap:wrap"><div class="seg" role="group">${[["alle","Alle"],["pruef","Zur Freigabe"+(n?` (${n})`:"")],["offen","In Arbeit"],["fertig","Versendet"]].map(([k,l])=>`<button type="button" data-kfilter="${k}" aria-pressed="${f===k}">${l}</button>`).join("")}</div></div>
+ <div class="panel" style="padding:6px 8px">${filt.length?`<div style="overflow-x:auto"><table class="tb"><thead><tr><th>Nummer</th><th>Kunde</th><th>Betreff</th><th style="text-align:right">Netto</th><th>Status</th><th>Erstellt</th><th>Freigegeben</th></tr></thead><tbody>
+  ${filt.map(a=>`<tr class="click" data-kopen="${esc(a.nr)}" tabindex="0"><td><b>${esc(a.nr)}</b>${a.rev>1?` <small>Rev. ${a.rev}</small>`:""}</td><td>${esc((a.kunde||{}).name||"–")}${a.interessent?' <span class="chip">Interessent</span>':""}</td><td>${esc(a.betreff||"")}</td>
+   <td style="text-align:right;white-space:nowrap">${eur(kRechnen(a,P).netto)}</td><td>${kChip(a.status)}${kIchFrei(a)?' <span class="chip or">deine Freigabe</span>':""}</td><td>${esc((a.erstellt||{}).name||"")}</td><td>${esc((a.freigabe||{}).name||"–")}</td></tr>`).join("")}</tbody></table></div>`:`<p style="padding:14px">Noch keine Angebote${f!=="alle"?" in dieser Ansicht":""}.</p>`}</div>`}
+
+function kAngebot(a){const P=KP(),dis=a.status!=="entwurf"?"disabled":"",k=a.kunde||{},r=kRechnen(a,P);
+ const kd=NF.liste("kunden").filter(x=>x&&x.nr).sort((x,y)=>String(x.name1).localeCompare(String(y.name1)));
+ const pos=a.positionen||[],nb=a.neben||[];
+ const posZeile=(p,i)=>`<tr class="kpos"><td>${i+1}</td><td>${p.typ==="frei"?`<input type="text" class="kin" data-kp="${i}|bez" value="${esc(p.bez||"")}" placeholder="Bezeichnung" ${dis}>`:`<b>${esc(p.bez)}</b>`}</td>
+   <td style="text-align:right;white-space:nowrap"><input class="knum" inputmode="decimal" data-kp="${i}|menge" value="${de(p.menge||0,p.menge%1?2:0)}" ${dis} aria-label="Menge"> ${p.typ==="frei"?`<input class="knum kein" data-kp="${i}|einheit" value="${esc(p.einheit||"")}" ${dis} aria-label="Einheit">`:`<span class="kein0">${esc(p.einheit||"")}</span>`}</td>
+   <td style="text-align:right"><input class="knum kep" inputmode="decimal" data-kp="${i}|ep" value="${de(p.ep||0,2)}" ${dis} aria-label="Einzelpreis"></td>
+   <td style="text-align:right;white-space:nowrap"><b id="kz-${i}">${eur((+p.menge||0)*(+p.ep||0))}</b></td>
+   <td>${dis?"":`<button type="button" class="kx" data-kdel="${i}" aria-label="Position entfernen">${I.x}</button>`}</td></tr>
+  <tr class="ktext"><td></td><td colspan="5"><textarea class="kta" rows="${Math.min(6,Math.max(1,String(p.text||"").split("\n").length))}" data-kp="${i}|text" placeholder="Freitext zur Position" ${dis}>${esc(p.text||"")}</textarea>
+   ${p.typ==="frei"?`<label class="kstd">Zeit intern <input class="knum" inputmode="decimal" data-kp="${i}|std" value="${de(p.std||0,1)}" ${dis}> Std. je Einheit</label>`:""}</td></tr>`;
+ const nbZeile=(n,i)=>`<tr class="kpos"><td>${pos.length+i+1}</td><td><b>${esc(n.bez)}</b> <span class="kst">*</span></td>
+   <td style="text-align:right;white-space:nowrap"><input class="knum" inputmode="decimal" data-kn="${i}|menge" value="${de(n.menge||0,0)}" ${dis} aria-label="${esc(n.bez)} Menge"> <span class="kein0">${esc(n.einheit)}</span></td>
+   <td style="text-align:right">${eur(n.ep)}</td><td style="text-align:right;white-space:nowrap"><b id="kn-${i}">${eur((+n.menge||0)*(+n.ep||0))}</b></td><td></td></tr>
+  <tr class="ktext"><td></td><td colspan="5"><textarea class="kta" rows="1" data-kn="${i}|text" placeholder="Freitext zur Position" ${dis}>${esc(n.text||"")}</textarea></td></tr>`;
+ const ich=ICH_ID(),erst=a.erstellt||{},ein=a.eingereicht||{},frei=a.freigabe||{};
+ const andere=(TECHS||[]).filter(t=>t.id!==ich&&t.rolle==="Geschäftsführung").map(t=>t.name.split(" ")[0]).join(" / ")||"andere Geschäftsführung";
+ const verlauf=(a.verlauf||[]).slice(-8);
+ let akt="";
+ if(a.status==="entwurf")akt=`<button type="button" class="btn" data-kaktion="einreichen">Zur Freigabe an ${esc(andere)}</button><button type="button" class="btn sec" data-kpdf="1">PDF-Vorschau</button><button type="button" class="btn sec" data-kloesch="1">Entwurf löschen</button>`;
+ else if(a.status==="pruef")akt=kIchFrei(a)?`<button type="button" class="btn" data-kaktion="freigeben">Freigeben</button><button type="button" class="btn sec" data-kpdf="1">PDF-Vorschau</button>
+   <textarea class="kta" id="kAnm" rows="2" placeholder="Anmerkung beim Zurückgeben"></textarea><button type="button" class="btn sec" data-kaktion="zurueck">Zurückgeben</button>`
+   :`<div class="kwarte">Wartet auf die Freigabe durch ${esc(andere)}</div><button type="button" class="btn sec" data-kaktion="zurueck">Zurückholen</button>`;
+ else if(a.status==="frei")akt=`${a.versand&&a.versand.mail===false?`<div class="kwarte">Mail an rechnung@ nicht gesendet: ${esc(a.versand.fehler||"")}</div><button type="button" class="btn sec" data-kaktion="mail-wiederholen">Mail erneut senden</button>`:""}
+   <button type="button" class="btn" data-kaktion="versendet">Als versendet markieren</button><button type="button" class="btn sec" data-kpdf="1">PDF ansehen</button><button type="button" class="btn sec" data-kaktion="neue-fassung">Neue Fassung</button>`;
+ else if(a.status==="vers")akt=`<div class="row" style="gap:8px"><button type="button" class="btn" data-kerg="1">Angenommen</button><button type="button" class="btn sec" data-kerg="0">Abgelehnt</button></div><button type="button" class="btn sec" data-kpdf="1">PDF ansehen</button><button type="button" class="btn sec" data-kaktion="neue-fassung">Neue Fassung</button>`;
+ else akt=`<button type="button" class="btn sec" data-kpdf="1">PDF ansehen</button>${a.status==="abgelehnt"?'<button type="button" class="btn sec" data-kaktion="neue-fassung">Neue Fassung</button>':""}`;
+ const schritte=[["ok","Erstellt",`${erst.name||""}`],[a.status==="entwurf"?"jetzt":"ok","Zur Freigabe",ein.name?`von ${ein.name}`:""],[a.status==="pruef"?"jetzt":frei.name?"ok":"","Freigegeben",frei.name||""],
+  ...(frei.name?[[a.versand?(a.versand.mail?"ok":"cr"):"",a.versand&&a.versand.mail===false?"Mail an rechnung@ fehlgeschlagen":"PDF, SharePoint und Mail an rechnung@",""]]:[]),
+  [["vers","angenommen","abgelehnt"].includes(a.status)?"ok":a.status==="frei"?"jetzt":"","Versendet",(a.versendet||{}).name||""],
+  ...(a.ergebnis?[[a.ergebnis.angenommen?"ok":"cr",a.ergebnis.angenommen?"Angenommen":"Abgelehnt",a.ergebnis.name||""]]:[])];
+ return`<div class="kalk"><div class="kl">
+  ${a.anmerkung&&a.status==="entwurf"?`<div class="kwarte">Zurückgegeben von ${esc(a.anmerkung.name||"")}: ${esc(a.anmerkung.text||"")}</div>`:""}
+  <div class="panel"><h3>Kunde</h3>
+   <div class="seg" role="group" aria-label="Kundenart"><button type="button" data-kart="0" aria-pressed="${!a.interessent}" ${dis}>Kundenstamm</button><button type="button" data-kart="1" aria-pressed="${!!a.interessent}" ${dis}>Interessent</button></div>
+   ${a.interessent?"":`<label class="f">Kunde suchen<input type="text" list="kKunden" id="kKundeWahl" value="${k.knr?esc(k.knr+" · "+(k.name||"")):""}" placeholder="Name oder Kundennummer" ${dis}><datalist id="kKunden">${kd.map(x=>`<option value="${esc(x.nr+" · "+[x.name1,x.name2].filter(Boolean).join(", "))}"></option>`).join("")}</datalist></label>`}
+   <div class="f2"><label class="f">${a.interessent?"Firma / Name":"Name"}<input type="text" data-kk="name" value="${esc(k.name||"")}" ${dis}></label><label class="f">Anschrift<input type="text" data-kk="anschrift" value="${esc(k.anschrift||"")}" ${dis}></label></div>
+   <div class="f2"><label class="f">Ansprechpartner<input type="text" data-kk="ansprech" value="${esc(k.ansprech||"")}" ${dis}></label><label class="f">E-Mail<input type="email" data-kk="mail" value="${esc(k.mail||"")}" autocapitalize="none" ${dis}></label></div>
+   <label class="f">Betreff<input type="text" data-ka="betreff" value="${esc(a.betreff||"")}" ${dis}></label></div>
+
+  <div class="panel"><h3>Positionen</h3><div style="overflow-x:auto"><table class="tb ktab"><thead><tr><th>Pos.</th><th>Bezeichnung</th><th style="text-align:right">Menge</th><th style="text-align:right">E-Preis</th><th style="text-align:right">Gesamt</th><th></th></tr></thead>
+   <tbody>${pos.map(posZeile).join("")}${nb.map(nbZeile).join("")}</tbody></table></div>
+   ${dis?"":`<div class="row" style="gap:8px;flex-wrap:wrap">${P.katalog.map(c=>`<button type="button" class="btn sec sm" data-kplus="${esc(c.id)}">+ ${esc(c.bez)}</button>`).join("")}<button type="button" class="btn sec sm" data-kplus="__frei">+ Freie Position</button></div>`}
+   <p style="margin:0;font-size:12.5px;color:var(--muted)"><span class="kst">*</span> geschätzter Wert, wird nach tatsächlichem Aufwand abgerechnet.</p></div>
+
+  <div class="panel"><h3>Rahmenbedingungen</h3><div class="krb">${P.bausteine.map(b=>`<label><input type="checkbox" data-krb="${esc(b.id)}" ${(a.rb||[]).includes(b.id)?"checked":""} ${dis}><span><b>${esc(b.titel)}</b><small>${esc(b.text)}</small></span></label>`).join("")}</div></div>
+ </div>
+ <div class="kr">
+  <div class="panel"><h3>Summe</h3><div class="ksum"><div><span>Leistungen</span><span id="ks-l">${eur(r.leist)}</span></div><div><span>Nebenkosten <span class="kst">*</span></span><span id="ks-n">${eur(r.nebenSum)}</span></div>
+   <div class="kn"><span>Netto</span><b id="ks-net">${eur(r.netto)}</b></div><div><span>MwSt. ${de(r.mw,0)} %</span><span id="ks-mw">${eur(r.mwst)}</span></div><div class="kb"><span>Brutto</span><span id="ks-br">${eur(r.brutto)}</span></div></div></div>
+  <div class="panel"><h3>Intern <span style="margin-left:auto;font-size:28px;font-weight:700;font-variant-numeric:tabular-nums" id="km">${de(r.marge,1)} %</span></h3>
+   <div class="kbal" id="kbal"><i></i><b style="left:${Math.max(0,Math.min(100,P.margeMin))}%"></b></div><div class="kint" id="kint"></div></div>
+  <div class="panel"><h3>Freigabe</h3><ul class="kschr">${schritte.map(([c,t,s])=>`<li class="${c}"><span>${esc(t)}${s?`<small>${esc(s)}</small>`:""}</span></li>`).join("")}</ul><div class="kakt">${akt}</div>
+   ${verlauf.length?`<details class="kverl"><summary>Verlauf</summary>${verlauf.map(v=>`<div><time>${new Date(v.zeit).toLocaleString("de-DE",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}</time><span>${esc(v.schritt)} · ${esc(v.name||"")}</span></div>`).join("")}</details>`:""}</div>
+ </div></div>`}
+
+/* Werte live aktualisieren, ohne neu aufzubauen */
+let KBAL=null;
+function kWerte(){const a=NF.get("angebote",S.kalkId);if(!a)return;const P=KP(),r=kRechnen(a,P),set=(id,t)=>{const e=document.getElementById(id);if(e&&e.textContent!==t)e.textContent=t};
+ (a.positionen||[]).forEach((p,i)=>set("kz-"+i,eur((+p.menge||0)*(+p.ep||0))));(a.neben||[]).forEach((n,i)=>set("kn-"+i,eur((+n.menge||0)*(+n.ep||0))));
+ set("ks-l",eur(r.leist));set("ks-n",eur(r.nebenSum));set("ks-net",eur(r.netto));set("ks-mw",eur(r.mwst));set("ks-br",eur(r.brutto));set("km",de(r.marge,1)+" %");
+ const b=$("#kbal");if(b){b.classList.toggle("wa",r.marge<P.margeMin);const i=b.querySelector("i");KBAL=KBAL&&KBAL.el===i?KBAL:{el:i,f:new NFB.Feder(r.marge,m=>{i.style.transform=`scaleX(${Math.max(0,Math.min(100,m))/100})`})};
+  if(KBAL.f.x===r.marge)KBAL.f.setze(r.marge);else KBAL.f.zu(r.marge,{antwort:.4})}
+ const ki=$("#kint");if(ki)ki.innerHTML=r.kosten.map(k=>`<div><span>${k[0]}</span><span>${eur(k[1])}</span></div>`).join("")+`<div class="kdb"><span>Deckungsbeitrag</span><span>${eur(r.db)}</span></div>`}
+
+function kSet(){const P=KP(),dis=RECHTE.kalkulation?"":"disabled",F=(k,l,e,d=2)=>`<label class="f">${l}<span class="kein1"><input type="text" inputmode="decimal" data-ks="${k}" value="${de(P[k],d)}" ${dis}><em>${e}</em></span></label>`;
+ return`<div class="grid2">
+  <div class="panel" style="grid-column:1/-1"><h3>Leistungen</h3><div style="overflow-x:auto"><table class="tb ktab"><thead><tr><th>Bezeichnung</th><th>Einheit</th><th style="text-align:right">Preis</th><th style="text-align:right">Zeit intern</th><th></th></tr></thead><tbody>
+   ${P.katalog.map((c,i)=>`<tr class="kpos"><td><input type="text" class="kin" data-kc="${i}|bez" value="${esc(c.bez)}"></td><td><input class="knum kein" data-kc="${i}|einheit" value="${esc(c.einheit)}"></td>
+    <td style="text-align:right;white-space:nowrap"><input class="knum kep" inputmode="decimal" data-kc="${i}|ep" value="${de(c.ep,2)}"> €</td><td style="text-align:right;white-space:nowrap"><input class="knum" inputmode="decimal" data-kc="${i}|std" value="${de(c.std,1)}"> Std.</td>
+    <td><button type="button" class="kx" data-kcdel="${i}" aria-label="Leistung entfernen">${I.x}</button></td></tr>
+    <tr class="ktext"><td colspan="5"><textarea class="kta" rows="1" data-kc="${i}|text" placeholder="Standard-Freitext">${esc(c.text||"")}</textarea></td></tr>`).join("")}</tbody></table></div>
+   <div class="row"><button type="button" class="btn sec sm" data-kcneu="1">+ Leistung</button></div></div>
+  <div class="panel"><h3>Nebenkosten</h3><div class="f3">${F("kmPersonal","Personal","€/km")}${F("kmFahrzeug","Fahrzeug","€/km")}${F("messTag","Messgerät","€/Tag")}${F("nacht","Übernachtung","€/Nacht")}</div></div>
+  <div class="panel"><h3>Interne Kosten</h3><div class="f3">${F("intStd","Stundensatz","€/Std.")}${F("intKm","Fahrzeug","€/km")}${F("tempo","Reisetempo","km/h",0)}${F("intNacht","Übernachtung","€/Nacht")}${F("intMess","Messgerät","€/Tag")}${F("margeMin","Mindestmarge","%",0)}</div></div>
+  <div class="panel"><h3>Angebot</h3><div class="f3">${F("mwst","MwSt.","%",0)}${F("gueltig","Gültig","Tage",0)}${F("ziel","Zahlungsziel","Tage",0)}</div></div>
+  <div class="panel"><h3>Freigabe und Versand</h3><div class="kreg"><div><span>Freigabe</span><b>Vier-Augen-Prinzip, immer</b></div><div><span>Ablage</span><b>SharePoint › Kunden › Angebote</b></div><div><span>Mail</span><b>info@ → rechnung@</b></div></div></div>
+  <div class="panel" style="grid-column:1/-1"><h3>Rahmenbedingungen</h3><div class="krb">${P.bausteine.map((b,i)=>`<div class="kbs"><label><input type="checkbox" data-kbstd="${i}" ${b.std?"checked":""}> im Angebot vorausgewählt</label>
+    <input type="text" class="kin" data-kb="${i}|titel" value="${esc(b.titel)}"><textarea class="kta" rows="2" data-kb="${i}|text">${esc(b.text)}</textarea><button type="button" class="btn sec sm" data-kbdel="${i}">Entfernen</button></div>`).join("")}</div>
+   <div class="row"><button type="button" class="btn sec sm" data-kbneu="1">+ Textbaustein</button></div></div></div>`}
+
+/* Speichern: Angebote nur im Entwurf, Einstellungen als Ganzes */
+function kSpeichere(teil){NF.setze("angebote",S.kalkId,teil)}
+function kSetSpeichere(teil){const P=KP();NF.setze("einstellungen","kalkulation",Object.assign({katalog:P.katalog,bausteine:P.bausteine},teil))}
+async function kAktion(was,body){const id=S.kalkId;
+ // erst alle offenen Änderungen senden, damit der Server den aktuellen Stand prüft
+ for(let i=0;i<50&&NF.ausstehend("angebote",id);i++){NF.senden();await new Promise(r=>setTimeout(r,100))}
+ if(was==="einreichen"){const P=KP(),a=NF.get("angebote",id);NF.setze("angebote",id,{rbTexte:P.bausteine.filter(b=>(a.rb||[]).includes(b.id)).map(b=>({titel:b.titel,text:b.text}))});
+  for(let i=0;i<50&&NF.ausstehend("angebote",id);i++){NF.senden();await new Promise(r=>setTimeout(r,100))}
+  if(NF.ausstehend("angebote",id)){toast("Keine Verbindung – bitte gleich noch einmal versuchen.");render();return}}
+ try{const d=await NF.api(`/api/angebote/${encodeURIComponent(id)}/${was}`,{method:"POST",body:body||{}});
+  const z=NF.store.angebote&&NF.store.angebote[id];if(z){z.daten=Object.assign({},d);delete z.daten.hinweis}NF.abholen();
+  toast(d.hinweis?"Freigegeben, aber Mail nicht gesendet: "+d.hinweis:{einreichen:"Zur Freigabe eingereicht",freigeben:"Freigegeben – PDF, SharePoint und Mail an rechnung@",zurueck:"Zurück in Bearbeitung",versendet:"Als versendet markiert","neue-fassung":"Neue Fassung angelegt","mail-wiederholen":"Mail erneut gesendet",ergebnis:"Gespeichert"}[was]||"Erledigt");render()}
+ catch(e){toast(e.message)}}
+
+document.addEventListener("click",async e=>{if(S.view!=="kalk")return;const t=e.target.closest("button,[data-kopen]");if(!t)return;const d=t.dataset;
+ if(d.ktab){S.kalkTab=d.ktab;save();render();return}
+ if(d.kfilter){S.kfilter=d.kfilter;save();render();return}
+ if(d.kopen){S.kalkId=d.kopen;S.kalkTab="angebot";save();render();$("#view").scrollTop=0;return}
+ if(d.kneu){const P=KP();t.disabled=true;try{const a=await NF.anlegen("angebote",{betreff:"Neues Angebot",interessent:false,kunde:{},positionen:[],
+   neben:kNeben(P).map(([art,bez,einheit,ep,text])=>({art,bez,einheit,ep,text,menge:0})),rb:P.bausteine.filter(b=>b.std).map(b=>b.id),mwst:P.mwst,gueltigTage:P.gueltig,zahlungsziel:P.ziel});
+   S.kalkId=a.nr;S.kalkTab="angebot";save();render()}catch(x){toast(x.message);t.disabled=false}return}
+ const a=S.kalkId&&NF.get("angebote",S.kalkId);
+ if(d.kplus&&a){const P=KP(),c=P.katalog.find(x=>x.id===d.kplus),pos=[...(a.positionen||[])];
+  pos.push(c?{typ:"leistung",k:c.id,bez:c.bez,text:c.text||"",menge:1,einheit:c.einheit,ep:c.ep,std:c.std}:{typ:"frei",bez:"",text:"",menge:1,einheit:"Stk.",ep:0,std:0});kSpeichere({positionen:pos});render();return}
+ if(d.kdel&&a){const pos=[...(a.positionen||[])];pos.splice(+d.kdel,1);kSpeichere({positionen:pos});render();return}
+ if(d.kart&&a){kSpeichere({interessent:d.kart==="1"});render();return}
+ if(d.kloesch&&a){if(t.dataset.sicher!=="1"){t.dataset.sicher="1";t.textContent="Wirklich löschen?";return}NF.loesche("angebote",a.nr);S.kalkId=null;S.kalkTab="liste";save();render();toast("Entwurf gelöscht");return}
+ if(d.kpdf&&a){for(let i=0;i<50&&NF.ausstehend("angebote",a.nr);i++){NF.senden();await new Promise(r=>setTimeout(r,100))}window.open("/api/druck/angebot/"+encodeURIComponent(a.nr),"_blank","noopener");return}
+ if(d.kaktion&&a){t.disabled=true;if(d.kaktion==="freigeben"){t.textContent="PDF und Mail werden erstellt …"};await kAktion(d.kaktion,d.kaktion==="zurueck"?{anmerkung:($("#kAnm")||{}).value||""}:{});return}
+ if(d.kerg&&a){await kAktion("ergebnis",{angenommen:d.kerg==="1"});return}
+ // Einstellungen
+ const P=KP();
+ if(d.kcneu){kSetSpeichere({katalog:[...P.katalog,{id:"l"+Date.now().toString(36),bez:"Neue Leistung",text:"",einheit:"Stk.",ep:0,std:0}]});render();return}
+ if(d.kcdel){const k=[...P.katalog];k.splice(+d.kcdel,1);kSetSpeichere({katalog:k});render();return}
+ if(d.kbneu){kSetSpeichere({bausteine:[...P.bausteine,{id:"b"+Date.now().toString(36),titel:"Neuer Textbaustein",text:"",std:false}]});render();return}
+ if(d.kbdel){const b=[...P.bausteine];b.splice(+d.kbdel,1);kSetSpeichere({bausteine:b});render();return}
+});
+document.addEventListener("keydown",e=>{if(S.view==="kalk"&&(e.key==="Enter"||e.key===" ")&&e.target.dataset&&e.target.dataset.kopen){e.preventDefault();S.kalkId=e.target.dataset.kopen;S.kalkTab="angebot";save();render()}});
+/* Tippen: sofort rechnen; Verlassen des Feldes: speichern */
+function kFeld(t,speichern){const a=S.kalkId&&NF.get("angebote",S.kalkId),d=t.dataset;
+ if(d.kp&&a){const[i,f]=d.kp.split("|"),pos=(a.positionen||[]).map(x=>Object.assign({},x));if(!pos[+i])return;pos[+i][f]=["menge","ep","std"].includes(f)?kZ(t.value):t.value;
+  if(speichern)kSpeichere({positionen:pos});else{a.positionen=pos;kWerte()}return true}
+ if(d.kn&&a){const[i,f]=d.kn.split("|"),nb=(a.neben||[]).map(x=>Object.assign({},x));if(!nb[+i])return;nb[+i][f]=f==="menge"?kZ(t.value):t.value;
+  if(speichern)kSpeichere({neben:nb});else{a.neben=nb;kWerte()}return true}
+ if(d.kk&&a&&speichern){kSpeichere({kunde:Object.assign({},a.kunde||{},{[d.kk]:t.value.trim()})});return true}
+ if(d.ka&&a&&speichern){kSpeichere({[d.ka]:t.value.trim()});if(d.ka==="betreff")$("#top h1").textContent=t.value.trim()||a.nr;return true}
+ const P=KP();
+ if(d.ks&&speichern){kSetSpeichere({[d.ks]:kZ(t.value)});return true}
+ if(d.kc&&speichern){const[i,f]=d.kc.split("|"),k=P.katalog.map(x=>Object.assign({},x));k[+i][f]=["ep","std"].includes(f)?kZ(t.value):t.value;kSetSpeichere({katalog:k});return true}
+ if(d.kb&&speichern){const[i,f]=d.kb.split("|"),b=P.bausteine.map(x=>Object.assign({},x));b[+i][f]=t.value;kSetSpeichere({bausteine:b});return true}}
+document.addEventListener("input",e=>{if(S.view!=="kalk")return;const t=e.target;if(t.classList.contains("kta")){t.rows=Math.min(6,Math.max(1,t.value.split("\n").length))}if(t.type!=="checkbox")kFeld(t,false)});
+document.addEventListener("change",e=>{if(S.view!=="kalk")return;const t=e.target,d=t.dataset,a=S.kalkId&&NF.get("angebote",S.kalkId);
+ if(t.id==="kKundeWahl"&&a){const nr=t.value.split(" · ")[0].trim(),k=NF.get("kunden",nr);if(!k){toast("Kunde nicht gefunden");return}
+  kSpeichere({kunde:{knr:nr,name:[k.name1,k.name2].filter(Boolean).join(", "),anschrift:[k.str,[k.plz,k.ort].filter(Boolean).join(" ")].filter(Boolean).join(", "),mail:k.mail||"",ansprech:(a.kunde||{}).ansprech||""}});render();return}
+ if(d.krb&&a){const rb=new Set(a.rb||[]);t.checked?rb.add(d.krb):rb.delete(d.krb);kSpeichere({rb:[...rb]});return}
+ if(d.kbstd){const P=KP(),b=P.bausteine.map(x=>Object.assign({},x));b[+d.kbstd].std=t.checked;kSetSpeichere({bausteine:b});return}
+ if(kFeld(t,true))kWerte()});
+
+/* Angebot als PDF (A4 wie die Rechnung, mehrseitig). Vor der Freigabe mit Wasserzeichen ENTWURF.
+ * angebotSeiten() verteilt die Blöcke auf Seiten und misst dabei, ob sie noch über die Fußzeile passen. */
+function angebotBloecke(a){const P=KP(),k=a.kunde||{},r=kRechnen(a,P),pos=a.positionen||[],nb=(a.neben||[]).filter(n=>+n.menge>0);
+ const dat=a.datum||new Date().toISOString().slice(0,10),bis=a.gueltigBis||addD(dat,+(a.gueltigTage??P.gueltig));
+ const rb=a.rbTexte&&a.rbTexte.length&&a.status!=="entwurf"?a.rbTexte:P.bausteine.filter(b=>(a.rb||[]).includes(b.id)).map(b=>({titel:b.titel,text:b.text}));
+ const ap=String(k.ansprech||"").trim(),anrede=ap?(/^(Frau|Herr)\s/.test(ap)?`Sehr geehrte${/^Frau/.test(ap)?"":"r"} ${esc(ap)},`:`Guten Tag ${esc(ap)},`):"Sehr geehrte Damen und Herren,";
+ const txt=t=>t?`<div class="atx">${esc(t).replace(/\n/g,"<br>")}</div>`:"";
+ const zeilen=[...pos.map(p=>({...p,st:false})),...nb.map(n=>({...n,st:true}))];
+ const fr=a.freigabe||{},er=a.erstellt||{},namen=[...new Set([fr.name,er.name].filter(Boolean))];
+ const B=[{t:"kopf",h:`<div class="rabs">NOVIS Anlagentechnik GmbH i. G. · Bornweg 34a · 63599 Biebergemünd</div>
+ <div class="radr"><div>${esc(k.name||"")}${ap?"<br>"+esc(ap):""}${k.anschrift?"<br>"+esc(k.anschrift).replace(/,\s*/g,"<br>"):""}</div>
+  <dl class="rkv"><dt>Angebotsnummer</dt><dd><b>${esc(a.nr)}${a.rev>1?" Rev. "+a.rev:""}</b></dd><dt>Datum</dt><dd>${fmt(dat)}</dd><dt>Gültig bis</dt><dd>${fmt(bis)}</dd>${k.knr?`<dt>Kundennummer</dt><dd>${esc(k.knr)}</dd>`:""}</dl></div>
+ <h2 class="rt">Angebot ${esc(a.nr)}${a.betreff?" · "+esc(a.betreff):""}</h2>
+ <p class="rp">${anrede}<br>vielen Dank für Ihre Anfrage. Gern bieten wir Ihnen die folgenden Leistungen an:</p>`}];
+ zeilen.forEach((z,i)=>B.push({t:"zeile",h:`<tr><td>${i+1}</td><td><b>${esc(z.bez||"")}</b>${z.st?" *":""}${txt(z.text)}</td><td>${de(+z.menge||0,(+z.menge||0)%1?2:0)}</td><td>${esc(z.einheit||"")}</td><td>${eur(+z.ep||0)}</td><td>${eur((+z.menge||0)*(+z.ep||0))}</td></tr>`}));
+ B.push({t:"block",h:`${nb.length?'<p class="ahinw">* geschätzter Wert, Abrechnung nach tatsächlichem Aufwand.</p>':""}<div class="rsum"><div><span>Summe netto</span><b>${eur(r.netto)}</b></div><div><span>zzgl. ${de(r.mw,0)} % USt.</span><b>${eur(r.mwst)}</b></div><div class="tot"><span>Angebotssumme</span><b>${eur(r.brutto)}</b></div></div>`});
+ rb.forEach((x,i)=>B.push({t:"block",h:`${i===0?'<h3 class="kdh">Rahmenbedingungen</h3>':""}<p class="arb"><b>${esc(x.titel)}</b><br>${esc(x.text).replace(/\n/g,"<br>")}</p>`}));
+ B.push({t:"block",h:`<p class="rp" style="margin-top:14px">Zahlungsziel: ${+(a.zahlungsziel??P.ziel)} Tage nach Rechnungsstellung ohne Abzug. An dieses Angebot halten wir uns bis zum <b>${fmt(bis)}</b> gebunden. Wir freuen uns auf Ihren Auftrag.<br><br>Mit freundlichen Grüßen<br>${namen.map(esc).join(" · ")}<br>NOVIS Anlagentechnik GmbH i. G.</p>`});
+ return B}
+function angebotSeiten(ziel,a){
+ const frei=["frei","vers","angenommen","abgelehnt"].includes(a.status),B=angebotBloecke(a),GRENZE=1123-96-46-24;
+ const fuss=`${SWOOSH}<div class="rf"><div><b>NOVIS Anlagentechnik GmbH i. G.</b><br>Bornweg 34a<br>63599 Biebergemünd</div><div><b>Kontakt</b><br>${esc(S.cfg.firma.mail)}${S.cfg.firma.tel?"<br>Tel. "+esc(S.cfg.firma.tel):""}<br>www.novis-anlagentechnik.de</div><div><b>Geschäftsführung</b><br>Jens Röll, Florian Pötzsch<br>Amtsgericht Hanau, ${esc(S.cfg.firma.hrb?"HRB "+S.cfg.firma.hrb:"HRB folgt")}</div><div><b>Bank / Steuer</b><br>${esc(S.cfg.firma.iban||"IBAN folgt")}<br>${esc(S.cfg.firma.ust?"USt-IdNr. "+S.cfg.firma.ust:"USt-IdNr. folgt")}</div></div>`;
+ const kopfTab='<table class="mtb rtb atb"><thead><tr><th>Pos.</th><th>Bezeichnung</th><th>Menge</th><th>Einheit</th><th>Einzelpreis</th><th>Gesamt</th></tr></thead><tbody></tbody></table>';
+ ziel.innerHTML="";const seiten=[];let body,tab=null;
+ const neueSeite=()=>{const pg=document.createElement("div");pg.className="pg pt angp";
+  pg.innerHTML=`${frei?"":'<div class="aentw">ENTWURF</div>'}<img class="rhimg${seiten.length?" klein":""}" src="${IMG_HEAD}" alt="NOVIS Anlagentechnik · Service redefined.">${seiten.length?`<div class="afolge">Angebot ${esc(a.nr)}${a.rev>1?" Rev. "+a.rev:""}</div>`:""}<div class="abody"></div>${fuss}<div class="aseite"></div>`;
+  ziel.appendChild(pg);seiten.push(pg);body=pg.querySelector(".abody");tab=null};
+ const voll=()=>body.offsetTop+body.offsetHeight>GRENZE;
+ neueSeite();
+ for(const x of B){
+  if(x.t==="zeile"){
+   if(!tab){body.insertAdjacentHTML("beforeend",kopfTab);tab=body.lastElementChild.querySelector("tbody")}
+   tab.insertAdjacentHTML("beforeend",x.h);
+   if(voll()&&tab.children.length>1){tab.lastElementChild.remove();neueSeite();body.insertAdjacentHTML("beforeend",kopfTab);tab=body.lastElementChild.querySelector("tbody");tab.insertAdjacentHTML("beforeend",x.h)}
+   else if(voll()&&tab.children.length===1&&body.children.length>1){tab.closest("table").remove();neueSeite();body.insertAdjacentHTML("beforeend",kopfTab);tab=body.lastElementChild.querySelector("tbody");tab.insertAdjacentHTML("beforeend",x.h)}
+  }else{tab=null;const w=document.createElement("div");w.innerHTML=x.h;body.appendChild(w);
+   if(voll()&&body.children.length>1){w.remove();neueSeite();body.appendChild(w)}}
+ }
+ seiten.forEach((pg,i)=>{pg.querySelector(".aseite").textContent=seiten.length>1?`Seite ${i+1} von ${seiten.length}`:""});
+ return seiten.length}
 
 /* ---------- Ereignisse ---------- */
 document.addEventListener("click",e=>{
@@ -1738,12 +2020,14 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape"&&(S.drawer||S.sel||S
 (async()=>{
  $("#view").innerHTML='<div class="lade">N-Flow lädt …</div>';
  let ich=null;
- try{ich=await NF.start({sammlungen:["kunden","anlagen","auftraege","berichte","rechnungen","abwesenheiten","belege","zeiten","artikel","arbeitsmittel","einstellungen","fahrzeuge","mahnungen"],kurz:true,nummern:DRUCK?[]:["A","NV","K"]})}
+ try{ich=await NF.start({sammlungen:["kunden","anlagen","auftraege","berichte","rechnungen","abwesenheiten","belege","zeiten","artikel","arbeitsmittel","einstellungen","fahrzeuge","mahnungen","angebote"],kurz:true,nummern:DRUCK?[]:["A","NV","K"]})}
  catch(e){if(DRUCK){window.NF_DRUCK={fertig:true,fehler:e.message};return}$("#view").innerHTML=`<div class="lade">${esc(e.message)}</div>`;return}
  if(!ich){if(DRUCK)window.NF_DRUCK={fertig:true,fehler:"Druckmodus nicht angemeldet"};return}
  if(DRUCK){RECHTE=ich.rechte||{};S.voll={};aufbauen();drucken(DRUCK,DRUCK_Q.get("id")||"");return}
  RECHTE=ich.rechte||{};
  if(!RECHTE.planung){location.replace("/app/");return}
+ const ausLink=()=>{const m=/^#angebot=(.+)$/.exec(location.hash);if(!m||!RECHTE.kalkulation)return;S.view="kalk";S.kalkTab="angebot";S.kalkId=decodeURIComponent(m[1]);S.drawer=null;history.replaceState(null,"",location.pathname+location.search)};
+ ausLink();window.addEventListener("hashchange",()=>{ausLink();render()});
  S.voll={};aufbauen();render();adminLaden();
  const beschaeftigt=()=>S.drawer||S.emp||S.a4||S.rv||S.preview||/INPUT|TEXTAREA|SELECT/.test((document.activeElement||{}).tagName||"");
  NF.bei("aenderung",()=>{if(beschaeftigt()){S._spaeter=true;return}aufbauen();render()});

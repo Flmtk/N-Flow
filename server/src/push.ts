@@ -17,6 +17,7 @@ export const ARTEN = {
   system: "Wartung und Updates von N-Flow",
   stoerung: "Neue Störmeldung über QR-Aufkleber (Büro)",
   info: "Neue Infos vom Büro (Bereich Info)",
+  freigabe: "Angebote zur Freigabe (Geschäftsführung)",
 } as const;
 export type Art = keyof typeof ARTEN;
 

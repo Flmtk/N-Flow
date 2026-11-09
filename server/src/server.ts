@@ -20,6 +20,7 @@ import { druckBeenden } from "./druck.js";
 import { infoBeobachten, infoRouten } from "./info.js";
 import { mahnwesenPlanen } from "./mahnwesen.js";
 import { einsatzhilfeRouten } from "./einsatzhilfe.js";
+import { angebotRouten } from "./angebote.js";
 
 const app = Fastify({
   logger: { level: config.produktion ? "info" : "debug" },
@@ -49,6 +50,7 @@ await app.register(mailRouten);
 await app.register(ablageRouten);
 await app.register(infoRouten);
 await app.register(einsatzhilfeRouten);
+await app.register(angebotRouten);
 
 const webOrdner = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../web");
 await app.register(fastifyStatic, { root: webOrdner, index: ["index.html"] });

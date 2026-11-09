@@ -8,6 +8,7 @@ import { nachSpeichern } from "../push.js";
 import { nachSpeichernAblage } from "../ablage.js";
 import { nachSpeichernLager } from "../lager.js";
 import { nachSpeichernWissen } from "../einsatzhilfe.js";
+import { ANGEBOT_GESCHUETZT } from "../angebote.js";
 
 /**
  * Gemeinsamer Datenspeicher für Büro und Monteur-App.
@@ -16,7 +17,7 @@ import { nachSpeichernWissen } from "../einsatzhilfe.js";
  */
 
 type Daten = Record<string, unknown>;
-export type Kreis = "A" | "SB" | "RE" | "NV" | "K";
+export type Kreis = "A" | "SB" | "RE" | "NV" | "K" | "ANG";
 
 interface Regel {
   lesen: Recht;
@@ -43,6 +44,7 @@ export const SAMMLUNGEN: Record<string, Regel> = {
   mahnungen: { lesen: "rechnungen", schreiben: "rechnungen", loeschen: "admin", schluessel: "id" },
   kontakte: { lesen: "eigene", schreiben: "eigene", loeschen: "eigene" },
   einstellungen: { lesen: "eigene", schreiben: "admin", loeschen: "admin" },
+  angebote: { lesen: "kalkulation", schreiben: "kalkulation", loeschen: "kalkulation", kreis: "ANG", schluessel: "nr" },
 };
 
 /** Einstellungen: „preise“ (Preise, Warnungen) nur mit Recht „preise“, „allgemein“ für alle lesbar. */
@@ -52,6 +54,8 @@ function regelFuer(sammlung: string, id?: string): Regel | null {
   if (sammlung === "einstellungen" && id === "preise") return { ...r, lesen: "preise", schreiben: "preise" };
   // Vorlagen (Arbeitsschritte, Textbausteine) pflegt das Büro mit dem Recht „Plantafel“
   if (sammlung === "einstellungen" && id === "vorlagen") return { ...r, schreiben: "planung" };
+  // Kalkulation: Preise, interne Kosten und Textbausteine nur für die Geschäftsführung
+  if (sammlung === "einstellungen" && id === "kalkulation") return { ...r, lesen: "kalkulation", schreiben: "kalkulation" };
   return r;
 }
 
@@ -61,8 +65,9 @@ const FORMAT: Record<Kreis, (n: number, jahr: number) => string> = {
   RE: (n, j) => `RE-${j}-${String(n).padStart(4, "0")}`,
   NV: (n) => `NV-${String(n).padStart(5, "0")}`,
   K: (n) => `K-${10000 + n}`,
+  ANG: (n, j) => `ANG-${j}-${String(n).padStart(4, "0")}`,
 };
-const MIT_JAHR: Record<Kreis, boolean> = { A: true, SB: true, RE: true, NV: false, K: false };
+const MIT_JAHR: Record<Kreis, boolean> = { A: true, SB: true, RE: true, NV: false, K: false, ANG: true };
 
 /** Zieht fortlaufende Nummern. Rechnungsnummern nur einzeln beim Anlegen (lückenlos). */
 export async function nummernZiehen(kreis: Kreis, anzahl: number, db: typeof sql = sql): Promise<string[]> {
@@ -105,6 +110,16 @@ function pruefe(s: string, b: Benutzer, r: Rechte, alt: Daten | null, neu: Daten
     const km = neu.km;
     for (const k of Object.keys(neu)) delete neu[k];
     Object.assign(neu, alt, { lager: { ...lagerAlt, bestand: lagerNeu.bestand ?? lagerAlt.bestand }, km: km ?? alt.km });
+  }
+  if (s === "angebote") {
+    // Status und Freigabe ändern nur die Routen in angebote.ts (Vier-Augen-Prinzip)
+    if (alt) {
+      if (alt.status !== "entwurf") return "Eingereichte oder freigegebene Angebote können nicht mehr geändert werden. Bitte eine neue Fassung anlegen.";
+      for (const k of ANGEBOT_GESCHUETZT) neu[k] = alt[k];
+    } else {
+      for (const k of ANGEBOT_GESCHUETZT) delete neu[k];
+      Object.assign(neu, { status: "entwurf", rev: 1, erstellt: { von: b.id, name: b.name, zeit: new Date().toISOString() }, verlauf: [] });
+    }
   }
   if (s === "anlagen" && !r.planung && alt) {
     // Vertragsdaten und Pool-Zuordnung bestimmt das Büro
@@ -228,7 +243,7 @@ export async function datenRouten(app: FastifyInstance): Promise<void> {
         } else if (s === "rechnungen" && teil.status && teil.status !== altDaten?.status) {
           await protokolliere(b.name, "Rechnung " + String(teil.status), id);
         } else if (s === "einstellungen") {
-          await protokolliere(b.name, id === "preise" ? "Preise geändert" : "Einstellungen geändert", Object.keys(teil).join(", "));
+          await protokolliere(b.name, id === "preise" ? "Preise geändert" : id === "kalkulation" ? "Kalkulation: Preise und Sätze geändert" : "Einstellungen geändert", Object.keys(teil).join(", "));
         }
         return { code: 200, zeile: z, alt: altDaten };
       } catch (err) {

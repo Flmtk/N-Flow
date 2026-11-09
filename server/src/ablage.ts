@@ -21,7 +21,7 @@ import { freischalten, hochladen, ordner, spEingerichtet, spStatus } from "./sha
  * wird es später erneut versucht; nichts geht verloren.
  */
 
-export type AblageArt = "kunde" | "bericht" | "rechnung" | "beleg" | "unterlage" | "mahnung" | "belegliste";
+export type AblageArt = "kunde" | "bericht" | "rechnung" | "beleg" | "unterlage" | "mahnung" | "belegliste" | "angebot";
 type Daten = Record<string, unknown>;
 
 class Warten extends Error {}
@@ -160,6 +160,21 @@ async function verarbeiten(art: AblageArt, ref: string): Promise<string | null> 
     const e = await hochladen(o.id, ["Rechnungen", `${m.re} ${m.name ?? "Mahnung"} ${m.datum ?? ""}.pdf`], await pdfErzeugen("mahnung", ref), "application/pdf");
     return e.webUrl;
   }
+  if (art === "angebot") {
+    // Nur freigegebene Angebote; Kunden unter Kunden › … › Angebote, Interessenten unter Angebote › Interessenten › Name
+    const a = await lade("angebote", ref);
+    if (!a || !["frei", "vers", "angenommen", "abgelehnt"].includes(String(a.status))) return null;
+    const k = (a.kunde ?? {}) as Daten, rev = Number(a.rev ?? 1);
+    const name = `${ref}${rev > 1 ? " Rev" + rev : ""} ${String(a.betreff ?? "").replace(/[\\/:*?"<>|#%]/g, " ").trim()}.pdf`.replace(/\s+/g, " ");
+    const pdf = await pdfErzeugen("angebot", ref);
+    if (!a.interessent && k.knr) {
+      const o = await kundenOrdner(String(k.knr));
+      return (await hochladen(o.id, ["Angebote", name], pdf, "application/pdf")).webUrl;
+    }
+    const w = await ordner("wurzel:Angebote", null, "Angebote");
+    const kn = String(k.name || "Ohne Namen").replace(/[\\/:*?"<>|#%]/g, " ").trim().slice(0, 80);
+    return (await hochladen(w.id, ["Interessenten", kn, name], pdf, "application/pdf")).webUrl;
+  }
   if (art === "unterlage") {
     const [nv, dateiId] = ref.split("|");
     const a = await lade("anlagen", nv);
@@ -224,7 +239,7 @@ export function ablageStarten(): void {
   setInterval(() => void abarbeiten(), 20_000);
 }
 
-const DRUCK_RECHT = { bericht: "berichte_pruefen", rechnung: "rechnungen", kunde: "planung", mahnung: "rechnungen", belegliste: "rechnungen" } as const;
+const DRUCK_RECHT = { bericht: "berichte_pruefen", rechnung: "rechnungen", kunde: "planung", mahnung: "rechnungen", belegliste: "rechnungen", angebot: "kalkulation" } as const;
 
 export async function ablageRouten(app: FastifyInstance): Promise<void> {
   app.get("/api/ablage", { preHandler: brauche("admin") }, async () => {

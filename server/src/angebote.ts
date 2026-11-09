@@ -41,10 +41,16 @@ async function aendern(id: string, teil: Daten, b: Benutzer, schritt: string): P
   return z.d;
 }
 
+/** Rabatt wie im Büro: in % oder € auf die Leistungen (nicht auf geschätzte Nebenkosten) */
+export function rabattBetrag(a: Daten, leist: number): number {
+  const r = (a.rabatt ?? {}) as { art?: string; wert?: number }, w = Math.max(0, Number(r.wert ?? 0) || 0);
+  return Math.round((r.art === "eur" ? Math.min(w, leist) : leist * Math.min(w, 100) / 100) * 100) / 100;
+}
 /** Summen wie im Büro (Positionen + Nebenkosten), für Mail und Liste */
 export function angebotSummen(a: Daten): { netto: number; brutto: number } {
-  const zeilen = [...((a.positionen ?? []) as { menge?: number; ep?: number }[]), ...((a.neben ?? []) as { menge?: number; ep?: number }[])];
-  const netto = zeilen.reduce((s, p) => s + Number(p.menge ?? 0) * Number(p.ep ?? 0), 0);
+  const summe = (l: unknown) => ((l ?? []) as { menge?: number; ep?: number }[]).reduce((s, p) => s + Number(p.menge ?? 0) * Number(p.ep ?? 0), 0);
+  const leist = summe(a.positionen), rab = rabattBetrag(a, leist);
+  const netto = leist - rab + summe(a.neben);
   const mwst = Number(a.mwst ?? 19);
   return { netto, brutto: netto * (1 + mwst / 100) };
 }
@@ -96,7 +102,9 @@ async function versandVorbereiten(id: string, a: Daten): Promise<{ mail: boolean
 /** Angenommenes Angebot mit Wartungspauschalen (aus einer Anlagenaufnahme): Vertrag an den Anlagen eintragen,
  *  Interessent wird Kunde. Die Pauschale aus dem Angebot gilt als vertragliche Pauschale. */
 async function wartungsvertraege(id: string, a: Daten, b: Benutzer): Promise<{ nv: string; vertrag: string; pausch: number }[]> {
-  const pos = ((a.positionen ?? []) as Daten[]).filter((p) => p.typ === "k01" && p.nv);
+  const alle = (a.positionen ?? []) as Daten[], pos = alle.filter((p) => p.typ === "k01" && p.nv);
+  const leist = alle.reduce((s, p) => s + Number(p.menge ?? 0) * Number(p.ep ?? 0), 0);
+  const faktor = leist > 0 ? 1 - rabattBetrag(a, leist) / leist : 1;
   const aus: { nv: string; vertrag: string; pausch: number }[] = [];
   for (const p of pos) {
     const nv = String(p.nv);
@@ -104,7 +112,7 @@ async function wartungsvertraege(id: string, a: Daten, b: Benutzer): Promise<{ n
     if (!z) continue;
     const anl = z.d, auf = (anl.aufnahme ?? {}) as Daten;
     const vertrag = anl.vertrag && anl.vertrag !== "Nr. folgt" ? String(anl.vertrag) : (await nummernZiehen("W", 1))[0];
-    const pausch = Math.round(Number(p.ep ?? 0) * 100) / 100;
+    const pausch = Math.round(Number(p.ep ?? 0) * faktor * 100) / 100;
     const teil: Daten = { vertrag, pausch, zyk: Number(anl.zyk ?? 12) || 12, betreuer: anl.betreuer ?? auf.von ?? null,
       aufnahme: { ...auf, status: "vertrag", angebot: id, vertragAb: jetzt().slice(0, 10) } };
     await sql`update daten set daten = daten || ${sql.json(teil as never)}, version = version + 1, geaendert_am = clock_timestamp(), geaendert_von = ${b.name}
@@ -130,6 +138,7 @@ export async function angebotRouten(app: FastifyInstance) {
   route("einreichen", async (b, id, a) => {
     if (a.status !== "entwurf") throw nein("Nur Entwürfe können eingereicht werden.");
     if (!((a.positionen ?? []) as unknown[]).length) throw nein("Das Angebot hat noch keine Positionen.", 400);
+    if (!String(((a.kunde ?? {}) as Daten).name ?? "").trim()) throw nein("Bitte zuerst den Auftraggeber eintragen.", 400);
     const d = await aendern(id, { status: "pruef", eingereicht: wer(b) }, b, "Zur Freigabe eingereicht");
     await protokolliere(b.name, "Angebot zur Freigabe eingereicht", id);
     void pushSenden(await geschaeftsfuehrung(b.id), "freigabe", `Angebot ${id} zur Freigabe`, `${b.name}: ${String(a.betreff ?? "")}`, `/buero/#angebot=${encodeURIComponent(id)}`);

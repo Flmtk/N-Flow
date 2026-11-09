@@ -428,6 +428,8 @@ body{padding:0}
 .kta:disabled,.knum:disabled,.kin:disabled{background:transparent;border-color:transparent;color:var(--fg);opacity:1}
 .kta:disabled:placeholder-shown{display:none}
 .kein0{color:var(--muted);font-size:13px}.kst{color:var(--accent)}
+.krab{align-items:center}.krabin{display:flex;align-items:center;gap:6px}.krabin .knum{width:70px}.kseg{display:inline-flex;padding:2px}.kseg button{padding:3px 9px;font-size:13px}
+.krz span:last-child{color:var(--accent)}
 .kk01{display:block;font-size:12.5px;color:var(--muted);margin-top:4px}.kk01 b{color:var(--accent)}
 .kaufg{display:flex;flex-direction:column;gap:10px;padding:12px 0;border-top:1px solid var(--line)}.kaufg:first-of-type{border-top:0;padding-top:0}.kaufk{display:flex;flex-direction:column}.kaufk span{color:var(--muted);font-size:13px}
 .kstd{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted);margin-top:6px}
@@ -1679,11 +1681,17 @@ const kNeben=P=>[["km","Personal- und Reisekosten","km",+(P.kmPersonal+P.kmFahrz
  ["tage","Tagespauschale Messgerät","Tag",P.messTag,""],["naechte","Übernachtungspauschale","Nacht",P.nacht,"Abrechnung nach Anzahl der Übernachtungen"]];
 const kZ=v=>{const x=parseFloat(String(v).replace(/\s/g,"").replace(/\.(?=\d{3}(\D|$))/g,"").replace(",","."));return isNaN(x)?0:x};
 function kRechnen(a,P){P=P||KP();const pos=a.positionen||[],nb=a.neben||[],g=k=>+((nb.find(n=>n.art===k)||{}).menge||0);
- const leist=pos.reduce((s,p)=>s+(+p.menge||0)*(+p.ep||0),0),nebenSum=nb.reduce((s,n)=>s+(+n.menge||0)*(+n.ep||0),0),netto=leist+nebenSum;
+ const leist=pos.reduce((s,p)=>s+(+p.menge||0)*(+p.ep||0),0),nebenSum=nb.reduce((s,n)=>s+(+n.menge||0)*(+n.ep||0),0);
+ const rb=a.rabatt||{},rw=Math.max(0,+rb.wert||0),rab=Math.round((rb.art==="eur"?Math.min(rw,leist):leist*Math.min(rw,100)/100)*100)/100,netto=leist-rab+nebenSum;
  const fk=pos.filter(p=>p.typ==="k01").reduce((s,p)=>s+2*(+p.km||0)*(+p.menge||0),0),kmG=g("km")+fk;
  const mw=+(a.mwst??P.mwst),mwst=netto*mw/100,std=pos.reduce((s,p)=>s+(+p.menge||0)*(+p.std||0),0),fahrt=kmG/(+P.tempo||1);
  const kosten=[["Arbeitszeit",std*P.intStd],["Fahrzeit",fahrt*P.intStd],["Fahrzeug",kmG*P.intKm],["Messgerät",g("tage")*P.intMess],["Übernachtung",g("naechte")*P.intNacht]];
- const ks=kosten.reduce((s,k)=>s+k[1],0),db=netto-ks;return{leist,nebenSum,netto,mw,mwst,brutto:netto+mwst,kosten,db,marge:netto?db/netto*100:0}}
+ const ks=kosten.reduce((s,k)=>s+k[1],0),db=netto-ks;return{leist,rab,rabTxt:rab>0?(rb.art==="eur"?"Rabatt auf Leistungen":`Rabatt ${de(rw,rw%1?1:0)} % auf Leistungen`):"",nebenSum,netto,mw,mwst,brutto:netto+mwst,kosten,db,marge:netto?db/netto*100:0}}
+/* Was vor dem Einreichen fehlt */
+function kFehlt(a){const k=a.kunde||{},pos=a.positionen||[],f=[];
+ if(!String(k.name||"").trim())f.push("Auftraggeber");if(!String(k.anschrift||"").trim())f.push("Anschrift");if(!String(a.betreff||"").trim()||a.betreff==="Neues Angebot")f.push("Betreff");
+ if(!pos.length)f.push("Positionen");else if(pos.some(p=>!(+p.menge>0)||!(+p.ep>0)))f.push("Menge oder Preis bei einer Position");
+ if(pos.some(p=>p.typ==="frei"&&!String(p.bez||"").trim()))f.push("Bezeichnung einer freien Position");return f}
 const kIchFrei=a=>a.status==="pruef"&&ICH_ID()!==(a.erstellt||{}).von&&ICH_ID()!==(a.eingereicht||{}).von;
 const ICH_ID=()=>(NF.ich&&NF.ich.benutzer&&NF.ich.benutzer.id)||"";
 const AUFN=()=>NF.liste("anlagen").filter(a=>a&&a.nv&&a.aufnahme);
@@ -1728,7 +1736,8 @@ function kAngebot(a){const P=KP(),dis=a.status!=="entwurf"?"disabled":"",k=a.kun
  const andere=(TECHS||[]).filter(t=>t.id!==ich&&t.rolle==="Geschäftsführung").map(t=>t.name.split(" ")[0]).join(" / ")||"andere Geschäftsführung";
  const verlauf=(a.verlauf||[]).slice(-8);
  let akt="";
- if(a.status==="entwurf")akt=`<button type="button" class="btn" data-kaktion="einreichen">Zur Freigabe an ${esc(andere)}</button><button type="button" class="btn sec" data-kpdf="1">PDF-Vorschau</button><button type="button" class="btn sec" data-kloesch="1">Entwurf löschen</button>`;
+ const fehlt=a.status==="entwurf"?kFehlt(a):[];
+ if(a.status==="entwurf")akt=`${fehlt.length?`<div class="kwarte" id="kFehlt">Vor dem Einreichen fehlt noch: <b>${esc(fehlt.join(", "))}</b></div>`:'<div class="kwarte" id="kFehlt" hidden></div>'}<button type="button" class="btn" data-kaktion="einreichen" ${fehlt.length?"disabled":""}>Zur Freigabe an ${esc(andere)}</button><button type="button" class="btn sec" data-kpdf="1">PDF-Vorschau</button><button type="button" class="btn sec" data-kloesch="1">Entwurf löschen</button>`;
  else if(a.status==="pruef")akt=kIchFrei(a)?`<button type="button" class="btn" data-kaktion="freigeben">Freigeben</button><button type="button" class="btn sec" data-kpdf="1">PDF-Vorschau</button>
    <textarea class="kta" id="kAnm" rows="2" placeholder="Anmerkung beim Zurückgeben"></textarea><button type="button" class="btn sec" data-kaktion="zurueck">Zurückgeben</button>`
    :`<div class="kwarte">Wartet auf die Freigabe durch ${esc(andere)}</div><button type="button" class="btn sec" data-kaktion="zurueck">Zurückholen</button>`;
@@ -1758,7 +1767,10 @@ function kAngebot(a){const P=KP(),dis=a.status!=="entwurf"?"disabled":"",k=a.kun
   <div class="panel"><h3>Rahmenbedingungen</h3><div class="krb">${P.bausteine.map(b=>`<label><input type="checkbox" data-krb="${esc(b.id)}" ${(a.rb||[]).includes(b.id)?"checked":""} ${dis}><span><b>${esc(b.titel)}</b><small>${esc(b.text)}</small></span></label>`).join("")}</div></div>
  </div>
  <div class="kr">
-  <div class="panel"><h3>Summe</h3><div class="ksum"><div><span>Leistungen</span><span id="ks-l">${eur(r.leist)}</span></div><div><span>Nebenkosten <span class="kst">*</span></span><span id="ks-n">${eur(r.nebenSum)}</span></div>
+  <div class="panel"><h3>Summe</h3><div class="ksum"><div><span>Leistungen</span><span id="ks-l">${eur(r.leist)}</span></div><div class="krab"><span>Rabatt</span><span class="krabin"><input class="knum" inputmode="decimal" data-krab="wert" value="${(a.rabatt||{}).wert?de(+a.rabatt.wert,(+a.rabatt.wert)%1?2:0):""}" placeholder="0" ${dis} aria-label="Rabatt">
+    <span class="seg kseg" role="group" aria-label="Rabatt in"><button type="button" data-krabart="proz" aria-pressed="${(a.rabatt||{}).art!=="eur"}" ${dis}>%</button><button type="button" data-krabart="eur" aria-pressed="${(a.rabatt||{}).art==="eur"}" ${dis}>€</button></span></span></div>
+   <div class="krz" ${r.rab>0?"":"hidden"}><span>abzgl. Rabatt</span><span id="ks-r">− ${eur(r.rab)}</span></div>
+   <div><span>Nebenkosten <span class="kst">*</span></span><span id="ks-n">${eur(r.nebenSum)}</span></div>
    <div class="kn"><span>Netto</span><b id="ks-net">${eur(r.netto)}</b></div><div><span>MwSt. ${de(r.mw,0)} %</span><span id="ks-mw">${eur(r.mwst)}</span></div><div class="kb"><span>Brutto</span><span id="ks-br">${eur(r.brutto)}</span></div></div></div>
   <div class="panel"><h3>Intern <span style="margin-left:auto;font-size:28px;font-weight:700;font-variant-numeric:tabular-nums" id="km">${de(r.marge,1)} %</span></h3>
    <div class="kbal" id="kbal"><i></i><b style="left:${Math.max(0,Math.min(100,P.margeMin))}%"></b></div><div class="kint" id="kint"></div></div>
@@ -1768,9 +1780,10 @@ function kAngebot(a){const P=KP(),dis=a.status!=="entwurf"?"disabled":"",k=a.kun
 
 /* Werte live aktualisieren, ohne neu aufzubauen */
 let KBAL=null;
-function kWerte(){const a=NF.get("angebote",S.kalkId);if(!a)return;const P=KP(),r=kRechnen(a,P),set=(id,t)=>{const e=document.getElementById(id);if(e&&e.textContent!==t)e.textContent=t};
+function kWerte(){const a=NF.get("angebote",S.kalkId);if(!a)return;
+ if(a.status==="entwurf"){const f=kFehlt(a),box=$("#kFehlt"),kn=document.querySelector('[data-kaktion="einreichen"]');if(box){box.hidden=!f.length;box.innerHTML=f.length?`Vor dem Einreichen fehlt noch: <b>${esc(f.join(", "))}</b>`:""}if(kn)kn.disabled=!!f.length}const P=KP(),r=kRechnen(a,P),set=(id,t)=>{const e=document.getElementById(id);if(e&&e.textContent!==t)e.textContent=t};
  (a.positionen||[]).forEach((p,i)=>set("kz-"+i,eur((+p.menge||0)*(+p.ep||0))));(a.neben||[]).forEach((n,i)=>set("kn-"+i,eur((+n.menge||0)*(+n.ep||0))));
- set("ks-l",eur(r.leist));set("ks-n",eur(r.nebenSum));set("ks-net",eur(r.netto));set("ks-mw",eur(r.mwst));set("ks-br",eur(r.brutto));set("km",de(r.marge,1)+" %");
+ set("ks-l",eur(r.leist));set("ks-r","− "+eur(r.rab));const rz=document.querySelector(".krz");if(rz)rz.hidden=!(r.rab>0);set("ks-n",eur(r.nebenSum));set("ks-net",eur(r.netto));set("ks-mw",eur(r.mwst));set("ks-br",eur(r.brutto));set("km",de(r.marge,1)+" %");
  const b=$("#kbal");if(b){b.classList.toggle("wa",r.marge<P.margeMin);const i=b.querySelector("i");KBAL=KBAL&&KBAL.el===i?KBAL:{el:i,f:new NFB.Feder(r.marge,m=>{i.style.transform=`scaleX(${Math.max(0,Math.min(100,m))/100})`})};
   if(KBAL.f.x===r.marge)KBAL.f.setze(r.marge);else KBAL.f.zu(r.marge,{antwort:.4})}
  const ki=$("#kint");if(ki)ki.innerHTML=r.kosten.map(k=>`<div><span>${k[0]}</span><span>${eur(k[1])}</span></div>`).join("")+`<div class="kdb"><span>Deckungsbeitrag</span><span>${eur(r.db)}</span></div>`}
@@ -1819,6 +1832,7 @@ document.addEventListener("click",async e=>{if(S.view!=="kalk")return;const t=e.
   pos.push(c?{typ:"leistung",k:c.id,bez:c.bez,text:c.text||"",menge:1,einheit:c.einheit,ep:c.ep,std:c.std}:{typ:"frei",bez:"",text:"",menge:1,einheit:"Stk.",ep:0,std:0});kSpeichere({positionen:pos});render();return}
  if(d.kdel&&a){const pos=[...(a.positionen||[])];pos.splice(+d.kdel,1);kSpeichere({positionen:pos});render();return}
  if(d.kart&&a){kSpeichere({interessent:d.kart==="1"});render();return}
+ if(d.krabart&&a){kSpeichere({rabatt:{art:d.krabart,wert:+((a.rabatt||{}).wert)||0}});render();return}
  if(d.kloesch&&a){if(t.dataset.sicher!=="1"){t.dataset.sicher="1";t.textContent="Wirklich löschen?";return}NF.loesche("angebote",a.nr);S.kalkId=null;S.kalkTab="liste";save();render();toast("Entwurf gelöscht");return}
  if(d.kpdf&&a){for(let i=0;i<50&&NF.ausstehend("angebote",a.nr);i++){NF.senden();await new Promise(r=>setTimeout(r,100))}window.open("/api/druck/angebot/"+encodeURIComponent(a.nr),"_blank","noopener");return}
  if(d.kaktion&&a){t.disabled=true;if(d.kaktion==="freigeben"){t.textContent="PDF und Mail werden erstellt …"};await kAktion(d.kaktion,d.kaktion==="zurueck"?{anmerkung:($("#kAnm")||{}).value||""}:{});return}
@@ -1838,6 +1852,8 @@ function kFeld(t,speichern){const a=S.kalkId&&NF.get("angebote",S.kalkId),d=t.da
  if(d.kn&&a){const[i,f]=d.kn.split("|"),nb=(a.neben||[]).map(x=>Object.assign({},x));if(!nb[+i])return;nb[+i][f]=f==="menge"?kZ(t.value):t.value;
   if(speichern)kSpeichere({neben:nb});else{a.neben=nb;kWerte()}return true}
  if(d.kk&&a&&speichern){kSpeichere({kunde:Object.assign({},a.kunde||{},{[d.kk]:t.value.trim()})});return true}
+ if(d.krab&&a&&speichern){kSpeichere({rabatt:{art:(a.rabatt||{}).art==="eur"?"eur":"proz",wert:kZ(t.value)}});return true}
+ if(d.krab&&a){a.rabatt={art:(a.rabatt||{}).art==="eur"?"eur":"proz",wert:kZ(t.value)};kWerte();return true}
  if(d.ka&&a&&speichern){kSpeichere({[d.ka]:t.value.trim()});if(d.ka==="betreff")$("#top h1").textContent=t.value.trim()||a.nr;return true}
  const P=KP();
  if(d.ks&&speichern){kSetSpeichere({[d.ks]:kZ(t.value)});return true}
@@ -1934,7 +1950,7 @@ function angebotBloecke(a){const P=KP(),k=a.kunde||{},r=kRechnen(a,P),pos=a.posi
  <h2 class="rt">Angebot ${esc(a.nr)}${a.betreff?" · "+esc(a.betreff):""}</h2>
  <p class="rp">${anrede}<br>vielen Dank für Ihre Anfrage. Gern bieten wir Ihnen die folgenden Leistungen an:</p>`}];
  zeilen.forEach((z,i)=>B.push({t:"zeile",h:`<tr><td>${i+1}</td><td><b>${esc(z.bez||"")}</b>${z.st?" *":""}${txt(z.text)}</td><td>${de(+z.menge||0,(+z.menge||0)%1?2:0)}</td><td>${esc(z.einheit||"")}</td><td>${eur(+z.ep||0)}</td><td>${eur((+z.menge||0)*(+z.ep||0))}</td></tr>`}));
- B.push({t:"block",h:`${nb.length?'<p class="ahinw">* geschätzter Wert, Abrechnung nach tatsächlichem Aufwand.</p>':""}<div class="rsum"><div><span>Summe netto</span><b>${eur(r.netto)}</b></div><div><span>zzgl. ${de(r.mw,0)} % USt.</span><b>${eur(r.mwst)}</b></div><div class="tot"><span>Angebotssumme</span><b>${eur(r.brutto)}</b></div></div>`});
+ B.push({t:"block",h:`${nb.length?'<p class="ahinw">* geschätzter Wert, Abrechnung nach tatsächlichem Aufwand.</p>':""}<div class="rsum">${r.rab>0?`<div><span>Summe Leistungen${r.nebenSum>0?"":""}</span><b>${eur(r.leist)}</b></div><div><span>abzgl. ${esc(r.rabTxt)}</span><b>− ${eur(r.rab)}</b></div>${r.nebenSum>0?`<div><span>Nebenkosten *</span><b>${eur(r.nebenSum)}</b></div>`:""}`:""}<div><span>Summe netto</span><b>${eur(r.netto)}</b></div><div><span>zzgl. ${de(r.mw,0)} % USt.</span><b>${eur(r.mwst)}</b></div><div class="tot"><span>Angebotssumme</span><b>${eur(r.brutto)}</b></div></div>`});
  rb.forEach((x,i)=>B.push({t:"block",h:`${i===0?'<h3 class="kdh">Rahmenbedingungen</h3>':""}<p class="arb"><b>${esc(x.titel)}</b><br>${esc(x.text).replace(/\n/g,"<br>")}</p>`}));
  B.push({t:"block",h:`<p class="rp" style="margin-top:14px">Zahlungsziel: ${+(a.zahlungsziel??P.ziel)} Tage nach Rechnungsstellung ohne Abzug. An dieses Angebot halten wir uns bis zum <b>${fmt(bis)}</b> gebunden. Wir freuen uns auf Ihren Auftrag.<br><br>Mit freundlichen Grüßen<br>${namen.map(esc).join(" · ")}<br>NOVIS Anlagentechnik GmbH i. G.</p>`});
  return B}

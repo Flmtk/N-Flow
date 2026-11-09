@@ -1,5 +1,13 @@
 # N-Flow · Liste der Updates
 
+## Update „Rabatt und Prüfung vor dem Einreichen“ (09.11.2026)
+
+Einspielen: `cd /docker/n-flow-test && sh ops/update.sh`, danach das Büro neu laden.
+
+- [x] Rabatt im Angebot, in % oder €, für Druckregel-Angebote und Wartungsverträge. Er gilt für die Leistungen, nicht für die geschätzten Nebenkosten. Im PDF erscheinen „Summe Leistungen“ und „abzgl. Rabatt“ nur, wenn ein Rabatt eingetragen ist.
+- [x] Beim angenommenen Wartungsvertrag wird die Pauschale an der Anlage mit Rabatt gespeichert.
+- [x] Fehler behoben: Ein Angebot ließ sich ohne Auftraggeber einreichen und war danach gesperrt, man musste neu anfangen. Jetzt ist „Zur Freigabe“ gesperrt, bis Auftraggeber, Anschrift, Betreff und Positionen mit Menge und Preis da sind. Was fehlt, steht direkt darüber. Der Server prüft das zusätzlich.
+
 ## Update „Anlagenaufnahme und Wartungsvertrag“ (09.11.2026)
 
 Einspielen: `cd /docker/n-flow-test && sh ops/update.sh`. Keine neuen Einträge in der `.env`, keine Datenbank-Migration.

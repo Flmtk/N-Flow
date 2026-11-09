@@ -587,13 +587,17 @@ document.documentElement.style.setProperty("--qr",QR);
 function isDesk(){return S.vt?S.vt==="pc":window.innerWidth>=1000}
 function applyDesk(){const dk=isDesk();$("#phone").classList.toggle("desk",dk);
  document.querySelectorAll("[data-vt]").forEach(b=>b.setAttribute("aria-pressed",String((b.dataset.vt==="pc")===dk)))}
+let TMX=null;
 function renderTabs(){
  const q=S.queue.length,dk=isDesk();
  tabs.innerHTML=`<div class="navbrand">${NFDESIGN.logo()}<span class="topslogan"><i aria-hidden="true"></i>service redefined.</span><button type="button" class="ico" data-go="suche" aria-label="Anlage suchen">${I.lupe}</button></div>`+[["heute","Heute"],...(dk?[]:[["scan","Scannen"]]),["berichte","Berichte"],["info","Info"],["ich","Ich"]].map(([k,l])=>
   `<button type="button" data-tab="${k}" ${S.tab===k?'aria-current="page"':""}>${I[k]}<span>${l}</span>${k==="berichte"&&q?`<i class="badge">${q}</i>`:""}</button>`).join("");
  tabs.hidden=S.view==="einsatz"&&!dk;
- // Inhalt läuft unter der durchscheinenden Leiste durch: Platz unten freihalten
- $("#phone").style.setProperty("--tabh",tabs.hidden||dk?"0px":tabs.offsetHeight+"px");
+ // Schwebende Leiste: weiße Markierung gleitet vom alten zum neuen Reiter
+ if(!dk&&!tabs.hidden){const akt=tabs.querySelector('button[aria-current="page"]'),m=document.createElement("span");m.className="tmark";m.setAttribute("aria-hidden","true");tabs.prepend(m);
+  if(akt){const x=akt.offsetLeft,w=akt.offsetWidth;m.style.width=w+"px";m.style.transition="none";m.style.transform=`translateX(${TMX==null?x:TMX}px)`;void m.offsetWidth;m.style.transition="";m.style.transform=`translateX(${x}px)`;TMX=x}else m.style.opacity="0"}
+ // Inhalt läuft unter der schwebenden Leiste durch: Platz unten freihalten
+ $("#phone").style.setProperty("--tabh",tabs.hidden||dk?"0px":(tabs.offsetHeight+22)+"px");
 }
 function header(title,back,extra){
  top.classList.toggle("empty",!title&&!back&&!extra&&S.online);
@@ -630,6 +634,7 @@ function vHeute(){
  const datum=new Date().toLocaleDateString("de-DE",{weekday:"long",day:"numeric",month:"long"});
  main.innerHTML=`<div class="pad ios">
   <div class="ltitel"><h1>Heute</h1><p>${esc(datum)} · ${gruss()}, ${esc(TECH.name.split(" ")[0])}</p></div>
+  ${JOBS.length?`<div class="tkacheln"><div class="tk akz"><b>${offen.length}</b><span>offen</span></div><div class="tk"><b>${erledigt}</b><span>erledigt</span></div><div class="tk"><b>${de(JOBS.reduce((x,j)=>x+(parseFloat(String(j.dauer||0).replace(",","."))||0),0),1)}</b><span>Std. geplant</span></div></div>`:""}
   ${wartHint()}
   ${nx?`<button type="button" class="naechst" data-job="${esc(nx.id)}"><span class="nz">${esc(nx.zeit)}</span><span class="nd"><b>${esc(na.kunde.name1)}</b><span>${esc(na.kunde.str)}, ${esc(na.kunde.ort)}</span><span>${esc(geraetTxt(na))}</span></span></button>`:""}
   ${offen.length?`<div class="sekt"><span>Tour · ${offen.length} offen</span>${erledigt?`<span>${erledigt} erledigt</span>`:""}</div>

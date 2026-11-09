@@ -1,5 +1,22 @@
 # N-Flow · Liste der Updates
 
+## Update „Büro im Kartenstil, Navigation wählbar“ (09.11.2026)
+
+Einspielen: `cd /docker/n-flow-test && sh ops/update.sh`. Danach das Büro neu laden; die App am Handy einmal ganz schließen und neu öffnen (App-Cache v17).
+
+**Büro**
+- [x] Neue Übersicht mit echten Daten: offene Forderungen nach Alter, Umsatz des Monats, Einzuplanen, Berichte prüfen, fällige Wartungen, Diagramm Umsatz und Zahlungseingang (6 Monate), „Braucht Aufmerksamkeit“, letzte Vorgänge (Rechnungen, Berichte, Angebote), Heute unterwegs, Auslastung der Woche, Fahrzeuge. Ohne Preisrecht werden die Geldkarten ausgeblendet.
+- [x] Kartenstil: grauer Grund, weiße Karten mit großem Radius, Figtree, „| service redefined.“ oben rechts.
+- [x] Navigation wählbar unter Einstellungen › Allgemein › Navigation: „Seitenleiste links“ oder „Leiste unten“ (gilt für dieses Gerät).
+- [x] Links: schmale Leiste mit Zählern am Symbol, beim Überfahren leicht größer mit Schildchen; oben aufklappbar mit Namen, die Markierung gleitet mit.
+- [x] Unten: schwebende dunkle Leiste mit Übersicht, Plantafel, Kunden, Berichte, Rechnungen, Kalkulation; „Mehr“ für die übrigen Bereiche, Konto und Speicherstand; Plus für einen neuen Auftrag.
+- [x] Bereichswechsel mit gleitender Markierung und kurzer weicher Unschärfe.
+
+**Monteur-App**
+- [x] Schwebende dunkle Leiste unten mit gleitender weißer Markierung.
+- [x] Heute: drei Tageskacheln (offen, erledigt, Stunden geplant), Karten mit großem Radius.
+- [x] Desktop-App: Seitenleiste als runde Karte wie im Büro.
+
 ## Update „Monteur-App im Apple-Stil“ (09.11.2026)
 
 Einspielen: `cd /docker/n-flow-test && sh ops/update.sh`. Danach die App am Handy einmal ganz schließen und neu öffnen (App-Cache v16).

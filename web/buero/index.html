@@ -469,6 +469,7 @@ input[type=email]{width:100%;background:var(--surface2);border:1px solid transpa
 </style>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&family=Barlow+Condensed:wght@400&display=swap">
 <link rel="stylesheet" href="/css/design.css">
+<link rel="stylesheet" href="/css/buero-neu.css">
 <script src="/js/design.js"></script>
 <script src="/js/bewegung.js"></script>
 <script src="/js/vorlagen.js"></script>
@@ -507,6 +508,9 @@ const tt=m=>String(Math.floor(m/60)).padStart(2,"0")+":"+String(Math.round(m%60)
 const wd=(s,k)=>{let x=s;let n=0;while(n<k){x=addD(x,1);const g=D(x).getDay();if(g%6)n++}return x};
 let toastT;function toast(t){let el=$(".toast");if(!el){el=document.createElement("div");el.className="toast";el.setAttribute("role","status");document.body.appendChild(el)}el.textContent=t;el.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>el.hidden=true,2800)}
 const I={
+ klapp:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="3"/><path d="M9.5 4.5v15"/></svg>',
+ handy:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6.5" y="2.5" width="11" height="19" rx="2.5"/><path d="M10.5 18.5h3"/></svg>',
+ plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
  dash:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3.5" y="3.5" width="7" height="8" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="5" rx="1.5"/><rect x="13.5" y="11.5" width="7" height="9" rx="1.5"/><rect x="3.5" y="14.5" width="7" height="6" rx="1.5"/></svg>',
  plan:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4M8 14h3M13 14h3M8 17h3"/></svg>',
  wart:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v4h-4M12 8v4l3 2"/></svg>',
@@ -541,7 +545,7 @@ function ortPos(o){o=String(o||"").trim();if(ORT[o])return ORT[o];const w=o.spli
 function km(o1,o2){const a=ortPos(o1),b=ortPos(o2);if(!a||!b)return 30;const r=Math.PI/180,dl=(b[0]-a[0])*r,dg=(b[1]-a[1])*r,x=Math.sin(dl/2)**2+Math.cos(a[0]*r)*Math.cos(b[0]*r)*Math.sin(dg/2)**2;return Math.round(6371*2*Math.asin(Math.sqrt(x))*1.3)}
 function needs(a){if(a.intern)return[];const n=[a.en==="Öl"?"Öl":a.en==="Wärmepumpe"?"Wärmepumpe":"Gas"];if((a.details&&a.details.Brenner)||/WM-G|WL\d|Gebläse|\+/.test(a.ger))n.push("Brenner");return n}
 function regionTech(a){const m=MONT().filter(t=>needs(a).every(n=>t.skills.includes(n)));if(!m.length)return null;return m.sort((x,y)=>km(x.base,a.ort)-km(y.base,a.ort))[0].id}
-const KEY="nflow-buero-ui",UIKEYS=["view","week","filter","wfilter","wtech","q","aq","setTab","admTab","refilter","dbSel","anlTab"];
+const KEY="nflow-buero-ui",UIKEYS=["view","week","filter","wfilter","wtech","q","aq","setTab","admTab","refilter","dbSel","anlTab","sideOffen"];
 let S={view:"dash",week:monday(TODAY),filter:"alle",wfilter:"60",q:"",sel:null,drawer:null};
 let UI={};try{UI=JSON.parse(localStorage.getItem(KEY))||{};UIKEYS.forEach(k=>{if(UI[k]!==undefined)S[k]=UI[k]})}catch(e){}
 const INTERN_ANL={nv:"INTERN",kunde:"NOVIS intern",obj:"",str:"Bornweg 34a",plz:"63599",ort:"Biebergemünd",tel:"",mail:"",ger:"–",kw:0,en:"–",zyk:0,letzte:TODAY,vertrag:"",intern:true};
@@ -567,14 +571,14 @@ function aufbauen(){
  S.mat=NF.eintraege("artikel").map(e=>Object.assign({_id:e.id},e.daten)).sort((a,b)=>String(a.nr).localeCompare(String(b.nr)));
  S.am=NF.eintraege("arbeitsmittel").map(e=>Object.assign({_id:e.id},e.daten));
  const allg=NF.get("einstellungen","allgemein")||{},pr=NF.get("einstellungen","preise")||{},d=defCfg();
- S.cfg={lang:UI.lang||"de",theme:UI.theme||"system",user:NF.ich.benutzer.id,firma:deep(d.firma,allg.firma),noti:deep(d.noti,allg.noti),zyk:deep(d.zyk,allg.zyk),alert:deep(d.alert,pr.alert),preise:deep(d.preise,pr.preise),wartung:allg.wartung||null};
+ S.cfg={lang:UI.lang||"de",theme:UI.theme||"system",navOrt:UI.navOrt||"links",user:NF.ich.benutzer.id,firma:deep(d.firma,allg.firma),noti:deep(d.noti,allg.noti),zyk:deep(d.zyk,allg.zyk),alert:deep(d.alert,pr.alert),preise:deep(d.preise,pr.preise),wartung:allg.wartung||null};
  const mon=monday(TODAY),Z={};NF.liste("zeiten").forEach(z=>{Z[z.tech+"_"+z.datum]=z});
  S.zeit={};TECHS.forEach(t=>{S.zeit[t.id]=[0,1,2,3,4].map(k=>stundenAus(Z[t.id+"_"+addD(mon,k)]))});
  S.ber.forEach(b=>{if(b.plan==null){const o=order(b.id);if(o)b.plan=o.dauer}});
  applyTheme();
 }
 function save(){
- UIKEYS.forEach(k=>UI[k]=S[k]);if(S.cfg){UI.lang=S.cfg.lang;UI.theme=S.cfg.theme}try{localStorage.setItem(KEY,JSON.stringify(UI))}catch(e){}
+ UIKEYS.forEach(k=>UI[k]=S[k]);if(S.cfg){UI.lang=S.cfg.lang;UI.theme=S.cfg.theme;UI.navOrt=S.cfg.navOrt}try{localStorage.setItem(KEY,JSON.stringify(UI))}catch(e){}
  if(!S.anl)return;
  if(RECHTE.planung)NF.abgleich("anlagen",S.anl.filter(a=>!a.intern),a=>a.nv,anlCanon);
  NF.abgleich("auftraege",S.orders,o=>o.id,o=>ohne(o,[]));
@@ -654,13 +658,44 @@ function nav(){
   wN=S.anl.filter(a=>a.vertrag&&due(a)<=addD(TODAY,30)&&!openFor(a.nv,"Wartung")).length;
  const reN=(S.rech||[]).filter(r=>r.status==="offen"&&addD(r.datum,14)<TODAY).length;
  const it=[["dash","Übersicht",""],["plan","Plantafel",pool],["wart","Wartungsplanung",wN],["anl","Kunden und Anlagen",""],["ber","Berichte",berN],["re","Rechnungen",reN],["team","Team",teamN],["fz","Fahrzeuge",fzN()],["kalk","Kalkulation",kPruefN()],["set","Einstellungen",""],["adm","Administration",""]].filter(x=>!(ISID()&&x[0]==="re")&&!(x[0]==="adm"&&!ISADM())&&!(x[0]==="kalk"&&!RECHTE.kalkulation));
- $("#side").innerHTML=`<div class="brand">${NFDESIGN.logo()}<span class="bt"><b>NOVIS</b><span>Büro · Planung</span></span></div>`+
-  it.map(([k,l,c])=>`<button type="button" class="nav" data-view="${k}" ${S.view===k?'aria-current="page"':""}>${I[k]}<span>${l}</span>${c?`<span class="cnt">${c}</span>`:""}</button>`).join("")+
-  `<button type="button" class="nav" data-href="/app/">${I.anl}<span>Monteur-App</span></button>`+
-  `<button type="button" class="foot acct" data-go="set:allg"><span class="sav" style="background:${ME().soft};color:${ME().farbe}">${esc(ME().kurz)}</span><span>Angemeldet als<br><b>${esc(ME().name)}</b><br>${esc(ME().rolle)}</span></button>`+syncHtml();
+ const offen=!!S.sideOffen;
+ $("#side").innerHTML=`<div class="sidein${offen?" offen":""}">
+  <div class="brand">${NFDESIGN.logo("klein")}<span class="bt"><b>NOVIS</b><span>Büro · Planung</span></span></div>
+  <button type="button" class="klapp" data-klapp="1" aria-expanded="${offen}" aria-label="${offen?"Seitenleiste einklappen":"Seitenleiste aufklappen"}"><span class="lic">${I.klapp}</span><span class="slt">Einklappen</span></button>
+  <div class="lliste"><span class="shl" aria-hidden="true"></span>
+  ${it.map(([k,l,c])=>`<div class="lbw"><button type="button" class="nav" data-view="${k}" ${S.view===k?'aria-current="page"':""} aria-label="${esc(l)}${c?", "+c:""}"><span class="lic">${I[k]}${c?`<i class="slz">${c}</i>`:""}</span><span class="slt">${l}</span>${c?`<span class="cnt">${c}</span>`:""}</button><span class="stip" aria-hidden="true">${l}${c?`<small>${c}</small>`:""}</span></div>`).join("")}
+  <div class="lbw"><button type="button" class="nav" data-href="/app/" aria-label="Monteur-App"><span class="lic">${I.handy}</span><span class="slt">Monteur-App</span></button><span class="stip" aria-hidden="true">Monteur-App</span></div>
+  </div>
+  <button type="button" class="foot acct" data-go="set:allg" aria-label="Angemeldet als ${esc(ME().name)}"><span class="sav" style="background:${ME().soft};color:${ME().farbe}">${esc(ME().kurz)}</span><span class="slt">Angemeldet als<br><b>${esc(ME().name)}</b><br>${esc(ME().rolle)}</span></button>${syncHtml()}</div>`;
+ dock(it);
 }
+/* Schwebende Leiste unten mit den Hauptbereichen. Bleibt bestehen, damit die Markierung gleiten kann. */
+function dock(it){let d=$("#dock");const unten=(S.cfg.navOrt||"links")==="unten";document.body.dataset.nav=unten?"unten":"links";
+ const haupt=["dash","plan","anl","ber","re","kalk"],L=haupt.map(k=>it.find(x=>x[0]===k)).filter(Boolean),rest=it.filter(x=>!haupt.includes(x[0])),kurz={dash:"Übersicht",anl:"Kunden",kalk:"Kalkulation"};
+ if(!d){d=document.createElement("nav");d.id="dock";d.className="dock";d.setAttribute("aria-label","Hauptbereiche");document.body.appendChild(d)}
+ const cnt=k=>{const x=it.find(y=>y[0]===k);return x&&x[2]?x[2]:""};
+ const sig=L.map(x=>x[0]+cnt(x[0])).join()+"|"+rest.map(x=>x[0]+x[2]).join()+"|"+ME().name;if(d.dataset.sig!==sig){d.dataset.sig=sig;
+  d.innerHTML=`<div class="dkw"><span class="dkm" aria-hidden="true"></span>${L.map(([k,l,c])=>`<button type="button" class="dk" data-view="${k}">${esc(kurz[k]||l)}${c?`<i class="dkz">${c}</i>`:""}</button>`).join("")}</div>
+   <div class="dmehr"><button type="button" class="dk mehr" data-dmehr="1" aria-expanded="false" aria-haspopup="true">Mehr${rest.some(x=>x[2])?'<i class="dkz">•</i>':""}</button>
+    <div class="dmenu" role="menu">${rest.map(([k,l,c])=>`<button type="button" role="menuitem" data-view="${k}">${I[k]}<span>${l}</span>${c?`<i class="cnt">${c}</i>`:""}</button>`).join("")}
+     <button type="button" role="menuitem" data-href="/app/">${I.handy}<span>Monteur-App</span></button>
+     <button type="button" role="menuitem" data-go="set:allg"><span class="sav" style="background:${ME().soft};color:${ME().farbe}">${esc(ME().kurz)}</span><span>${esc(ME().name)}<small>${esc(ME().rolle)}</small></span></button>
+     <div class="dsync">${syncHtml()}</div></div></div>
+   <button type="button" class="plus" data-newo="" aria-label="Neuer Auftrag">${I.plus}</button>`}
+ const i=L.findIndex(x=>x[0]===S.view),m=d.querySelector(".dkm");
+ d.querySelectorAll(".dkw .dk").forEach(b=>{const an=b.dataset.view===S.view;b.classList.toggle("an",an);if(an)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current")});
+ const mb=d.querySelector(".dk.mehr");if(mb)mb.classList.toggle("an",rest.some(x=>x[0]===S.view));
+ if(m){m.style.opacity=i<0?"0":"1";if(i>=0)m.style.transform=`translateX(${i*110}px)`}
+ d.hidden=!!(S.drawer&&window.innerWidth<900)}
+function dockZiel(view){const d=$("#dock");if(!d)return;const bs=[...d.querySelectorAll(".dk")],i=bs.findIndex(b=>b.dataset.view===view),m=d.querySelector(".dkm");
+ bs.forEach(b=>b.classList.toggle("an",b.dataset.view===view));if(m){m.style.opacity=i<0?"0":"1";if(i>=0)m.style.transform=`translateX(${i*110}px)`}}
+document.addEventListener("click",e=>{if(e.target.closest&&e.target.closest(".dmehr"))return;const w=document.querySelector(".dmehr.auf");if(w){w.classList.remove("auf");const b=w.querySelector("[data-dmehr]");if(b)b.setAttribute("aria-expanded","false")}},true);
+/* Seitenleiste aufgeklappt: helle Markierung gleitet zur Zeile unter der Maus */
+document.addEventListener("mouseover",e=>{const sin=e.target.closest&&e.target.closest(".sidein.offen");if(!sin)return;const w=e.target.closest(".lbw"),hl=sin.querySelector(".shl");if(!hl)return;
+ if(!w){hl.style.opacity="0";return}const erst=hl.style.opacity!=="1";if(erst)hl.style.transition="none";hl.style.transform=`translateY(${w.offsetTop}px)`;if(erst){void hl.offsetWidth;hl.style.transition=""}hl.style.opacity="1"});
+document.addEventListener("mouseleave",e=>{if(e.target&&e.target.id==="side"){const hl=document.querySelector("#side .shl");if(hl)hl.style.opacity="0"}},true);
 function syncHtml(){const st=NF.status();return`<div class="syncst ${!st.online?"off":st.ausstehend?"wait":""}" id="syncst"><i></i>${!st.online?"Keine Verbindung · Änderungen warten":st.ausstehend?st.ausstehend+" Änderung(en) werden gespeichert":"Alles gespeichert"}</div>`}
-function top(title,extra){$("#top").innerHTML=`<h1>${esc(title)}</h1>${extra||""}`}
+function top(title,extra){const t=$("#top");t.hidden=!title&&!extra;t.innerHTML=`<h1>${esc(title)}</h1>${extra||""}`}
 
 /* ---------- Übersicht ---------- */
 function alerts(){const A=S.cfg.alert,out=[];if(ISID())return out;
@@ -672,8 +707,8 @@ function alerts(){const A=S.cfg.alert,out=[];if(ISID())return out;
  return out}
 function amNext(x){return addM(x.letzte,+x.iv||12)}
 function vDash(){
- top("Übersicht",`<button type="button" class="btn" data-view="plan">Zur Plantafel</button>`);
- const h=new Date().getHours(),en=S.cfg.lang==="en",gr=h<11?(en?"Good morning":"Guten Morgen"):h<17?(en?"Good afternoon":"Guten Tag"):(en?"Good evening":"Guten Abend");
+ top("");
+ const h=new Date().getHours(),gr=h<11?"Guten Morgen":h<17?"Guten Tag":"Guten Abend",mitGeld=!ISID();
  const heute=S.orders.filter(o=>o.date===TODAY),pool=S.orders.filter(o=>o.status==="offen"),stoer=pool.filter(o=>o.art==="Störung");
  const wf=S.anl.filter(a=>a.vertrag&&due(a)<=addD(TODAY,30)&&!openFor(a.nv,"Wartung")),ber=S.ber.filter(b=>b.status==="neu"),ant=S.abs.filter(a=>a.status==="offen");
  const att=[...stoer.map(o=>({c:"cr",t:`Störung ungeplant: ${anl(o.nv).kunde}`,s:o.grund,go:`order:${o.id}`})),
@@ -681,27 +716,62 @@ function vDash(){
   ...S.anl.filter(a=>a.vertrag&&due(a)<TODAY&&!openFor(a.nv,"Wartung")).map(a=>({c:"wa",t:`Wartung überfällig: ${a.kunde}`,s:`${a.nv} · fällig seit ${fmt(due(a))}`,go:"view:wart"})),
   ...ant.map(a=>({c:"bl",t:`${a.art} beantragt: ${tech(a.tech).name}`,s:`${fmt(a.von)}${a.bis!==a.von?" – "+fmt(a.bis):""}${a.zeit?" · "+a.zeit:""}${a.grund?" · "+a.grund:""}`,go:"view:team"})),
   ...ber.map(b=>({c:"or",t:`Bericht zu prüfen: ${b.sb}`,s:`${anl(b.nv).kunde} · ${tech(b.tech).name}`,go:`ber:${b.sb}`})),...fzAlerts(),...(typeof mahnAlerts==="function"?mahnAlerts():[]),...alerts()];
- $("#view").innerHTML=`<div class="pad">
-  <div class="greet"><h2>${gr}, ${esc(ME().name.split(" ")[0])}</h2><p>${D(TODAY).toLocaleDateString(en?"en-GB":"de-DE",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}</p></div>
-  <div class="kpis">
-   <button type="button" class="kpi" data-view="plan"><b>${heute.length}</b><span>Einsätze heute</span></button>
-   <button type="button" class="kpi ${stoer.length?"alert":""}" data-view="plan"><b>${pool.length}</b><span>Einzuplanen${stoer.length?` · ${stoer.length} Störung`:""}</span></button>
-   <button type="button" class="kpi" data-view="wart"><b>${wf.length}</b><span>Wartungen fällig in 30 Tagen</span></button>
-   <button type="button" class="kpi" data-view="ber"><b>${ber.length}</b><span>Berichte zu prüfen</span></button>
-   <button type="button" class="kpi" data-view="team"><b>${ant.length+S.bel.filter(b=>b.status==="offen").length}</b><span>Anträge und Belege</span></button>
+ // Geld: offene Forderungen nach Alter, Umsatz und Zahlungseingang der letzten sechs Monate (netto)
+ const R=(S.rech||[]).filter(r=>r.status!=="storniert"),offen=R.filter(r=>r.status==="offen"),alt=r=>Math.round((D(TODAY)-D(r.datum))/864e5);
+ const sumB=L=>L.reduce((x,r)=>x+(+r.brutto||0),0),fo=sumB(offen),ueber=sumB(offen.filter(r=>addD(r.datum,14)<TODAY));
+ const bk=[["bis 14 Tage",sumB(offen.filter(r=>alt(r)<=14)),""],["15–30 Tage",sumB(offen.filter(r=>alt(r)>14&&alt(r)<=30)),""],["über 30 Tage",sumB(offen.filter(r=>alt(r)>30)),"spaet"]];
+ const mon=[];for(let i=5;i>=0;i--){const d=D(TODAY);d.setDate(1);d.setMonth(d.getMonth()-i);mon.push({k:d.toISOString().slice(0,7),n:d.toLocaleDateString("de-DE",{month:"short"}).replace(".","")})}
+ mon.forEach(m=>{m.u=R.filter(r=>String(r.datum).slice(0,7)===m.k).reduce((x,r)=>x+(+r.netto||0),0);m.b=R.filter(r=>r.status==="bezahlt"&&String(r.bezahlt||"").slice(0,7)===m.k).reduce((x,r)=>x+(+r.netto||0),0)});
+ const mx=Math.max(1,...mon.map(m=>Math.max(m.u,m.b))),dies=mon[5],vor=mon[4],veraend=vor.u?Math.round((dies.u-vor.u)/vor.u*100):null;
+ // Woche: Auslastung je Monteur
+ const wo=monday(TODAY),tage=[0,1,2,3,4].map(k=>addD(wo,k)),soll=40;
+ const ausl=MONT().map(t=>{const hh=tage.reduce((x,d)=>x+load(t.id,d),0);return{t,h:hh,p:Math.min(100,hh/soll*100)}});
+ // Letzte Vorgänge: Rechnungen, Berichte, Angebote
+ const akt=[...(mitGeld?R.map(r=>{const st=reState(r);return{nr:r.re,v:"Rechnung",k:anl(r.nv).kunde,b:eur(+r.brutto||0),s:r.status==="bezahlt"?"Bezahlt":st[0]==="cr"?"Überfällig":"Offen",c:r.status==="bezahlt"?"ok":"or",d:r.datum,go:`re:${r.re}`}}):[]),
+  ...S.ber.map(b=>({nr:b.sb,v:"Servicebericht · "+(b.art||""),k:anl(b.nv).kunde,b:"–",s:b.status==="neu"?"Zu prüfen":"Geprüft",c:b.status==="neu"?"gr":"ok",d:b.datum||"",go:`ber:${b.sb}`})),
+  ...(RECHTE.kalkulation?ANGS().map(x=>({nr:x.nr,v:"Angebot",k:(x.kunde||{}).name||"–",b:eur(kRechnen(x).brutto),s:(KST[x.status]||KST.entwurf)[1],c:{frei:"ok",angenommen:"ok",vers:"ok",abgelehnt:"or",pruef:"gr"}[x.status]||"gr",d:x.datum||String((x.erstellt||{}).zeit||"").slice(0,10),go:`ang:${x.nr}`})):[])]
+  .filter(x=>x.d).sort((x,y)=>String(y.d).localeCompare(String(x.d))).slice(0,8);
+ const kpi=(cls,lab,wert,unter,ico,go)=>`<button type="button" class="dkpi ${cls}" data-go="${go}"><span class="dl">${lab}</span><span class="ki" aria-hidden="true">${ico}</span><b>${wert}</b><small>${unter}</small></button>`;
+ const IK={pfeil:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg>',kal:I.plan,ber:I.ber,wart:I.wart,heute:I.dash};
+ $("#view").innerHTML=`<div class="pad dash">
+  <div class="dkopf"><div class="greet"><h2>${gr}, ${esc(ME().name.split(" ")[0])}</h2><p>${D(TODAY).toLocaleDateString("de-DE",{weekday:"long",day:"numeric",month:"long"})} · ${heute.length} Einsätze heute${ber.length?` · ${ber.length} Bericht${ber.length>1?"e":""} zu prüfen`:""}</p></div>
+   <span class="dslog"><i aria-hidden="true"></i>service redefined.</span></div>
+  <div class="dreihe1">
+   ${mitGeld?`<section class="dkarte"><div class="dkt"><h3>Offene Forderungen</h3><small>${offen.length} Rechnung${offen.length===1?"":"en"}</small></div>
+    <div class="dgross">${eur(fo)}</div><div class="dunter">${ueber?`davon <b>${eur(ueber)}</b> überfällig`:"nichts überfällig"}</div>
+    <div class="dknr"><button type="button" class="dbtn dunkel" data-view="re">Rechnungen</button><button type="button" class="dbtn hell" data-view="ber">Berichte abrechnen</button></div>
+    <div class="dalter">${bk.map(([l,v,c])=>`<div class="${c}"><span>${l}</span><b>${eur(v)}</b></div>`).join("")}</div></section>`:""}
+   <div class="dkpis">
+    ${mitGeld?kpi("akz",`Umsatz ${esc(D(TODAY).toLocaleDateString("de-DE",{month:"long"}))}`,eur(dies.u),veraend==null?"netto":`${veraend>=0?"+":""}${veraend} % zum Vormonat`,IK.pfeil,"view:re"):kpi("akz","Einsätze heute",heute.length,`${MONT().length} Monteure`,IK.heute,"view:plan")}
+    ${kpi(stoer.length?"warn":"","Einzuplanen",pool.length,stoer.length?`${stoer.length} Störung${stoer.length>1?"en":""}`:"Aufträge ohne Termin",IK.kal,"view:plan")}
+    ${kpi("","Berichte prüfen",ber.length,ber.length?"warten auf dich":"alles geprüft",IK.ber,"view:ber")}
+    ${kpi("","Wartungen fällig",wf.length,"in den nächsten 30 Tagen",IK.wart,"view:wart")}
+   </div>
+   ${mitGeld?`<section class="dkarte"><div class="dkt"><h3>Umsatz und Zahlungseingang</h3><div class="dleg"><span><i class="u"></i>Umsatz</span><span><i class="k"></i>bezahlt</span></div></div>
+    <div class="ddia" role="img" aria-label="Umsatz und Zahlungseingang der letzten sechs Monate">${mon.map(m=>`<div class="dmon" title="${m.n}: ${eur(m.u)} Umsatz, ${eur(m.b)} bezahlt"><span class="dbal u" style="height:${Math.max(2,m.u/mx*100)}%"></span><span class="dbal k" style="height:${Math.max(2,m.b/mx*100)}%"></span></div>`).join("")}</div>
+    <div class="dmx">${mon.map((m,i)=>`<span class="${i===5?"jetzt":""}">${m.n}</span>`).join("")}</div></section>`:""}
   </div>
-  <div class="grid2">
-   <div class="panel"><h3>Braucht Aufmerksamkeit</h3>
-    ${att.length?`<div class="list">${att.map(x=>`<button type="button" class="li" data-go="${esc(x.go)}"><span class="dot ${x.c}"></span><span><b>${esc(x.t)}</b><small>${esc(x.s)}</small></span><span class="hint">›</span></button>`).join("")}</div>`:'<p class="empty">Alles erledigt.</p>'}</div>
-   <div class="panel"><h3>Heute unterwegs</h3>
-    ${MONT().map(t=>{const os=dayOrders(t.id,TODAY),ab=absOn(t.id,TODAY,true);return`<div class="box" style="gap:4px"><div style="display:flex;align-items:center;gap:8px"><span class="chip" style="background:${t.soft};color:${t.farbe}">${t.kurz}</span><b>${esc(t.name)}</b><span class="hint" style="margin-left:auto">${de(load(t.id,TODAY))} h geplant</span></div>
+  <div class="dreihe2">
+   <section class="dkarte"><div class="dkt"><h3>Braucht Aufmerksamkeit</h3><small>${att.length||""}</small></div>
+    ${att.length?`<div class="list">${att.slice(0,8).map(x=>`<button type="button" class="li" data-go="${esc(x.go)}"><span class="dot ${x.c}"></span><span><b>${esc(x.t)}</b><small>${esc(x.s)}</small></span><span class="hint">›</span></button>`).join("")}</div>${att.length>8?`<p class="hint" style="margin:8px 0 0">und ${att.length-8} weitere</p>`:""}`:'<p class="empty">Alles erledigt.</p>'}</section>
+   <section class="dkarte"><div class="dkt"><h3>Letzte Vorgänge</h3></div>
+    ${akt.length?`<div class="dtw"><table class="dtab"><thead><tr><th>Nummer</th><th>Vorgang</th><th>Kunde</th><th class="r">Betrag</th><th>Status</th><th>Datum</th></tr></thead><tbody>
+     ${akt.map(x=>`<tr class="click" data-go="${esc(x.go)}" tabindex="0"><td class="nr">${esc(x.nr)}</td><td>${esc(x.v)}</td><td>${esc(x.k)}</td><td class="r">${esc(x.b)}</td><td><span class="dst ${x.c}"><i></i>${esc(x.s)}</span></td><td>${fmt(x.d)}</td></tr>`).join("")}</tbody></table></div>`:'<p class="empty">Noch keine Vorgänge.</p>'}</section>
+  </div>
+  <div class="dreihe3">
+   <section class="dkarte"><div class="dkt"><h3>Heute unterwegs</h3></div>
+    ${MONT().map(t=>{const os=dayOrders(t.id,TODAY),ab=absOn(t.id,TODAY,true);return`<div class="dtour"><div class="dtk"><span class="chip" style="background:${t.soft};color:${t.farbe}">${t.kurz}</span><b>${esc(t.name)}</b><span class="hint">${de(load(t.id,TODAY))} h</span></div>
      ${ab.length?`<div class="alert">${ab.map(a=>a.art+(a.zeit?" "+a.zeit:"")).join(", ")}</div>`:""}
-     <div class="tl">${os.map(o=>{const a=anl(o.nv);return`<div class="row"><time>${o.time}</time><span>${esc(a.kunde)} · ${esc(a.ort)}<br><span class="hint">${o.art} · ${o.nv}</span></span><span class="chip ${o.status==="erledigt"?"ok":o.art==="Störung"?"cr":""}">${o.status==="erledigt"?"erledigt":o.art}</span></div>`}).join("")||'<p class="hint">Keine Einsätze.</p>'}</div></div>`}).join("")}
+     ${os.map(o=>{const a=anl(o.nv);return`<button type="button" class="dzeile" data-go="order:${o.id}"><time>${o.time||""}</time><span>${esc(a.kunde)} · ${esc(a.ort)}</span><span class="dart ${o.status==="erledigt"?"ok":""}">${o.status==="erledigt"?"erledigt":o.art}</span></button>`}).join("")||'<p class="hint" style="margin:4px 0 0">Keine Einsätze.</p>'}</div>`}).join("")}</section>
+   <div class="dspalte">
+    <section class="dkarte"><div class="dkt"><h3>Auslastung diese Woche</h3><small>KW ${kwOf(wo)}</small></div>
+     ${ausl.map(x=>`<div class="dzl"><span>${esc(x.t.name)}</span><b>${de(x.h,x.h%1?1:0)} / ${soll} h</b></div><div class="dbalk"><i class="${x.p>=85?"voll":""}" style="width:${x.p}%"></i></div>`).join("")||'<p class="empty">Keine Monteure.</p>'}</section>
+    ${FZ().length?`<section class="dkarte"><div class="dkt"><h3>Fahrzeuge</h3><small>${FZ().length}</small></div><div class="dfz">${FZ().slice(0,4).map((f,i)=>{const F=NFFZ.faellig(f,TODAY)[0],t=f.fahrer?tech(f.fahrer):null;
+     return`<button type="button" class="dfzk ${i?"hell":""}" data-view="fz"><span class="chip">${F&&F.stufe!=="ok"?esc(F.art)+(F.tage<0?" überfällig":" in "+F.tage+" T"):"alles aktuell"}</span><span><span class="kenn">${esc(f.kennzeichen||"ohne Kennzeichen")}</span><small>${t?esc(t.name.split(" ")[0]):"frei"}${f.modell?" · "+esc(f.modell):""}</small></span></button>`}).join("")}</div></section>`:""}
    </div>
   </div>
  </div>`;
 }
-
 /* ---------- Plantafel ---------- */
 function vPlan(){
  const wk=S.week,days=[0,1,2,3,4].map(k=>addD(wk,k)),kw=kwOf(wk);
@@ -1393,6 +1463,7 @@ function setAllg(){const F=S.cfg.firma,acc=TECHS.filter(t=>t.rolle!=="Monteur"&&
   <div class="panel"><h3>Sprache</h3><div class="seg" role="group">${[["de","Deutsch"],["en","English"]].map(([k,l])=>`<button type="button" data-cfgset="lang|${k}" aria-pressed="${S.cfg.lang===k}">${l}</button>`).join("")}</div>
    <p class="hint">Gilt für die Oberfläche. Berichte, Rechnungen und Kundenmails bleiben auf Deutsch.</p>
    <h3 style="margin-top:8px">Darstellung</h3><div class="seg" role="group">${[["system","Wie System"],["light","Hell"],["dark","Dunkel"]].map(([k,l])=>`<button type="button" data-cfgset="theme|${k}" aria-pressed="${S.cfg.theme===k}">${l}</button>`).join("")}</div>
+   <h3 style="margin-top:8px">Navigation</h3><div class="seg" role="group" aria-label="Navigation">${[["links","Seitenleiste links"],["unten","Leiste unten"]].map(([k,l])=>`<button type="button" data-cfgset="navOrt|${k}" aria-pressed="${(S.cfg.navOrt||"links")===k}">${l}</button>`).join("")}</div>
    <h3 style="margin-top:8px">Farbschema</h3><div class="schemawahl">${Object.entries(NFDESIGN.schemata).map(([k,l])=>`<button type="button" data-schema="${k}" aria-pressed="${NFDESIGN.schema()===k}"><span class="sw sw-${k}">${NFDESIGN.n()}</span>${l}</button>`).join("")}</div>
    <p class="hint">Gilt auf diesem Gerät für Büro und Monteur-App.</p></div>
   <div class="panel"><h3>Konto</h3>
@@ -2018,8 +2089,12 @@ document.addEventListener("click",e=>{
  if(t.id==="spFrei"){t.disabled=true;NF.api("/api/ablage/freischalten",{method:"POST"}).then(p=>{toast(p.ok?"SharePoint verbunden. Jetzt Sites.FullControl.All in Entra wieder entfernen.":p.meldung);return NF.api("/api/ablage")}).then(x=>{S.sp=x;render()}).catch(e=>{t.disabled=false;toast(e.message)});return}
  if(t.id==="wartAn"){S.cfg.wartung={aktiv:true,datum:TODAY,zeit:$("#wartZeit").value};NF.setze("einstellungen","allgemein",{wartung:S.cfg.wartung});render();toast("Hinweis an die Monteur-App gesendet");return}
  if(t.id==="wartAus"){S.cfg.wartung={aktiv:false};NF.setze("einstellungen","allgemein",{wartung:S.cfg.wartung});render();toast("Hinweis zurückgenommen");return}
- if(d.view){S.view=d.view;S.drawer=null;S.sel=null;save();render();$("#view").scrollTop=0;return}
- if(d.go){const[k,id]=d.go.split(/:(.+)/);if(k==="set"){S.view="set";S.setTab=id;S.drawer=null}else if(k==="view"){S.view=id;S.drawer=null}else S.drawer=k+":"+id;save();render();return}
+ if(d.dmehr){const w=t.closest(".dmehr"),auf=!w.classList.contains("auf");w.classList.toggle("auf",auf);t.setAttribute("aria-expanded",String(auf));return}
+ if(!t.closest(".dmehr")){const w=document.querySelector(".dmehr.auf");if(w){w.classList.remove("auf");const b=w.querySelector("[data-dmehr]");if(b)b.setAttribute("aria-expanded","false")}}
+ if(d.klapp){S.sideOffen=!S.sideOffen;save();const sin=$("#side .sidein");if(sin){sin.classList.toggle("offen",S.sideOffen);t.setAttribute("aria-expanded",String(S.sideOffen));t.setAttribute("aria-label",S.sideOffen?"Seitenleiste einklappen":"Seitenleiste aufklappen");const hl=sin.querySelector(".shl");if(hl)hl.style.opacity="0"}return}
+ if(d.view){const neu=d.view!==S.view,v=$("#view"),geh=()=>{S.view=d.view;S.drawer=null;S.sel=null;save();render();v.scrollTop=0;v.classList.remove("weich")};
+  if(neu&&!NFB.reduziert()){v.classList.add("weich");dockZiel(d.view);setTimeout(geh,160)}else geh();return}
+ if(d.go){const[k,id]=d.go.split(/:(.+)/);if(k==="ang"){S.view="kalk";S.kalkTab="angebot";S.kalkId=id;S.drawer=null;save();render();return}if(k==="ber"){S.a4=id;save();render();return}if(k==="re"){S.rv=id;save();render();return}if(k==="set"){S.view="set";S.setTab=id;S.drawer=null}else if(k==="view"){S.view=id;S.drawer=null}else S.drawer=k+":"+id;save();render();return}
  if(d.anl){S.drawer="anl:"+d.anl;save();drawer();return}
  if(d.ber&&!t.matches("button")){S.drawer="ber:"+d.ber;save();drawer();return}
  if(d.filter){S.filter=d.filter;save();render();return}
@@ -2060,7 +2135,7 @@ document.addEventListener("click",e=>{
  if(d.hadd){const[nv,auf]=d.hadd.split("|"),tx=($("#hwNeu").value||"").trim();if(tx.length<3){toast("Bitte Hinweis eintragen");return}
   const neu=hinweiseVon(nv).concat([{id:neueId(),text:tx,von:ME().name,datum:new Date().toISOString(),auftrag:auf||null}]);NF.setze("anlagen",nv,{hinweise:neu});aufbauen();drawer();render();toast("Hinweis gespeichert, der Monteur sieht ihn in der App");return}
  if(d.hdone){const[nv,hid]=d.hdone.split("|");NF.setze("anlagen",nv,{hinweise:hinweiseVon(nv).map(h=>h.id===hid?Object.assign({},h,{erledigt:{von:ME().name,datum:new Date().toISOString()}}):h)});aufbauen();drawer();render();toast("Hinweis als erledigt markiert");return}
- if(d.cfgset){const[k,v]=d.cfgset.split("|");S.cfg[k]=v;applyTheme();save();render();if(k==="user")toast("Angemeldet als "+ME().name);return}
+ if(d.cfgset){const[k,v]=d.cfgset.split("|");S.cfg[k]=v;applyTheme();save();if(k==="navOrt"){const dk=$("#dock");if(dk)dk.dataset.sig=""}render();if(k==="user")toast("Angemeldet als "+ME().name);return}
  if(t.id==="logout"){fetch("/auth/logout",{method:"POST"}).finally(()=>location.href="/");return}
  if(t.id==="matAdd"){S.mat.push({_id:neueId(),nr:"",bez:"",her:"",ek:0});save();render();return}
  if(t.id==="amAdd"){S.am.push({_id:neueId(),bez:"Neues Arbeitsmittel",art:"Messgerät",sn:"",wer:"",pruef:"Kalibrierung",iv:12,letzte:TODAY});save();render();return}

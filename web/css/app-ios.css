@@ -118,3 +118,39 @@ dl.kv dd{text-align:right}
   .naechst::after{animation:none}
   .intro .flogo,.intro .slogan i{animation:iRuhig 200ms var(--ease-out) both}
 }
+
+/* ---------- Kartenstil wie im Büro (11/2026) ---------- */
+:root{--karte-schatten:0 1px 2px rgba(31,30,29,.04),0 8px 24px -16px rgba(31,30,29,.18)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--karte-schatten:none}}
+:root[data-theme="dark"]{--karte-schatten:none}
+.panel,.liste{border-radius:22px;box-shadow:var(--karte-schatten)}
+.naechst{border-radius:20px}
+.naechst::after{border-radius:21.5px}
+.panel .akl{margin:0 -14px -14px;border-radius:0 0 22px 22px;overflow:hidden}
+
+/* Tageskacheln auf „Heute“ */
+.tkacheln{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.tk{background:var(--surface);border-radius:18px;padding:12px 14px;box-shadow:var(--karte-schatten);display:flex;flex-direction:column;gap:2px}
+.tk b{font:800 24px/1.1 var(--f-display);font-variant-numeric:tabular-nums}
+.tk span{font-size:12.5px;color:var(--muted)}
+.tk.akz{background:#C2510B;color:#fff}
+.tk.akz span{color:rgba(255,255,255,.88)}
+
+/* Schwebende dunkle Leiste unten (Handy) mit gleitender weißer Markierung */
+.phone:not(.desk) #tabs{left:12px;right:12px;bottom:calc(10px + env(safe-area-inset-bottom,0px));padding:6px;border:0;border-radius:999px;background:#1F1E1D;
+  -webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:0 12px 30px -10px rgba(31,30,29,.5)}
+.phone:not(.desk) .tabs button{position:relative;z-index:1;height:52px;padding:4px 2px;gap:2px;justify-content:center;border-radius:999px;color:#BDBDB8;font-size:10.5px;font-weight:600}
+.phone:not(.desk) .tabs button svg{width:22px;height:22px;padding:0;background:none!important;border-radius:0}
+.phone:not(.desk) .tabs button[aria-current="page"]{color:#1F1E1D;font-weight:700}
+.phone:not(.desk) .tabs .badge{top:2px}
+.tmark{position:absolute;top:6px;left:0;height:52px;border-radius:999px;background:#fff;z-index:0;pointer-events:none;transition:transform 320ms cubic-bezier(0.77,0,0.175,1)}
+.phone.desk .tmark{display:none}
+@media (prefers-reduced-transparency:reduce){.phone:not(.desk) #tabs{background:#1F1E1D}}
+@media (prefers-reduced-motion:reduce){.tmark{transition:none}}
+
+/* Desktop-App: Seitenleiste als runde Karte wie im Büro */
+.phone.desk #tabs{margin:12px;border-radius:26px;border-right:0;background:var(--surface);box-shadow:var(--karte-schatten);height:auto;align-self:stretch}
+.phone.desk .tabs button{border-radius:22px;font-weight:600}
+.phone.desk .tabs button[aria-current="page"]{background:#1F1E1D;color:#fff}
+.phone.desk .tabs button[aria-current="page"] svg{color:#fff}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .phone.desk .tabs button[aria-current="page"]{background:var(--fg);color:var(--bg)}}
